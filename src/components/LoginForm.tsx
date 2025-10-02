@@ -57,19 +57,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
       className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4 overflow-y-auto"
       onClick={handleBackgroundClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden my-8 max-h-[90vh] overflow-y-auto">
+      <div className="bg-card border rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white relative">
+        <div className="bg-primary p-4 text-primary-foreground relative">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 text-white hover:text-gray-200 transition-colors"
+            className="absolute right-4 top-4 text-primary-foreground hover:text-primary-foreground/80 transition-colors"
           >
             <X size={24} />
           </button>
           <h2 className="text-xl font-bold mb-1">
             {isLogin ? "Đăng Nhập" : "Đăng Ký"}
           </h2>
-          <p className="text-blue-100 text-sm">
+          <p className="text-primary-foreground/80 text-sm">
             {isLogin
               ? "Chào mừng bạn trở lại!"
               : "Tạo tài khoản mới để bắt đầu"}
@@ -81,12 +81,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           {/* Name field (chỉ hiện khi đăng ký) */}
           {!isLogin && (
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Họ và tên
               </label>
               <div className="relative">
                 <User
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                   size={20}
                 />
                 <input
@@ -94,7 +94,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 font-medium placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
                   placeholder="Nhập họ và tên của bạn"
                   required={!isLogin}
                 />
@@ -104,12 +104,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
 
           {/* Email field */}
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Email
             </label>
             <div className="relative">
               <Mail
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                 size={20}
               />
               <input
@@ -117,7 +117,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 font-medium placeholder-gray-400"
+                className="w-full pl-10 pr-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
                 placeholder="Nhập email của bạn"
                 required
               />
@@ -126,12 +126,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
 
           {/* Password field */}
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Mật khẩu
             </label>
             <div className="relative">
               <Lock
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                 size={20}
               />
               <input
@@ -139,14 +139,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 font-medium placeholder-gray-400"
+                className="w-full pl-10 pr-12 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
                 placeholder="Nhập mật khẩu"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -156,12 +156,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           {/* Confirm Password field (chỉ hiện khi đăng ký) */}
           {!isLogin && (
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Xác nhận mật khẩu
               </label>
               <div className="relative">
                 <Lock
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                   size={20}
                 />
                 <input
@@ -169,7 +169,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 font-medium placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
                   placeholder="Nhập lại mật khẩu"
                   required={!isLogin}
                 />
@@ -182,7 +182,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
             <div className="text-right">
               <a
                 href="#"
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
                 Quên mật khẩu?
               </a>
@@ -192,19 +192,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           {/* Submit button */}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold hover:bg-primary/90 transition-all transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
             {isLogin ? "Đăng Nhập" : "Đăng Ký"}
           </button>
 
           {/* Toggle between login/register */}
           <div className="text-center mt-4">
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isLogin ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+                className="text-primary hover:text-primary/80 font-semibold transition-colors"
               >
                 {isLogin ? "Đăng ký ngay" : "Đăng nhập"}
               </button>
@@ -215,10 +215,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           <div className="mt-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Hoặc</span>
+                <span className="px-2 bg-card text-muted-foreground">Hoặc</span>
               </div>
             </div>
 
@@ -226,7 +226,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
             <div className="mt-3 space-y-2">
               <button
                 type="button"
-                className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                className="w-full flex items-center justify-center px-4 py-2.5 border border-input rounded-lg bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-sm"
               >
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                   <path

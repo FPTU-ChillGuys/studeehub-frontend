@@ -338,9 +338,7 @@ const HomePage = () => {
                     handleCloseLogin();
                     redirectBasedOnRole(user);
                   } else {
-                    alert(
-                      "Invalid email or password. Try:\n- admin@studeehub.com / admin123\n- user@studeehub.com / user123"
-                    );
+                    alert("Invalid email or password!");
                   }
                 } catch (error) {
                   console.error("Login error:", error);

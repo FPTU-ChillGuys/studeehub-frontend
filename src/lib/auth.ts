@@ -1,4 +1,6 @@
 // Authentication utilities
+import { AuthService } from "./api/services/auth";
+
 export interface User {
   id: string;
   email: string;
@@ -7,39 +9,21 @@ export interface User {
   avatar?: string;
 }
 
-// Simulate user database
-const MOCK_USERS = {
-  "admin@studeehub.com": {
-    id: "1",
-    email: "admin@studeehub.com",
-    name: "Admin User",
-    role: "admin" as const,
-    password: "12345aA@",
-  },
-  "user@studeehub.com": {
-    id: "2",
-    email: "user@studeehub.com",
-    name: "Regular User",
-    role: "user" as const,
-    password: "12345aA@",
-  },
-};
-
 export const authenticateUser = async (
   email: string,
   password: string
 ): Promise<User | null> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    const response = await AuthService.login({ email, password });
 
-  const mockUser = MOCK_USERS[email as keyof typeof MOCK_USERS];
+    // Store user data in localStorage
+    setCurrentUser(response.user);
 
-  if (mockUser && mockUser.password === password) {
-    const { password: _, ...user } = mockUser;
-    return user;
+    return response.user;
+  } catch (error) {
+    console.error("Authentication failed:", error);
+    return null;
   }
-
-  return null;
 };
 
 export const getCurrentUser = (): User | null => {
@@ -48,6 +32,9 @@ export const getCurrentUser = (): User | null => {
     if (userStr) {
       return JSON.parse(userStr);
     }
+
+    // Fallback: try to get user from token
+    return AuthService.getCurrentUser();
   } catch (error) {
     console.error("Error getting current user:", error);
   }
@@ -58,9 +45,15 @@ export const setCurrentUser = (user: User): void => {
   localStorage.setItem("user", JSON.stringify(user));
 };
 
-export const logout = (): void => {
-  localStorage.removeItem("user");
-  window.location.href = "/";
+export const logout = async (): Promise<void> => {
+  try {
+    await AuthService.logout();
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+    localStorage.removeItem("user");
+    window.location.href = "/";
+  }
 };
 
 export const redirectBasedOnRole = (user: User): void => {
@@ -78,5 +71,33 @@ export const isAdmin = (user: User | null): boolean => {
 
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
-  return getCurrentUser() !== null;
+  const user = getCurrentUser();
+  if (!user) return false;
+
+  // Check if token is still valid
+  const accessToken = localStorage.getItem("accessToken");
+  if (!accessToken) return false;
+
+  return !AuthService.isTokenExpired(accessToken);
+};
+
+// Validate token with server and refresh if needed
+export const validateToken = async (): Promise<User | null> => {
+  try {
+    const newToken = await AuthService.refreshTokenIfNeeded();
+    if (!newToken) {
+      return null;
+    }
+
+    const user = AuthService.getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Token validation failed:", error);
+    localStorage.removeItem("user");
+    return null;
+  }
 };

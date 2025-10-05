@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Home, FileText, Origami } from "lucide-react";
+import { Calendar, Home, Origami, BookOpen } from "lucide-react";
 
 import {
   Sidebar,
@@ -28,19 +28,9 @@ const data = {
       isActive: true,
     },
     {
-      title: "Documentation",
-      url: "/dashboard/documents",
-      icon: FileText,
-      items: [
-        {
-          title: "Upload Document",
-          url: "/dashboard/documents?tab=upload",
-        },
-        {
-          title: "My Document",
-          url: "/dashboard/documents?tab=my-documents",
-        },
-      ],
+      title: "My Notebooks",
+      url: "/dashboard/my-documents",
+      icon: BookOpen,
     },
     {
       title: "Flashcards",

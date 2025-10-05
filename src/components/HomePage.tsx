@@ -13,7 +13,12 @@ import {
   Upload,
   Zap,
 } from "lucide-react";
-import LoginForm from "./LoginForm";
+import { LoginForm } from "./LoginForm";
+import {
+  authenticateUser,
+  setCurrentUser,
+  redirectBasedOnRole,
+} from "@/lib/auth";
 
 const HomePage = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -317,8 +322,54 @@ const HomePage = () => {
         </div>
       </footer>
 
-      {/* Login Modal */}
-      <LoginForm isOpen={isLoginModalOpen} onClose={handleCloseLogin} />
+      {/* Login Form */}
+      {isLoginModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="w-full max-w-sm">
+            <LoginForm
+              showCloseButton={true}
+              onClose={handleCloseLogin}
+              onLogin={async (email, password) => {
+                console.log("Login attempt:", { email, password });
+                try {
+                  const user = await authenticateUser(email, password);
+                  if (user) {
+                    setCurrentUser(user);
+                    handleCloseLogin();
+                    redirectBasedOnRole(user);
+                  } else {
+                    alert(
+                      "Invalid email or password. Try:\n- admin@studeehub.com / admin123\n- user@studeehub.com / user123"
+                    );
+                  }
+                } catch (error) {
+                  console.error("Login error:", error);
+                  alert("Login failed. Please try again.");
+                }
+              }}
+              onSignUp={async (email, password, name) => {
+                console.log("Sign up attempt:", { email, password, name });
+                // For demo, create a new user account (normally would call API)
+                try {
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                  const newUser = {
+                    id: Date.now().toString(),
+                    email,
+                    name,
+                    role: "user" as const,
+                  };
+                  setCurrentUser(newUser);
+                  handleCloseLogin();
+                  redirectBasedOnRole(newUser);
+                } catch (error) {
+                  console.error("Sign up error:", error);
+                  alert("Sign up failed. Please try again.");
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

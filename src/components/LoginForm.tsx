@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 
 interface LoginFormProps {
@@ -9,6 +10,7 @@ interface LoginFormProps {
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,6 +38,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     // Xử lý đăng nhập/đăng ký ở đây
     console.log("Form submitted:", formData);
+
+    // Giả lập login thành công (sau này sẽ thay bằng API call)
+    if (isLogin) {
+      // Đăng nhập thành công, chuyển đến dashboard
+      router.push("/dashboard");
+    } else {
+      // Đăng ký thành công, cũng chuyển đến dashboard
+      router.push("/dashboard");
+    }
+
     // Đóng modal sau khi submit thành công
     onClose();
   };
@@ -67,12 +79,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
             <X size={24} />
           </button>
           <h2 className="text-xl font-bold mb-1">
-            {isLogin ? "Đăng Nhập" : "Đăng Ký"}
+            {isLogin ? "Sign In" : "Sign Up"}
           </h2>
           <p className="text-primary-foreground/80 text-sm">
-            {isLogin
-              ? "Chào mừng bạn trở lại!"
-              : "Tạo tài khoản mới để bắt đầu"}
+            {isLogin ? "Welcome back!" : "Create a new account to get started"}
           </p>
         </div>
 
@@ -82,7 +92,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           {!isLogin && (
             <div className="relative">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Họ và tên
+                Full Name
               </label>
               <div className="relative">
                 <User
@@ -95,7 +105,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                   value={formData.name}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
-                  placeholder="Nhập họ và tên của bạn"
+                  placeholder="Enter your full name"
                   required={!isLogin}
                 />
               </div>
@@ -118,7 +128,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="w-full pl-10 pr-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
-                placeholder="Nhập email của bạn"
+                placeholder="Enter your email"
                 required
               />
             </div>
@@ -127,7 +137,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           {/* Password field */}
           <div className="relative">
             <label className="block text-sm font-medium text-foreground mb-2">
-              Mật khẩu
+              Password
             </label>
             <div className="relative">
               <Lock
@@ -140,7 +150,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                 value={formData.password}
                 onChange={handleInputChange}
                 className="w-full pl-10 pr-12 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
-                placeholder="Nhập mật khẩu"
+                placeholder="Enter your password"
                 required
               />
               <button
@@ -157,7 +167,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
           {!isLogin && (
             <div className="relative">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Xác nhận mật khẩu
+                Confirm Password
               </label>
               <div className="relative">
                 <Lock
@@ -170,7 +180,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-foreground font-medium placeholder-muted-foreground bg-background"
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder="Enter your password again"
                   required={!isLogin}
                 />
               </div>
@@ -184,7 +194,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                 href="#"
                 className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
-                Quên mật khẩu?
+                Forgot password?
               </a>
             </div>
           )}
@@ -194,19 +204,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
             type="submit"
             className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold hover:bg-primary/90 transition-all transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
-            {isLogin ? "Đăng Nhập" : "Đăng Ký"}
+            {isLogin ? "Sign In" : "Sign Up"}
           </button>
 
           {/* Toggle between login/register */}
           <div className="text-center mt-4">
             <p className="text-muted-foreground text-sm">
-              {isLogin ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
+              {isLogin
+                ? "Don't have an account? "
+                : "Already have an account? "}
               <button
                 type="button"
                 onClick={toggleMode}
                 className="text-primary hover:text-primary/80 font-semibold transition-colors"
               >
-                {isLogin ? "Đăng ký ngay" : "Đăng nhập"}
+                {isLogin ? "Sign Up Now" : "Sign In Here"}
               </button>
             </p>
           </div>
@@ -246,7 +258,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isOpen, onClose }) => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Đăng nhập với Google
+                Sign in with Google
               </button>
             </div>
           </div>

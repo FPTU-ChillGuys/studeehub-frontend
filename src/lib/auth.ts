@@ -1,12 +1,13 @@
 // Authentication utilities
 import { AuthService } from "./api/services/auth";
+import { signIn, signOut as nextAuthSignOut, getSession } from 'next-auth/react';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: "user" | "admin";
-  avatar?: string;
+  avatar?: string | null;
 }
 
 export const authenticateUser = async (
@@ -47,6 +48,7 @@ export const setCurrentUser = (user: User): void => {
 
 export const logout = async (): Promise<void> => {
   try {
+    await nextAuthSignOut({ redirect: false });
     await AuthService.logout();
   } catch (error) {
     console.error("Logout error:", error);
@@ -82,6 +84,41 @@ export const isAuthenticated = (): boolean => {
 };
 
 // Validate token with server and refresh if needed
+// Google OAuth login
+export const loginWithGoogle = async (): Promise<void> => {
+  try {
+    const result = await signIn('google', { 
+      callbackUrl: '/',
+      redirect: false 
+    });
+    
+    if (result?.error) {
+      console.error('Google sign in error:', result.error);
+      return;
+    }
+    
+    const session = await getServerSession();
+    if (session?.user) {
+      const user: User = {
+        id: session.user.id || '',
+        email: session.user.email || '',
+        name: session.user.name || '',
+        role: (session.user.role as 'user' | 'admin') || 'user',
+        avatar: session.user.image || undefined
+      };
+      
+      setCurrentUser(user);
+      redirectBasedOnRole(user);
+    }
+  } catch (error) {
+    console.error('Error during Google sign in:', error);
+  }
+};
+
+export const getServerSession = async () => {
+  return await getSession();
+};
+
 export const validateToken = async (): Promise<User | null> => {
   try {
     const newToken = await AuthService.refreshTokenIfNeeded();

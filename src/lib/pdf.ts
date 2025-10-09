@@ -1,12 +1,14 @@
-import pdf from "pdf-parse";
+import { PDFParse } from 'pdf-parse';
+
 
 export const PdfBufferToText = async (buffer: Buffer) => {
-  return await pdf(buffer)
-    .then(function (data : { text: string }) {
-      return data.text;
-    })
-    .catch((err) => {
-      console.error("Error parsing PDF:", err);
-      return "";
-    });
+   const parser = new PDFParse({data: buffer});
+
+  parser.getText().then((result ) => {
+    return result.text;
+  }).finally(async () => {
+    await parser.destroy();
+  });
+
+  return "";
 };

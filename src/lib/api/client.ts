@@ -1,3 +1,5 @@
+import { ApiError, ApiErrorResponse } from "@/Types";
+
 // API response wrapper từ backend
 export interface APIResponse<T> {
   data: T;
@@ -5,25 +7,6 @@ export interface APIResponse<T> {
   message: string;
   errors: string[] | null;
   errorType: number;
-}
-
-// Auth related types
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  name: string; // Make required
-  role: "user" | "admin";
-  avatar?: string;
 }
 
 // API Client class
@@ -89,25 +72,16 @@ class APIClient {
       if (!response.ok) {
         console.error(`HTTP Error: ${response.status} ${response.statusText}`);
 
-        // Try to parse error response
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = {
-            message: `HTTP ${response.status}: ${response.statusText}`,
-          };
-        }
-
+        const errorData: ApiErrorResponse = await response.json();
+        
         if (response.status === 401) {
           this.clearToken();
           window.location.href = "/";
-          throw new Error("Authentication failed");
         }
 
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+        throw new ApiError(response, {
+          ...errorData
+        });
       }
 
       const data: APIResponse<T> = await response.json();

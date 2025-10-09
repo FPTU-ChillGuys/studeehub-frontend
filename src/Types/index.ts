@@ -4,6 +4,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
+  role: 'student' | 'teacher' | 'admin';
 }
 
 // Document types
@@ -43,11 +44,39 @@ export interface ChatMessage {
   sources?: string[]; // Document IDs that were referenced
 }
 
+// API Error types
+export interface ApiErrorResponse {
+  data?: unknown
+  success?: boolean | false;
+  message: string;
+  errors?: Record<string, string[]> | string[];
+  errorType: number;
+}
+
+export class ApiError extends Error {
+  status: number;
+  statusText: string;
+  data?: ApiErrorResponse;
+
+  constructor(response: Response, data: ApiErrorResponse) {
+    super(data.message || `HTTP error! status: ${response.status}`);
+    this.name = 'ApiError';
+    this.status = response.status;
+    this.statusText = response.statusText;
+    this.data = data;
+    
+    // Maintain proper stack trace in V8 environment
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiError);
+    }
+  }
+}
+
 // API response types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
-  error?: string;
+  error?: string | ApiErrorResponse;
   message?: string;
 }
 

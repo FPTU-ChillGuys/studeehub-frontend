@@ -1,56 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
-import {
-  authenticateUser,
-  setCurrentUser,
-  redirectBasedOnRole,
-} from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Page() {
-  const router = useRouter();
+  const { login, signUp } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
-    try {
-      console.log("Login attempt:", { email, password });
-      const user = await authenticateUser(email, password);
-
-      if (user) {
-        setCurrentUser(user);
-        redirectBasedOnRole(user);
-      } else {
-        alert("Invalid email or password!");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("Login failed. Please try again.");
-    }
+    const result = await login(email, password);
+    return result;
   };
 
-  const handleSignUp = async (
-    email: string,
-    password: string,
-    name: string
-  ) => {
-    try {
-      console.log("Sign up attempt:", { email, password, name });
-
-      // For demo, create a new user account (normally would call API)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const newUser = {
-        id: Date.now().toString(),
-        email,
-        name,
-        role: "user" as const,
-      };
-
-      setCurrentUser(newUser);
-      redirectBasedOnRole(newUser);
-    } catch (error) {
-      console.error("Sign up error:", error);
-      alert("Sign up failed. Please try again.");
-    }
+  const handleSignUp = async (email: string, password: string, fullName: string, userName: string) => {
+    const result = await signUp(email, password, fullName, userName);
+    return result;
   };
 
   return (

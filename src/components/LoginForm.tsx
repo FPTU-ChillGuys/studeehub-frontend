@@ -19,13 +19,14 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
+import { ErrorDisplay } from "./ui/error-display";
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
-  onLogin?: (email: string, password: string) => void;
-  onSignUp?: (email: string, password: string, name: string) => void;
-  onClose?: () => void; // Thêm prop để đóng form
-  showCloseButton?: boolean; // Tùy chọn hiển thị nút X
+  onLogin?: (email: string, password: string) => Promise<{ success: boolean; error?: string }> | void;
+  onSignUp?: (email: string, password: string, fullName: string, userName: string) => Promise<{ success: boolean; error?: string }> | void;
+  onClose?: () => void;
+  showCloseButton?: boolean;
 }
 
 export function LoginForm({
@@ -40,10 +41,12 @@ export function LoginForm({
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    name: "",
+    fullName: "",
+    userName: "",
     confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,31 +58,50 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
 
     try {
       if (isSignUp) {
         if (formData.password !== formData.confirmPassword) {
-          alert("Passwords don't match!");
+          setError("Passwords don't match!");
           return;
         }
-        onSignUp?.(formData.email, formData.password, formData.name);
+        if (!formData.userName.trim()) {
+          setError("Username is required");
+          return;
+        }
+        const result = await onSignUp?.(
+          formData.email, 
+          formData.password, 
+          formData.fullName, 
+          formData.userName
+        );
+        if (result?.error) {
+          setError(result.error);
+        }
       } else {
-        onLogin?.(formData.email, formData.password);
+        const result = await onLogin?.(formData.email, formData.password);
+        if (result?.error) {
+          setError(result.error);
+        }
       }
     } catch (error) {
       console.error("Authentication error:", error);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const toggleMode = () => {
+    setError(null);
     setIsSignUp(!isSignUp);
     setFormData({
       email: "",
       password: "",
-      name: "",
+      fullName: "",
+      userName: "",
       confirmPassword: "",
     });
   };
@@ -98,6 +120,13 @@ export function LoginForm({
             <X className="w-4 h-4" />
           </Button>
         )}
+        
+        {/* Error Display */}
+        {error && (
+          <div className="px-6 pt-6">
+            <ErrorDisplay error={error} />
+          </div>
+        )}
 
         <CardHeader>
           <CardTitle>
@@ -113,18 +142,35 @@ export function LoginForm({
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               {isSignUp && (
-                <Field>
-                  <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </Field>
+                <>
+                  <Field>
+                    <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
+                    <Input
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      placeholder="John Doe"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="userName">Username</FieldLabel>
+                    <Input
+                      id="userName"
+                      name="userName"
+                      type="text"
+                      placeholder="johndoe123"
+                      value={formData.userName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <FieldDescription className="text-xs text-muted-foreground">
+                      This will be your unique identifier on the platform
+                    </FieldDescription>
+                  </Field>
+                </>
               )}
 
               <Field>

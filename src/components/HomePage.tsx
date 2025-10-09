@@ -14,14 +14,11 @@ import {
   Zap,
 } from "lucide-react";
 import { LoginForm } from "./LoginForm";
-import {
-  authenticateUser,
-  setCurrentUser,
-  redirectBasedOnRole,
-} from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 const HomePage = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { login, signUp } = useAuth();
 
   // Function để scroll mượt mà đến section
   const scrollToSection = (sectionId: string) => {
@@ -38,45 +35,48 @@ const HomePage = () => {
   const handleOpenLogin = () => {
     setIsLoginModalOpen(true);
   };
-
   // Function để đóng modal login
   const handleCloseLogin = () => {
     setIsLoginModalOpen(false);
   };
 
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+    userName: "",
+    confirmPassword: "",
+  });
+
   const features = [
     {
       icon: Brain,
       title: "AI-Powered Learning",
-      description:
-        "Upload your documents and let AI generate personalized review questions tailored to your learning style.",
+      description: "Upload your documents and let AI generate personalized review questions tailored to your learning style.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted",
+      bgColor: "bg-gradient-to-br from-accent to-muted"
     },
     {
       icon: Target,
       title: "Personalized Learning Paths",
-      description:
-        "Get customized study plans that adapt to your progress and help you achieve your academic goals.",
+      description: "Get customized study plans that adapt to your progress and help you achieve your academic goals.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted",
+      bgColor: "bg-gradient-to-br from-accent to-muted"
     },
     {
       icon: Users,
       title: "Community Learning",
-      description:
-        "Connect with fellow learners, ask questions, and share knowledge in our vibrant Q&A forum.",
+      description: "Connect with fellow learners, ask questions, and share knowledge in our vibrant Q&A forum.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted",
+      bgColor: "bg-gradient-to-br from-accent to-muted"
     },
     {
       icon: TrendingUp,
       title: "Progress Tracking",
-      description:
-        "Monitor your learning journey with detailed analytics, achievements, and performance insights.",
+      description: "Monitor your learning journey with detailed analytics, achievements, and performance insights.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted",
-    },
+      bgColor: "bg-gradient-to-br from-accent to-muted"
+    }
   ];
 
   const benefits = [
@@ -330,39 +330,18 @@ const HomePage = () => {
               showCloseButton={true}
               onClose={handleCloseLogin}
               onLogin={async (email, password) => {
-                console.log("Login attempt:", { email, password });
-                try {
-                  const user = await authenticateUser(email, password);
-                  if (user) {
-                    setCurrentUser(user);
-                    handleCloseLogin();
-                    redirectBasedOnRole(user);
-                  } else {
-                    alert("Invalid email or password!");
-                  }
-                } catch (error) {
-                  console.error("Login error:", error);
-                  alert("Login failed. Please try again.");
-                }
-              }}
-              onSignUp={async (email, password, name) => {
-                console.log("Sign up attempt:", { email, password, name });
-                // For demo, create a new user account (normally would call API)
-                try {
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
-                  const newUser = {
-                    id: Date.now().toString(),
-                    email,
-                    name,
-                    role: "user" as const,
-                  };
-                  setCurrentUser(newUser);
+                const result = await login(email, password);
+                if (result?.success) {
                   handleCloseLogin();
-                  redirectBasedOnRole(newUser);
-                } catch (error) {
-                  console.error("Sign up error:", error);
-                  alert("Sign up failed. Please try again.");
                 }
+                return result;
+              }}
+              onSignUp={async (email, password, fullName, userName) => {
+                const result = await signUp(email, password, fullName, userName);
+                if (result?.success) {
+                  handleCloseLogin();
+                }
+                return result;
               }}
             />
           </div>

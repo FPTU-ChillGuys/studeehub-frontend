@@ -2,13 +2,9 @@
 import { AuthService } from "./api/services/auth";
 import { signIn, signOut as nextAuthSignOut, getSession } from 'next-auth/react';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: "user" | "admin";
-  avatar?: string | null;
-}
+import { User } from "@/Types";
+
+export type { User };
 
 export const authenticateUser = async (
   email: string,
@@ -59,7 +55,7 @@ export const logout = async (): Promise<void> => {
 };
 
 export const redirectBasedOnRole = (user: User): void => {
-  if (user.role === "admin") {
+  if (user.role === "admin" || user.role === "teacher") {
     window.location.href = "/admin";
   } else {
     window.location.href = "/dashboard";
@@ -74,7 +70,6 @@ export const isAdmin = (user: User | null): boolean => {
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   const user = getCurrentUser();
-  if (!user) return false;
 
   // Check if token is still valid
   const accessToken = localStorage.getItem("accessToken");
@@ -103,7 +98,7 @@ export const loginWithGoogle = async (): Promise<void> => {
         id: session.user.id || '',
         email: session.user.email || '',
         name: session.user.name || '',
-        role: (session.user.role as 'user' | 'admin') || 'user',
+        role: (session.user.role as 'student' | 'teacher' | 'admin') || 'student',
         avatar: session.user.image || undefined
       };
       

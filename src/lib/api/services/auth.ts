@@ -1,8 +1,39 @@
 import { apiClient } from '../client';
-import { AuthResponse, LoginRequest, User } from '../client';
+import { User } from "@/Types";
+import { 
+  AuthResponse, 
+  LoginRequest, 
+  RegisterRequest, 
+  AuthTokens 
+} from '../types/auth';
 
 export class AuthService {
-  static async login(credentials: LoginRequest): Promise<{ user: User; tokens: AuthResponse }> {
+  static async register(userData: RegisterRequest): Promise<{ user: User; tokens: AuthTokens }> {
+    const response = await apiClient.post<AuthResponse>('/auth/register', userData);
+    
+    // Set access token for future requests
+    apiClient.setToken(response.data.accessToken);
+    
+    // Store refresh token
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    }
+
+    // Decode JWT to get user info
+    const user = this.decodeToken(response.data.accessToken);
+    
+    return {
+      user,
+      tokens: {
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+        expiresIn: response.data.expiresIn,
+        tokenType: response.data.tokenType || 'Bearer'
+      }
+    };
+  }
+
+  static async login(credentials: LoginRequest): Promise<{ user: User; tokens: AuthTokens }> {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     
     // Set access token for future requests
@@ -55,7 +86,8 @@ export class AuthService {
         name: payload.name || payload.email.split('@')[0], // Fallback name
         role: payload.role || 'user',
       };
-    } catch {
+    } catch (error) {
+      console.error('Error decoding token:', error);
       throw new Error('Invalid token format');
     }
   }

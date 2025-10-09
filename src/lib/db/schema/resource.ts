@@ -3,8 +3,6 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { nanoid } from 'nanoid'
 
-
-
 export const resources = pgTable("resources", {
     id: varchar("id").primaryKey().$defaultFn(() => nanoid()).notNull(),
     fileName : varchar("file_name").notNull(),

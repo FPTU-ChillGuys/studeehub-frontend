@@ -3,8 +3,8 @@ import { User } from "@/Types";
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
-  tokenType: string;
+  //expiresIn: number;
+  //tokenType: string;
 }
 
 export interface AuthResponse extends AuthTokens {
@@ -22,6 +22,13 @@ export interface RegisterRequest {
   fullName: string;
   userName: string;
   // Add any additional registration fields here
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
+export interface GoogleAuthResponse extends AuthResponse {
 }
 
 export interface AuthError extends Error {

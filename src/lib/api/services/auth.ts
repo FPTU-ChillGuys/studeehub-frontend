@@ -4,7 +4,9 @@ import {
   AuthResponse, 
   LoginRequest, 
   RegisterRequest, 
-  AuthTokens 
+  AuthTokens,
+  GoogleLoginRequest,
+  GoogleAuthResponse
 } from '../types/auth';
 
 export class AuthService {
@@ -27,8 +29,6 @@ export class AuthService {
       tokens: {
         accessToken: response.data.accessToken,
         refreshToken: response.data.refreshToken,
-        expiresIn: response.data.expiresIn,
-        tokenType: response.data.tokenType || 'Bearer'
       }
     };
   }
@@ -98,12 +98,39 @@ export class AuthService {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const expiry = payload.exp * 1000; // Convert to milliseconds
       return Date.now() > expiry;
-    } catch {
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
       return true; // Consider invalid tokens as expired
     }
   }
 
   // Refresh token if needed
+  static async loginWithGoogle(googleToken: string): Promise<{ tokens: AuthTokens }> {
+    const response = await apiClient.post<GoogleAuthResponse>('/auth/login/google', {
+      idToken: googleToken
+    });
+    
+    // Set access token for future requests
+    apiClient.setToken(response.data.accessToken);
+    
+    // Store refresh token
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    }
+    
+    // Store user data in localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    
+    return {
+      tokens: {
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+      }
+    };
+  }
+
   static async refreshTokenIfNeeded(): Promise<string | null> {
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');

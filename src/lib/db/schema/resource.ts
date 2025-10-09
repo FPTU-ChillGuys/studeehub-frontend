@@ -19,4 +19,4 @@ export const resources = pgTable("resources", {
 });
 
 export const insertResourceSchema = createInsertSchema(resources).extend({}).omit({id: true, createdAt: true, updatedAt: true, isActive: true});
-export type InsertResource = z.infer<typeof insertResourceSchema>;
+export type InsertResourceParams = z.infer<typeof insertResourceSchema>;

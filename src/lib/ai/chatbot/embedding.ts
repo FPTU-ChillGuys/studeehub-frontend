@@ -11,6 +11,7 @@ const generateChunks = (input: string): string[] => {
     .filter(i => i !== '');
 };
 
+// Generate embeddings for multiple pieces of text
 export const generateEmbeddings = async (
   value: string,
 ): Promise<Array<{ embedding: number[]; content: string }>> => {
@@ -22,6 +23,7 @@ export const generateEmbeddings = async (
   return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
 };
 
+// Generate embedding for a single piece of text
 export const generateEmbedding = async (value: string): Promise<number[]> => {
   const input = value.replaceAll('\\n', ' ');
   const { embedding } = await embed({
@@ -31,6 +33,7 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
   return embedding;
 };
 
+// Find relevant content based on user query and resource IDs
 export const findRelevantContent = async (userQuery: { query: string; resourceId: string | string[] }) => {
     const userQueryEmbedded = await generateEmbedding(userQuery.query);
     const similarity = sql<number>`${cosineDistance(
@@ -43,13 +46,15 @@ export const findRelevantContent = async (userQuery: { query: string; resourceId
         : [userQuery.resourceId];
     
     const similarGuides = await db
-        .select({ name: embeddings.content, similarity })
-        .from(embeddings)
-        .where(and(
-            sql`${embeddings.resourceId} IN ${resourceIds}`,
-            gt(similarity, 0.5)
-        ))
-        .orderBy(t => desc(t.similarity))
-        .limit(200);
+      .select({ name: embeddings.content, similarity })
+      .from(embeddings)
+      .where(
+        and(
+          sql`${embeddings.resourceId} IN ${resourceIds}`,
+          gt(similarity, 0.5)
+        )
+      )
+      .orderBy((t) => desc(t.similarity))
+      .limit(200);
     return similarGuides;
 };

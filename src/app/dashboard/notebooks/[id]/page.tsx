@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
 import UploadModal from "@/components/modals/UploadModal";
@@ -11,6 +11,7 @@ import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
 import { getFileIcon } from "@/components/notebook-detail/utils";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import useState from "react-usestateref";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -72,14 +73,15 @@ const NotebookDetailPage = () => {
         if (response.ok) {
           const data = await response.json();
           // Update documents in notebook state
-          if (data.success === true){
+          if (data.success === true) {
             // Get documents from response
-            const documents : Document[] = data?.resources?.map((res: any) => ({
-              id: res.id,
-              name: res.fileName,
-              type: res.type,
-              url: res.url,
-          })) || [];
+            const documents: Document[] =
+              data?.resources?.map((res: any) => ({
+                id: res.id,
+                name: res.fileName,
+                type: res.type,
+                url: res.url,
+              })) || [];
             setNotebook((prev) => ({
               ...prev,
               documents: documents,
@@ -97,28 +99,77 @@ const NotebookDetailPage = () => {
     fetchDocuments();
   }, [notebookId]);
 
-  const handleUploadFiles = (files: File[]) => {
-    // Convert uploaded files to documents
-    const newDocuments: Document[] = files.map((file, index) => ({
-      id: (Date.now() + index).toString(),
-      name: file.name,
-      type:
-        (file.name.split(".").pop()?.toUpperCase() as Document["type"]) ||
-        "PDF",
-      size: (file.size / 1024 / 1024).toFixed(2) + " MB",
-      uploadDate: new Date().toISOString().split("T")[0],
-      status: "processing",
-      questionsGenerated: 0,
-      notebookId: notebookId,
-    }));
+  const handleUploadFiles = async (files: File[]) => {
+    try {
+      // Convert uploaded files to documents
+      const newDocuments: Document[] = files.map((file, index) => ({
+        id: (Date.now() + index).toString(),
+        name: file.name,
+        type:
+          (file.name.split(".").pop()?.toUpperCase() as Document["type"]) ||
+          "PDF",
+        size: (file.size / 1024 / 1024).toFixed(2) + " MB",
+        uploadDate: new Date().toISOString().split("T")[0],
+        status: "processing",
+        questionsGenerated: 0,
+        notebookId: notebookId,
+      }));
 
-    // Update notebook with new documents
-    setNotebook((prev) => ({
-      ...prev,
-      documents: [...prev.documents, ...newDocuments],
-      documentsCount: prev.documentsCount + newDocuments.length,
-      lastModified: new Date().toISOString().split("T")[0],
-    }));
+      // Update notebook with new documents
+      setNotebook((prev) => ({
+        ...prev,
+        documents: [...prev.documents, ...newDocuments],
+        documentsCount: prev.documentsCount + newDocuments.length,
+        lastModified: new Date().toISOString().split("T")[0],
+      }));
+
+      //Upload files to backend
+      let resourceIds: string[] = [];
+      const uploadToServer = async () => {
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append("files", file);
+        });
+        formData.append("notebookId", notebookId);
+
+        // Upload files to server
+        try {
+          const response = await fetch("/api/file/upload", {
+            method: "POST",
+            body: formData,
+          });
+          if (!response.ok) {
+            throw new Error("Failed to upload files");
+          }
+          const data = await response.json();
+          if (data.success === true) {
+            console.log("Files uploaded successfully:", data);
+            resourceIds = data.resourceIds || [];
+          } else {
+            console.error("File upload failed:", data.message);
+          }
+        } catch (error) {
+          console.error("Error uploading files:", error);
+        }
+      };
+      // Run upload
+      await uploadToServer();
+
+      //Update document status to completed (temporary)
+      setNotebook((prev) => ({
+        ...prev,
+        documents: prev.documents.map((doc, index) =>
+          doc.status === "processing" && newDocuments.filter((d) => d.id === doc.id).length > 0
+            ? { ...doc, status: "completed" }
+            : doc
+        ),
+        lastModified: new Date().toISOString().split("T")[0],
+      }));
+      console.log("Resource IDs after upload:", resourceIds);
+      console.log("Notebook after upload:", notebook);
+    } catch (error) {
+      console.error("Error in handleUploadFiles:", error);
+    }
   };
 
   const filteredDocuments = notebook.documents.filter((doc) =>

@@ -14,13 +14,17 @@ export async function POST(req: Request) {
       );
     }
 
-    //Get resourceId from form data
-    const resourceId = formData.get("resourceId") as string;
-    if (!resourceId) {
-      return new Response(
-        JSON.stringify({ success: false, message: "No resourceId provided" }),
-        { status: 400 }
-      );
+    //Temeporary: Only upload pdf files
+    for (const file of files) {
+      if (file.type !== "application/pdf") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Only PDF files are supported",
+          }),
+          { status: 400 }
+        );
+      }
     }
 
     const notebookId = formData.get("notebookId") as string;
@@ -81,7 +85,6 @@ export async function POST(req: Request) {
       }),
       { status: 200 }
     );
-
   } catch (error) {
     console.error("File upload error:", error);
     return new Response(

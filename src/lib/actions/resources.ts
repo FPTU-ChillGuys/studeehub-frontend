@@ -29,20 +29,22 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
     console.log("Generated embeddings count:", embeddingResult.length);
 
     // Insert embeddings into the database
-    await db.insert(embeddings).values(
-      embeddingResult.map((embedding) => ({
-        resourceId: resource.id,
-        content: embedding.content ?? "",
-        embedding: embedding.embedding,
-      }))
-    );
+    if (embeddingResult.length > 0) {
+      await db.insert(embeddings).values(
+        embeddingResult.map((embedding) => ({
+          resourceId: resource.id,
+          content: embedding.content ?? "",
+          embedding: embedding.embedding ?? [],
+        }))
+      );
+    }
 
     console.log("Resource and embeddings created with ID:", resource.id);
 
     return { success: true, resourceId: resource.id };
   } catch (e) {
     if (e instanceof Error) {
-      console.error("Error!");
+      console.error("Error:", e.message);
       return { success: false };
     }
   }

@@ -81,6 +81,7 @@ const NotebookDetailPage = () => {
                 name: res.fileName,
                 type: res.type,
                 url: res.url,
+                status: "completed",
               })) || [];
             setNotebook((prev) => ({
               ...prev,

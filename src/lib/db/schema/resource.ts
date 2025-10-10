@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid'
 
 export const resources = pgTable("resources", {
     id: varchar("id").primaryKey().$defaultFn(() => nanoid()).notNull(),
+    notebookId: varchar("notebook_id").notNull(),
     fileName : varchar("file_name").notNull(),
     url: varchar("url").notNull(),
     type: varchar("type").notNull(),
@@ -18,5 +19,5 @@ export const resources = pgTable("resources", {
     isActive: boolean("is_active").notNull().default(true),
 });
 
-export const insertResourceSchema = createInsertSchema(resources).extend({}).omit({id: true, createdAt: true, updatedAt: true, isActive: true});
+export const insertResourceSchema = createInsertSchema(resources).extend({}).omit({id: true, createdAt: true, updatedAt: true, isActive: true, notebookId: true});
 export type InsertResourceParams = z.infer<typeof insertResourceSchema>;

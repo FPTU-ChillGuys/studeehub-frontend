@@ -23,6 +23,14 @@ export async function POST(req: Request) {
       );
     }
 
+    const notebookId = formData.get("notebookId") as string;
+    if (!notebookId) {
+      return new Response(
+        JSON.stringify({ success: false, message: "No notebookId provided" }),
+        { status: 400 }
+      );
+    }
+
     //Get file names from form data
     const fileNames = files.map((file) => file.name);
 
@@ -41,7 +49,7 @@ export async function POST(req: Request) {
 
     //Save texts to database or process as needed
     for (const [index, text] of pdfTexts.entries()) {
-      const result = await createResource(resourceId, {
+      const result = await createResource(notebookId, {
         content: text,
         fileName: fileNames[index],
         type: "PDF",

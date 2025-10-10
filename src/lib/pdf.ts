@@ -1,14 +1,16 @@
-import { PDFParse } from 'pdf-parse';
+import { PDFParse } from "pdf-parse";
+import 'pdfjs-dist/build/pdf.worker.mjs';
 
+export const PdfBufferToText = async (buffer: Buffer): Promise<string> => {
+  const parser = new PDFParse({ data: buffer });
 
-export const PdfBufferToText = async (buffer: Buffer) => {
-   const parser = new PDFParse({data: buffer});
-
-  parser.getText().then((result) => {
-    return result.text;
-  }).finally(async () => {
+  try {
+    const result = await parser.getText();
     await parser.destroy();
-  });
-
-  return "";
+    return result.text;
+  } catch (error) {
+    console.error("Error parsing PDF:", error);
+    await parser.destroy();
+    return "";
+  }
 };

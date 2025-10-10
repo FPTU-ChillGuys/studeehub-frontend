@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     //Convert buffers to text
     const pdfTexts = await Promise.all(
-      buffers.map((buffer) => PdfBufferToText(buffer))
+      buffers.map(async (buffer) => await PdfBufferToText(buffer))
     );
 
     const resourceIds: string[] = [];

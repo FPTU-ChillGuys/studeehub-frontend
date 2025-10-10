@@ -22,19 +22,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             : "bg-card border border-border text-foreground"
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{text?.text}</p>
-        {sources && sources.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/20">
-            <p className="text-xs text-muted-foreground">
-              Nguồn:{" "}
-              {sources.map((source) => {
-                    return source.filename;
-                })
-                .filter(Boolean)
-                .join(", ")}
-            </p>
-          </div>
-        )}
+  
       </div>
     </div>
   );

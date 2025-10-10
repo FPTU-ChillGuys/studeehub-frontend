@@ -15,6 +15,7 @@ interface ChatSectionProps {
   handleSendMessage: () => void;
   selectedDocuments: Set<string>;
   getFileIcon: (type: string) => React.ReactNode;
+  status: string;
 }
 
 const ChatSection: React.FC<ChatSectionProps> = ({
@@ -25,6 +26,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   handleSendMessage,
   selectedDocuments,
   getFileIcon,
+  status,
 }) => {
   return (
     <div className="w-[70%] border-r border-border flex flex-col">
@@ -60,6 +62,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
           />
         ))}
       </div>
+
+      {/* Status */}
+      {status === "streaming" || status === "submitted" && (
+        <div className="p-4 border-t border-border bg-card text-sm text-muted-foreground">
+          Đang tạo câu hỏi...
+        </div>
+      )}
 
       {/* Message Input */}
       <MessageInput

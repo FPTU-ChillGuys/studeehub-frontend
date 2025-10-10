@@ -127,6 +127,7 @@ const NotebookDetailPage = () => {
           handleSendMessage={sendMessage}
           selectedDocuments={selectedDocuments}
           getFileIcon={getFileIcon}
+          status={status}
         />
 
         <DocumentsPanel

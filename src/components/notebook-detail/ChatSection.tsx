@@ -42,8 +42,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
               </h2>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {notebook.documentsCount} documents •{" "}
-              {notebook.totalQuestions} questions generated
+              {notebook.documentsCount} documents • {notebook.totalQuestions}{" "}
+              questions generated
             </p>
           </div>
         </div>
@@ -52,19 +52,17 @@ const ChatSection: React.FC<ChatSectionProps> = ({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
-          <ChatMessage
-            key={message.id}
-            message={message}
-          />
+          <ChatMessage key={message.id} message={message} />
+        ))}
+        {status === "streaming" ||
+        (status === "submitted" && (
+            <div
+              className={`max-w-[30%] rounded-lg p-3 bg-card border border-border text-foreground`}
+            >
+              <p className="text-sm whitespace-pre-wrap"> Đang chờ...</p>
+            </div>
         ))}
       </div>
-
-      {/* Status */}
-      {status === "streaming" || status === "submitted" && (
-        <div className="p-4 border-t border-border bg-card text-sm text-muted-foreground">
-          Đang tạo câu hỏi...
-        </div>
-      )}
 
       {/* Message Input */}
       <MessageInput

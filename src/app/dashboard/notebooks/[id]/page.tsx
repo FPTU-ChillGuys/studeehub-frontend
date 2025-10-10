@@ -41,6 +41,14 @@ const NotebookDetailPage = () => {
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chatbot",
+      prepareSendMessagesRequest: ({messages}) => {
+        return {
+          body: {
+            messages,
+            resourceIds: Array.from(selectedDocuments) ?? [],
+          },
+        };
+      },
     }),
   });
 
@@ -88,12 +96,12 @@ const NotebookDetailPage = () => {
     (d) => d.status === "completed"
   ).length;
 
-  const handleToggleDocument = (docId: string, selected: boolean) => {
+  const handleToggleDocument = (resourceId: string, selected: boolean) => {
     const newSelected = new Set(selectedDocuments);
     if (selected) {
-      newSelected.add(docId);
+      newSelected.add(resourceId);
     } else {
-      newSelected.delete(docId);
+      newSelected.delete(resourceId);
     }
     setSelectedDocuments(newSelected);
   };

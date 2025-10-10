@@ -2,9 +2,9 @@ import { StreamingTextGenerationFromMessagesToResultWithErrorHandler } from "@/l
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 export async function POST(req: Request) {
-  const { messages, resourceId }: { messages: UIMessage[] , resourceId: string | string[] } = await req.json();
+  const { messages, resourceIds }: { messages: UIMessage[] , resourceIds: string | string[] } = await req.json();
 
-  const result = StreamingTextGenerationFromMessagesToResultWithErrorHandler(messages, resourceId);
+  const result = StreamingTextGenerationFromMessagesToResultWithErrorHandler(messages, resourceIds);
 
   return createUIMessageStreamResponse({ stream: result });
 }

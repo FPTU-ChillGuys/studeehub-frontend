@@ -1,8 +1,8 @@
 import { getResourcesByNotebookId } from "@/lib/actions/resources";
 
 
-export async function GET(req: Request) {
-    const { notebookId } = await req.json();
+export async function GET(req: Request, params: { params: { notebookId: string } }) {
+    const { notebookId } = await params.params;
 
     //Get resources from database by notebookId
     const resourcesList = await getResourcesByNotebookId(notebookId);

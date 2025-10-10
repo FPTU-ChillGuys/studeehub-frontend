@@ -41,7 +41,7 @@ const NotebookDetailPage = () => {
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chatbot",
-      prepareSendMessagesRequest: ({messages}) => {
+      prepareSendMessagesRequest: ({ messages }) => {
         return {
           body: {
             messages,
@@ -63,6 +63,39 @@ const NotebookDetailPage = () => {
   //   };
   //   setMessages([welcomeMessage]);
   // }, [notebook.title, notebookId]);
+
+  //Get file upload and document management
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await fetch(`/api/file/${notebookId}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Update documents in notebook state
+          if (data.success === true){
+            // Get documents from response
+            const documents : Document[] = data?.resources?.map((res: any) => ({
+              id: res.id,
+              name: res.fileName,
+              type: res.type,
+              url: res.url,
+          })) || [];
+            setNotebook((prev) => ({
+              ...prev,
+              documents: documents,
+              documentsCount: documents.length,
+            }));
+          } else if (data.success === false || data.success === undefined) {
+            console.error("Failed to fetch documents:", data.message);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+      }
+    };
+
+    fetchDocuments();
+  }, [notebookId]);
 
   const handleUploadFiles = (files: File[]) => {
     // Convert uploaded files to documents

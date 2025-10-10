@@ -41,6 +41,10 @@ export const findRelevantContent = async (userQuery: { query: string; resourceId
         userQueryEmbedded,
     )}`;
     
+    if (!userQuery.resourceId || (Array.isArray(userQuery.resourceId) && userQuery.resourceId.length === 0)) {
+        return [];
+    }
+
     const resourceIds = Array.isArray(userQuery.resourceId) 
         ? userQuery.resourceId 
         : [userQuery.resourceId];

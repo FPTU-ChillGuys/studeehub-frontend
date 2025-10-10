@@ -10,9 +10,7 @@ import { UIMessage } from "ai";
 interface ChatSectionProps {
   notebook: Notebook;
   messages: UIMessage[];
-  inputMessage: string;
-  setInputMessage: (message: string) => void;
-  handleSendMessage: () => void;
+  handleSendMessage: (message: string) => void;
   selectedDocuments: Set<string>;
   getFileIcon: (type: string) => React.ReactNode;
   status: string;
@@ -21,8 +19,6 @@ interface ChatSectionProps {
 const ChatSection: React.FC<ChatSectionProps> = ({
   notebook,
   messages,
-  inputMessage,
-  setInputMessage,
   handleSendMessage,
   selectedDocuments,
   getFileIcon,
@@ -72,8 +68,6 @@ const ChatSection: React.FC<ChatSectionProps> = ({
 
       {/* Message Input */}
       <MessageInput
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
         handleSendMessage={handleSendMessage}
         selectedDocuments={selectedDocuments}
         documents={notebook.documents}

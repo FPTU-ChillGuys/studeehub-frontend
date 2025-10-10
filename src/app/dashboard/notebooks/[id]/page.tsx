@@ -17,7 +17,6 @@ const NotebookDetailPage = () => {
   const notebookId = params.id as string;
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [inputMessage, setInputMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(
     new Set()
@@ -35,8 +34,7 @@ const NotebookDetailPage = () => {
     totalQuestions: 45,
     status: "active",
     thumbnail: "🏛️",
-    documents: [
-    ],
+    documents: [],
   });
 
   //Chatbot by Vercel AI SDK
@@ -45,8 +43,6 @@ const NotebookDetailPage = () => {
       api: "/api/chatbot",
     }),
   });
-
-
 
   // // Initialize welcome message
   // useEffect(() => {
@@ -84,7 +80,6 @@ const NotebookDetailPage = () => {
     }));
   };
 
-
   const filteredDocuments = notebook.documents.filter((doc) =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -114,6 +109,10 @@ const NotebookDetailPage = () => {
     setSelectedDocuments(new Set());
   };
 
+  const handleSendMessage = (message: string) => {
+    sendMessage({ text: message });
+  };
+
   return (
     <SidebarInset>
       <NotebookHeader notebookTitle={notebook.title} />
@@ -122,9 +121,7 @@ const NotebookDetailPage = () => {
         <ChatSection
           notebook={notebook}
           messages={messages}
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          handleSendMessage={sendMessage}
+          handleSendMessage={handleSendMessage}
           selectedDocuments={selectedDocuments}
           getFileIcon={getFileIcon}
           status={status}

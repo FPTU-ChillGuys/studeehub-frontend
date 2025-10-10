@@ -1,26 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Document } from "@/Types";
 
 interface MessageInputProps {
-  inputMessage: string;
-  setInputMessage: (message: string) => void;
-  handleSendMessage: () => void;
+  handleSendMessage: (message: string) => void;
   selectedDocuments: Set<string>;
   documents: Document[];
   getFileIcon: (type: string) => React.ReactNode;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
-  inputMessage,
-  setInputMessage,
   handleSendMessage,
   selectedDocuments,
   documents,
   getFileIcon,
 }) => {
+  const [inputMessage, setInputMessage] = useState("");
+  
+
+  const onSend = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSendMessage(inputMessage);
+    setInputMessage("");
+  };
+
   return (
     <div className="p-4 border-t border-border">
       {/* Selected Documents Display */}
@@ -46,27 +51,26 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
 
-      <div className="flex gap-2">
+      <form onSubmit={onSend} className="flex gap-2">
         <Input
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder={
             selectedDocuments.size > 0
               ? "Ask about the content of the selected documents..."
               : "Select documents to start chatting..."
           }
-          disabled={selectedDocuments.size === 0}
+          // disabled={selectedDocuments.size === 0}
           className="flex-1"
         />
         <Button
-          onClick={handleSendMessage}
-          disabled={selectedDocuments.size === 0 || !inputMessage.trim()}
+          type="submit"
+          // disabled={selectedDocuments.size === 0 || !inputMessage.trim()}
         >
           <Send className="w-4 h-4" />
         </Button>
-      </div>
+      </form>
     </div>
   );
 };

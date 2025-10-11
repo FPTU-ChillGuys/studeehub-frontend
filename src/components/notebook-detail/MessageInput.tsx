@@ -61,12 +61,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
               ? "Ask about the content of the selected documents..."
               : "Select documents to start chatting..."
           }
-          // disabled={selectedDocuments.size === 0}
+          disabled={selectedDocuments.size === 0}
           className="flex-1"
         />
         <Button
           type="submit"
-          // disabled={selectedDocuments.size === 0 || !inputMessage.trim()}
+          disabled={selectedDocuments.size === 0 || !inputMessage.trim()}
         >
           <Send className="w-4 h-4" />
         </Button>

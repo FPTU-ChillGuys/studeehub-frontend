@@ -9,20 +9,31 @@ import {
 import { findRelevantContent } from "./embedding";
 import { z } from "zod";
 import { qwen3 } from "./model/ollama";
+import { geminiFlashLite } from "./model/google";
 
-const SYSTEM_PROMPT = `You are an AI assistant that helps people find information and answer questions. You are given a user question, and you have access to a tool that can get information from your knowledge base to answer questions. If you don't know the answer, just say you don't know. Do not try to make up an answer.`;
+const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.
+    Only respond to questions using information from tool calls.'
+    Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
+    if no relevant information is found in the tool calls, respond, "Sorry, I don't know."`;
 
 export function StreamingTextGenerationFromMessagesToResult(
   messages: UIMessage[],
-  resourceId: string | string[]
+  resourceIds: string | string[]
 ) {
   const result = streamText({
-    model: qwen3,
+    model: geminiFlashLite,
     system: SYSTEM_PROMPT,
     messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(100),
     tools: {
-      getInformation: getInformationTool(resourceId),
+      getInformation: tool({
+        description: `Get information from your knowledge base to answer questions.`,
+        inputSchema: z.object({
+          question: z.string().describe("The users question"),
+        }),
+        execute: async ({ question }) =>
+          findRelevantContent({ query: question, resourceIds }),
+      }),
     },
   });
   return result;
@@ -30,7 +41,7 @@ export function StreamingTextGenerationFromMessagesToResult(
 
 export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
   messages: UIMessage[],
-  resourceId: string | string[]
+  resourceIds: string | string[]
 ) {
   const stream = createUIMessageStream({
     async execute({ writer }) {
@@ -38,12 +49,19 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
       try {
         // Thử tạo stream text
         result = streamText({
-          model: qwen3,
+          model: geminiFlashLite,
           system: SYSTEM_PROMPT,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(100),
           tools: {
-            getInformation: getInformationTool(resourceId),
+            getInformation: tool({
+              description: `Get information from your knowledge base to answer questions.`,
+              inputSchema: z.object({
+                question: z.string().describe("The users question"),
+              }),
+              execute: async ({ question }) =>
+                findRelevantContent({ query: question, resourceIds }),
+            }),
           },
         });
       } catch (error) {
@@ -68,17 +86,3 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
 
   return stream;
 }
-
-// Ghi tool o day
-export const getInformationTool = (resourceId: string | string[]) =>
-  tool({
-    description: `Get information from your knowledge base to answer questions.`,
-    inputSchema: z.object({
-      question: z.string().describe("The users question"),
-      resourceId: z
-        .array(z.string())
-        .describe("The resource IDs to search within"),
-    }),
-    execute: async ({ question }) =>
-      findRelevantContent({ query: question, resourceId }),
-  });

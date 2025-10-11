@@ -34,21 +34,23 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
 };
 
 // Find relevant content based on user query and resource IDs
-export const findRelevantContent = async (userQuery: { query: string; resourceId: string | string[] }) => {
+export const findRelevantContent = async (userQuery: { query: string; resourceIds: string | string[] }) => {
     const userQueryEmbedded = await generateEmbedding(userQuery.query);
     const similarity = sql<number>`${cosineDistance(
         embeddings.embedding,
         userQueryEmbedded,
     )}`;
-    
-    if (!userQuery.resourceId || (Array.isArray(userQuery.resourceId) && userQuery.resourceId.length === 0)) {
+
+    if (!userQuery.resourceIds || (Array.isArray(userQuery.resourceIds) && userQuery.resourceIds.length === 0)) {
         return [];
     }
 
-    const resourceIds = Array.isArray(userQuery.resourceId) 
-        ? userQuery.resourceId 
-        : [userQuery.resourceId];
-    
+    console.log("Resource IDs for embedding search:", userQuery.resourceIds);
+
+    const resourceIds = Array.isArray(userQuery.resourceIds)
+        ? userQuery.resourceIds
+        : [userQuery.resourceIds];
+
     const similarGuides = await db
       .select({ name: embeddings.content, similarity })
       .from(embeddings)

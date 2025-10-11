@@ -19,7 +19,7 @@ const NotebookDetailPage = () => {
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(
+  const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] = useState<Set<string>>(
     new Set()
   );
 
@@ -43,28 +43,16 @@ const NotebookDetailPage = () => {
     transport: new DefaultChatTransport({
       api: "/api/chatbot",
       prepareSendMessagesRequest: ({ messages }) => {
-        return {
+          return {
           body: {
             messages,
-            resourceIds: Array.from(selectedDocuments) ?? [],
+            resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
           },
         };
       },
     }),
   });
-
-  // // Initialize welcome message
-  // useEffect(() => {
-  //   const welcomeMessage: ChatMessage = {
-  //     id: "welcome",
-  //     text: `Hello! I am the AI assistant for the notebook "${notebook.title}". I can help you:\n\n• Answer questions about the content of your documents\n• Create review questions from the documents\n• Summarize and explain concepts\n• Provide effective study guidance\n\nFeel free to ask me anything about your documents!`,
-  //     isUser: false,
-  //     timestamp: new Date(),
-  //     notebookId: notebookId,
-  //   };
-  //   setMessages([welcomeMessage]);
-  // }, [notebook.title, notebookId]);
-
+  
   //Get file upload and document management
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -189,6 +177,7 @@ const NotebookDetailPage = () => {
       newSelected.delete(resourceId);
     }
     setSelectedDocuments(newSelected);
+    console.log("Selected documents:", Array.from(selectedDocumentsRef.current))
   };
 
   const handleSelectAll = () => {
@@ -196,6 +185,7 @@ const NotebookDetailPage = () => {
       .filter((d) => d.status === "completed")
       .map((d) => d.id);
     setSelectedDocuments(new Set(completedDocs));
+    console.log("Selected all documents:", Array.from(selectedDocumentsRef.current));
   };
 
   const handleClearSelection = () => {

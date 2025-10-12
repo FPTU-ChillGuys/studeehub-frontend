@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { LanguageModel } from 'ai';
+import { EmbeddingModel, LanguageModel } from 'ai';
 
 export const google = createGoogleGenerativeAI({
     baseURL: "https://generativelanguage.googleapis.com/v1beta",
@@ -7,3 +7,5 @@ export const google = createGoogleGenerativeAI({
 })
 
 export const geminiFlashLite : LanguageModel = google("gemini-2.5-flash-lite");
+
+export const    geminiEmbedding : EmbeddingModel = google.textEmbeddingModel("gemini-embedding-001");

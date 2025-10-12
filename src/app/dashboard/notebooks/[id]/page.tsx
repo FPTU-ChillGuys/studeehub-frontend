@@ -145,15 +145,21 @@ const NotebookDetailPage = () => {
       await uploadToServer();
 
       //Update document status to completed (temporary)
-      setNotebook((prev) => ({
-        ...prev,
-        documents: prev.documents.map((doc, index) =>
-          doc.status === "processing" && newDocuments.filter((d) => d.id === doc.id).length > 0
-            ? { ...doc, status: "completed" }
-            : doc
-        ),
-        lastModified: new Date().toISOString().split("T")[0],
-      }));
+      setNotebook((prev) => {
+        let y = 0;
+        return {
+          ...prev,
+          documents: prev.documents.map((doc) => {
+            if (doc.status === "processing" && newDocuments.some((d) => d.id === doc.id)) {
+              const updatedDoc = { ...doc, status: "completed" as const, id: resourceIds[y] };
+              y++;
+              return updatedDoc;
+            }
+            return doc;
+          }),
+          lastModified: new Date().toISOString().split("T")[0],
+        };
+      });
       console.log("Resource IDs after upload:", resourceIds);
       console.log("Notebook after upload:", notebook);
     } catch (error) {

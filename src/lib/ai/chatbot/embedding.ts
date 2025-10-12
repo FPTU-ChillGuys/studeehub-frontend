@@ -3,64 +3,82 @@ import { embeddingModel } from "./model/ollama";
 import { cosineDistance, desc, gt, sql, and, eq } from "drizzle-orm";
 import { embeddings } from "@/lib/db/schema/embedding";
 import { db } from "@/lib/db";
+import { geminiEmbedding } from "@/lib/ai/chatbot/model/google";
 
 const generateChunks = (input: string): string[] => {
   return input
     .trim()
-    .split('.')
-    .filter(i => i !== '');
+    .split(".")
+    .filter((i) => i !== "");
 };
 
 // Generate embeddings for multiple pieces of text
 export const generateEmbeddings = async (
-  value: string,
+  value: string
 ): Promise<Array<{ embedding: number[]; content: string }>> => {
   const chunks = generateChunks(value);
   const { embeddings } = await embedMany({
-    model: embeddingModel,
+    model: geminiEmbedding,
     values: chunks,
+    providerOptions: {
+      google: {
+        outputDimensionality: 1536,
+        taskType: "SEMANTIC_SIMILARITY",
+      },
+    },
   });
   return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
 };
 
 // Generate embedding for a single piece of text
 export const generateEmbedding = async (value: string): Promise<number[]> => {
-  const input = value.replaceAll('\\n', ' ');
+  const input = value.replaceAll("\\n", " ");
   const { embedding } = await embed({
-    model: embeddingModel,
+    model: geminiEmbedding,
     value: input,
+    providerOptions: {
+      google: {
+        outputDimensionality: 1536,
+        taskType: "SEMANTIC_SIMILARITY",
+      },
+    },
   });
   return embedding;
 };
 
 // Find relevant content based on user query and resource IDs
-export const findRelevantContent = async (userQuery: { query: string; resourceIds: string | string[] }) => {
-    const userQueryEmbedded = await generateEmbedding(userQuery.query);
-    const similarity = sql<number>`${cosineDistance(
-        embeddings.embedding,
-        userQueryEmbedded,
-    )}`;
+export const findRelevantContent = async (userQuery: {
+  query: string;
+  resourceIds: string | string[];
+}) => {
+  const userQueryEmbedded = await generateEmbedding(userQuery.query);
+  const similarity = sql<number>`${cosineDistance(
+    embeddings.embedding,
+    userQueryEmbedded
+  )}`;
 
-    if (!userQuery.resourceIds || (Array.isArray(userQuery.resourceIds) && userQuery.resourceIds.length === 0)) {
-        return [];
-    }
+  if (
+    !userQuery.resourceIds ||
+    (Array.isArray(userQuery.resourceIds) && userQuery.resourceIds.length === 0)
+  ) {
+    return [];
+  }
 
-    console.log("Resource IDs for embedding search:", userQuery.resourceIds);
+  console.log("Resource IDs for embedding search:", userQuery.resourceIds);
 
-    const resourceIds = Array.isArray(userQuery.resourceIds)
-        ? userQuery.resourceIds
-        : [userQuery.resourceIds];
+  const resourceIds = Array.isArray(userQuery.resourceIds)
+    ? userQuery.resourceIds
+    : [userQuery.resourceIds];
 
-    const similarGuides = await db
-      .select({ name: embeddings.content, similarity })
-      .from(embeddings)
-      .where(
-        and(
-          sql`${embeddings.resourceId} IN ${resourceIds}`,
-          gt(similarity, 0.5)
-        )
-      )
-      .orderBy((t) => desc(t.similarity))
-      .limit(200);
-    return similarGuides;
+  const similarGuides = await db
+    .select({ name: embeddings.content, similarity })
+    .from(embeddings)
+    .where(
+      and(sql`${embeddings.resourceId} IN ${resourceIds}`, gt(similarity, 0.5))
+    )
+    .orderBy((t) => desc(t.similarity))
+    .limit(200);
+
+  console.log("Similar guides found:", similarGuides);  
+  return similarGuides;
 };

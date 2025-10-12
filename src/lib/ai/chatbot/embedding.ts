@@ -23,10 +23,10 @@ export const generateEmbeddings = async (
     providerOptions: {
       google: {
         outputDimensionality: 1536,
-        taskType: "SEMANTIC_SIMILARITY",
       },
     },
   });
+  console.log("Generated embeddings:", embeddings);
   return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
 };
 
@@ -39,10 +39,10 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
     providerOptions: {
       google: {
         outputDimensionality: 1536,
-        taskType: "SEMANTIC_SIMILARITY",
       },
     },
   });
+  console.log("Generated single embedding:", embedding);
   return embedding;
 };
 
@@ -79,6 +79,5 @@ export const findRelevantContent = async (userQuery: {
     .orderBy((t) => desc(t.similarity))
     .limit(200);
 
-  console.log("Similar guides found:", similarGuides);  
   return similarGuides;
 };

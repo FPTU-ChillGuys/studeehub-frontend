@@ -6,6 +6,6 @@ export const google = createGoogleGenerativeAI({
     apiKey: process.env.GOOGLE_API_KEY,
 })
 
-export const geminiFlashLite : LanguageModel = google("gemini-2.5-flash-lite");
+export const geminiFlashLite : LanguageModel = google("gemini-2.0-flash-lite");
 
 export const    geminiEmbedding : EmbeddingModel = google.textEmbeddingModel("gemini-embedding-001");

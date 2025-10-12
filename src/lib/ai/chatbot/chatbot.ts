@@ -11,10 +11,15 @@ import { z } from "zod";
 import { qwen3 } from "./model/ollama";
 import { geminiFlashLite } from "./model/google";
 
+// const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.
+//     Only respond to questions using information from tool calls.'
+//     Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
+//     if no relevant information is found in the tool calls, respond, "Sorry, I don't know."`;
+
 const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.
-    Only respond to questions using information from tool calls.'
-    Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
-    if no relevant information is found in the tool calls, respond, "Sorry, I don't know."`;
+     Only respond to questions using information from tool calls.'
+     Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
+    if no relevant information is found in the tool calls, respond what relevant information you have found in the tool calls, do not make up any information.`;
 
 export function StreamingTextGenerationFromMessagesToResult(
   messages: UIMessage[],
@@ -31,8 +36,11 @@ export function StreamingTextGenerationFromMessagesToResult(
         inputSchema: z.object({
           question: z.string().describe("The users question"),
         }),
-        execute: async ({ question }) =>
-          findRelevantContent({ query: question, resourceIds }),
+        execute: async ({ question }) => {
+          const response = findRelevantContent({ query: question, resourceIds });
+          console.log("Response from findRelevantContent:", response);
+          return response;
+        },
       }),
     },
   });

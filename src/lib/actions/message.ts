@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { InsertMessageParams, insertMessageSchema, messages } from "../db/schema/message";
+import { messagesDBToUI } from "../mapping/message";
 
 
 export const createMessage = async (notebookId : string, message: InsertMessageParams) => {
@@ -28,5 +29,5 @@ export const getMessagesByNotebookId = async (notebookId: string) => {
         .where(eq(messages.notebookId, notebookId))
         .orderBy(asc(messages.createdAt));
 
-    return messagesList;
+    return messagesDBToUI(messagesList);
 }

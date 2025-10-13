@@ -19,3 +19,11 @@ export const messageDBToUI = (messageDB: InsertMessageParams) : UIMessage => {
     ]
   };
 };
+
+export const messagesDBToUI = (messagesDB: InsertMessageParams[]) : UIMessage[] => {
+  return messagesDB.map(messageDBToUI);
+};
+
+export const messagesUIToDB = (notebookId: string, messagesUI: UIMessage[]) : InsertMessageParams[] => {
+    return messagesUI.map((messageUI) => messageUIToDB(notebookId, messageUI));
+};

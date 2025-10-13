@@ -18,14 +18,14 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
  
 
   return (
-    <div className="w-[33%] flex flex-col p-6 border-l border-border overflow-hidden">
+    <div className="w-[30%] flex flex-col p-6 border-l border-border overflow-hidden">
       <div className="flex-1 flex flex-col items-center justify-center gap-6 overflow-auto px-4">
         {decks?.length > 0 && (
           <div>
-            <FlashcardArray deck={decks} className="max-w-sm" />
+            <FlashcardArray deck={decks} className="max-w-80" />
           </div>
         )}
-        <div className="flex flex-col gap-2 w-full max-w-sm">
+        <div className="flex flex-col gap-2 w-full max-w-80">
           <Button onClick={() => onClearDecks()}>Clear Deck</Button>
           <Button onClick={() => onSetDecks()}>Create Deck</Button>
         </div>

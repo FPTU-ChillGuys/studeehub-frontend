@@ -13,6 +13,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
+import { IFlashcard } from "react-quizlet-flashcard";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -22,6 +23,9 @@ const NotebookDetailPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] =
     useState<Set<string>>(new Set());
+
+ const [decks, setDecks, decksRef] = useState<IFlashcard[]>([]);
+
 
   // Sample notebook data - In real app, fetch based on notebookId
   const [notebook, setNotebook] = useState<Notebook>({
@@ -233,6 +237,33 @@ const NotebookDetailPage = () => {
     sendMessage({ text: message });
   };
 
+  const onSetDecks = () => {
+     const tempDecks: IFlashcard[] = [
+        {
+          front : {
+            html : (<div>What is the capital of France?</div>)
+          },
+          back : {
+            html : (<div>Paris</div>)
+          }
+        },
+        {
+          front : {
+            html : (<div>What is 2 + 2?</div>)
+          },
+          back : {
+            html : (<div>4</div>)
+          }
+        }
+      ]
+
+    setDecks(tempDecks);
+  }
+
+  const onClearDecks = () => {
+     setDecks([]);
+  }
+
   return (
     <SidebarInset>
       <NotebookHeader notebookTitle={notebook.title} />
@@ -259,7 +290,11 @@ const NotebookDetailPage = () => {
           getFileIcon={getFileIcon}
           status={status}
         />
-        <FlashcardsPanel />
+        <FlashcardsPanel 
+          onSetDecks={onSetDecks}
+          onClearDecks={onClearDecks}
+          decks={decksRef.current}
+        />
       </div>
 
       <UploadModal

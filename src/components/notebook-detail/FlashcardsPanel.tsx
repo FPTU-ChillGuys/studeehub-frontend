@@ -1,26 +1,35 @@
 import React from "react";
-import useStateRef from "react-usestateref";
 import "react-quizlet-flashcard/dist/index.css";
-import { Deck } from "@/Types";
-import { FlashcardArray, FlashcardArrayProps, IFlashcard } from "react-quizlet-flashcard";
+import { FlashcardArray, IFlashcard } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
 
 
 interface FlashcardsPanelProps {
-  onSetDecks: (decks : IFlashcard[]) => void;
+  onSetDecks: () => void;
+  onClearDecks: () => void;
+  decks: IFlashcard[];
 }
 
 const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onSetDecks,
+  onClearDecks,
+  decks,
 }) => {
-  const [decks, setDecks, decksRef] = useStateRef<IFlashcard[]>([]);
  
 
   return (
-    <div className="w-[20%] flex flex-col">
-      <FlashcardArray deck={decksRef.current} />
-      <Button onClick={() => setDecks([])}>Clear Deck</Button>
-      <Button onClick={() => onSetDecks(decksRef.current)}>Create Deck</Button>
+    <div className="w-[33%] flex flex-col p-6 border-l border-border overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 overflow-auto px-4">
+        {decks?.length > 0 && (
+          <div>
+            <FlashcardArray deck={decks} className="max-w-sm" />
+          </div>
+        )}
+        <div className="flex flex-col gap-2 w-full max-w-sm">
+          <Button onClick={() => onClearDecks()}>Clear Deck</Button>
+          <Button onClick={() => onSetDecks()}>Create Deck</Button>
+        </div>
+      </div>
     </div>
   );
 };

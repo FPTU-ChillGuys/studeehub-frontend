@@ -26,7 +26,6 @@ const NotebookDetailPage = () => {
     useState<Set<string>>(new Set());
 
  const [decks, setDecks, decksRef] = useState<IFlashcard[]>([]);
- const [isGeneratingDecks, setIsGeneratingDecks] = useState(false);
 
 
   // Sample notebook data - In real app, fetch based on notebookId

@@ -25,6 +25,7 @@ const NotebookDetailPage = () => {
     useState<Set<string>>(new Set());
 
  const [decks, setDecks, decksRef] = useState<IFlashcard[]>([]);
+ const [isGeneratingDecks, setIsGeneratingDecks] = useState(false);
 
 
   // Sample notebook data - In real app, fetch based on notebookId
@@ -237,43 +238,31 @@ const NotebookDetailPage = () => {
     sendMessage({ text: message });
   };
 
-  const onSetDecks = () => {
-     const tempDecks: IFlashcard[] = [
-        {
-          front : {
-            html : (<div>What is the capital of France?</div>)
-          },
-          back : {
-            html : (<div>Paris</div>)
-          }
-        },
-        {
-          front : {
-            html : (<div>What is 2 + 2?</div>)
-          },
-          back : {
-            html : (<div>4</div>)
-          }
-        },
-         {
-          front : {
-            html : (<div>What is 2 + 2?</div>)
-          },
-          back : {
-            html : (<div>4</div>)
-          }
-        },
-         {
-          front : {
-            html : (<div>What is 2 + 2?</div>)
-          },
-          back : {
-            html : (<div>4</div>)
-          }
-        }
-      ]
+  const onSetDecks = async () => {
+    const response = await fetch(`/api/flashcard`, {
+      method : "POST",
+      headers : {
+        "Content-Type" : "application/json"
+      },
+      body : JSON.stringify({
+        notebookId : notebookId,
+        resourceIds : Array.from(selectedDocumentsRef.current) ?? []
+      })
+    }).then(res => res.json());
 
-    setDecks(tempDecks);
+    if (response.success === true) {
+        console.log("Flashcards generated:", response.flashcards);
+        // Map response to IFlashcard format
+        const generatedDecks: IFlashcard[] = response.flashcards.map((fc: any) => ({
+            front : {
+                html : (<div>{fc.front}</div>)
+            },
+            back : {
+                html : (<div>{fc.back}</div>)
+            }
+        }));
+        setDecks(generatedDecks);
+    }
   }
 
   const onClearDecks = () => {

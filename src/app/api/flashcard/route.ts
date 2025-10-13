@@ -19,7 +19,7 @@ export async function POST(req : Request) {
         //Save flashcards to database
         await createFlashcards(notebookId, flashcardResponse.flashcards);
 
-        return new Response(JSON.stringify({ success: true, flashcards: flashcardResponse }), {
+        return new Response(JSON.stringify({ success: true, flashcards: flashcardResponse.flashcards }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
         });

@@ -3,7 +3,7 @@ import { InsertMessageParams } from "../db/schema/message";
 
 export const messageUIToDB = (notebookId : string, messageUI: UIMessage) : InsertMessageParams => {
   return {
-    id: messageUI.id,
+    id: messageUI.id || "",
     notebookId: notebookId,
     text: messageUI.parts.map((part) => part.type === "text" ? part.text : "").join(""),
     role: messageUI.role,

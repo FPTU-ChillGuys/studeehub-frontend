@@ -19,9 +19,8 @@ const NotebookDetailPage = () => {
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] = useState<Set<string>>(
-    new Set()
-  );
+  const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] =
+    useState<Set<string>>(new Set());
 
   // Sample notebook data - In real app, fetch based on notebookId
   const [notebook, setNotebook] = useState<Notebook>({
@@ -39,20 +38,39 @@ const NotebookDetailPage = () => {
   });
 
   //Chatbot by Vercel AI SDK
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chatbot",
       prepareSendMessagesRequest: ({ messages }) => {
-          return {
+        return {
           body: {
             messages,
             resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+            notebookId: notebookId,
           },
         };
       },
     }),
   });
-  
+
+  //Load existing chat messages
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`/api/chatbot/${notebookId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched messages:", data);
+          setMessages(data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+    fetchMessages();
+  }, [notebookId, setMessages]);
+
+
   //Get file upload and document management
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -150,8 +168,15 @@ const NotebookDetailPage = () => {
         return {
           ...prev,
           documents: prev.documents.map((doc) => {
-            if (doc.status === "processing" && newDocuments.some((d) => d.id === doc.id)) {
-              const updatedDoc = { ...doc, status: "completed" as const, id: resourceIds[y] };
+            if (
+              doc.status === "processing" &&
+              newDocuments.some((d) => d.id === doc.id)
+            ) {
+              const updatedDoc = {
+                ...doc,
+                status: "completed" as const,
+                id: resourceIds[y],
+              };
               y++;
               return updatedDoc;
             }
@@ -183,7 +208,10 @@ const NotebookDetailPage = () => {
       newSelected.delete(resourceId);
     }
     setSelectedDocuments(newSelected);
-    console.log("Selected documents:", Array.from(selectedDocumentsRef.current))
+    console.log(
+      "Selected documents:",
+      Array.from(selectedDocumentsRef.current)
+    );
   };
 
   const handleSelectAll = () => {
@@ -191,7 +219,10 @@ const NotebookDetailPage = () => {
       .filter((d) => d.status === "completed")
       .map((d) => d.id);
     setSelectedDocuments(new Set(completedDocs));
-    console.log("Selected all documents:", Array.from(selectedDocumentsRef.current));
+    console.log(
+      "Selected all documents:",
+      Array.from(selectedDocumentsRef.current)
+    );
   };
 
   const handleClearSelection = () => {

@@ -14,6 +14,7 @@ import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import { IFlashcard } from "react-quizlet-flashcard";
+import 'react-quizlet-flashcard/dist/index.css'
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -255,10 +256,18 @@ const NotebookDetailPage = () => {
         // Map response to IFlashcard format
         const generatedDecks: IFlashcard[] = response.flashcards.map((fc: any) => ({
             front : {
-                html : (<div>{fc.front}</div>)
+                html : (
+                    <div className="flex items-center justify-center h-full w-full p-6">
+                        <p className="text-center text-lg font-medium">{fc.front}</p>
+                    </div>
+                )
             },
             back : {
-                html : (<div>{fc.back}</div>)
+                html : (
+                    <div className="flex items-center justify-center h-full w-full p-6">
+                        <p className="text-center text-base">{fc.back}</p>
+                    </div>
+                )
             }
         }));
         setDecks(generatedDecks);

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { generateEmbeddings } from "../ai/chatbot/embedding";
 import { db } from "../db";
 import { embeddings } from "../db/schema/embedding";
@@ -64,6 +64,21 @@ export const getResourcesByNotebookId = async (notebookId: string) => {
     return resourcesList;
   } catch (e) {
     console.error("Error fetching resources:", e);
+    return [];
+  }
+};
+
+export const getContentFromResourceId = async (resourceIds:  string[]) => {
+  try {
+    const resourceList = await db
+      .select({
+        content: resources.content,
+      })
+      .from(resources)
+      .where(inArray(resources.id, resourceIds));
+    return resourceList;
+  } catch (e) {
+    console.error("Error fetching resource content:", e);
     return [];
   }
 };

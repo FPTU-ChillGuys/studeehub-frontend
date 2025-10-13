@@ -254,6 +254,22 @@ const NotebookDetailPage = () => {
           back : {
             html : (<div>4</div>)
           }
+        },
+         {
+          front : {
+            html : (<div>What is 2 + 2?</div>)
+          },
+          back : {
+            html : (<div>4</div>)
+          }
+        },
+         {
+          front : {
+            html : (<div>What is 2 + 2?</div>)
+          },
+          back : {
+            html : (<div>4</div>)
+          }
         }
       ]
 

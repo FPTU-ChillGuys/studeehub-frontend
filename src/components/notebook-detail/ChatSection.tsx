@@ -25,7 +25,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   status,
 }) => {
   return (
-    <div className="w-[70%] border-r border-border flex flex-col">
+    <div className="w-[60%] border-r border-border flex flex-col">
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-start gap-3">

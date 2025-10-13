@@ -31,7 +31,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   completedDocsCount,
 }) => {
   return (
-    <div className="w-[30%] flex flex-col">
+    <div className="w-[20%] flex flex-col">
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between">

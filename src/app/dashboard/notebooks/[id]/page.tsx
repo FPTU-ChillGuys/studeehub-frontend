@@ -238,15 +238,6 @@ const NotebookDetailPage = () => {
       <NotebookHeader notebookTitle={notebook.title} />
 
       <div className="flex flex-1 h-[calc(100vh-4rem)]">
-        <ChatSection
-          notebook={notebook}
-          messages={messages}
-          handleSendMessage={handleSendMessage}
-          selectedDocuments={selectedDocuments}
-          getFileIcon={getFileIcon}
-          status={status}
-        />
-
         <DocumentsPanel
           documents={filteredDocuments}
           selectedDocuments={selectedDocuments}
@@ -258,6 +249,15 @@ const NotebookDetailPage = () => {
           setIsUploadModalOpen={setIsUploadModalOpen}
           getFileIcon={getFileIcon}
           completedDocsCount={completedDocsCount}
+        />
+        
+         <ChatSection
+          notebook={notebook}
+          messages={messages}
+          handleSendMessage={handleSendMessage}
+          selectedDocuments={selectedDocuments}
+          getFileIcon={getFileIcon}
+          status={status}
         />
       </div>
 

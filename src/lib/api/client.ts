@@ -73,14 +73,14 @@ class APIClient {
         console.error(`HTTP Error: ${response.status} ${response.statusText}`);
 
         const errorData: ApiErrorResponse = await response.json();
-        
+
         if (response.status === 401) {
           this.clearToken();
           window.location.href = "/";
         }
 
         throw new ApiError(response, {
-          ...errorData
+          ...errorData,
         });
       }
 

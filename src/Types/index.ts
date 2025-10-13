@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: "user" | "admin";
 }
 
 // Document types
@@ -46,7 +46,7 @@ export interface ChatMessage {
 
 // API Error types
 export interface ApiErrorResponse {
-  data?: unknown
+  data?: unknown;
   success?: boolean | false;
   message: string;
   errors?: Record<string, string[]> | string[];
@@ -60,11 +60,11 @@ export class ApiError extends Error {
 
   constructor(response: Response, data: ApiErrorResponse) {
     super(data.message || `HTTP error! status: ${response.status}`);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.status = response.status;
     this.statusText = response.statusText;
     this.data = data;
-    
+
     // Maintain proper stack trace in V8 environment
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ApiError);

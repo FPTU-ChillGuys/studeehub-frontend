@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { loginWithGoogle } from "@/lib/auth";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,8 +23,16 @@ import { X, AlertCircle } from "lucide-react";
 import { ErrorDisplay } from "./ui/error-display";
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
-  onLogin?: (email: string, password: string) => Promise<{ success: boolean; error?: string }> | void;
-  onSignUp?: (email: string, password: string, fullName: string, userName: string) => Promise<{ success: boolean; error?: string }> | void;
+  onLogin?: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }> | void;
+  onSignUp?: (
+    email: string,
+    password: string,
+    fullName: string,
+    userName: string
+  ) => Promise<{ success: boolean; error?: string }> | void;
   onClose?: () => void;
   showCloseButton?: boolean;
 }
@@ -48,12 +56,43 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Validation states
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string>("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  // useEffect cho validation realtime
+  React.useEffect(() => {
+    if (isSignUp && formData.confirmPassword && formData.password) {
+      const timeoutId = setTimeout(() => {
+        if (formData.password !== formData.confirmPassword) {
+          setConfirmPasswordError("Passwords don't match");
+        } else {
+          setConfirmPasswordError("");
+        }
+        setIsTyping(false);
+      }, 500); // Đợi 500ms sau khi user ngừng nhập
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setConfirmPasswordError("");
+    }
+  }, [formData.password, formData.confirmPassword, isSignUp]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // Nếu đang nhập confirmPassword, set isTyping = true
+    if (name === "confirmPassword" || name === "password") {
+      setIsTyping(true);
+      setConfirmPasswordError(""); // Xóa error khi đang nhập
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +102,11 @@ export function LoginForm({
 
     try {
       if (isSignUp) {
+        // Kiểm tra có lỗi validation không
+        if (confirmPasswordError) {
+          setError(confirmPasswordError);
+          return;
+        }
         if (formData.password !== formData.confirmPassword) {
           setError("Passwords don't match!");
           return;
@@ -72,9 +116,9 @@ export function LoginForm({
           return;
         }
         const result = await onSignUp?.(
-          formData.email, 
-          formData.password, 
-          formData.fullName, 
+          formData.email,
+          formData.password,
+          formData.fullName,
           formData.userName
         );
         if (result?.error) {
@@ -104,11 +148,27 @@ export function LoginForm({
       userName: "",
       confirmPassword: "",
     });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    // Reset validation states
+    setConfirmPasswordError("");
+    setIsTyping(false);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="relative">
+    <div
+      className={cn("flex flex-col gap-6 w-full max-w-2xl mx-auto", className)}
+      {...props}
+    >
+      <Card className="relative w-full">
         {/* Close Button */}
         {showCloseButton && onClose && (
           <Button
@@ -120,7 +180,7 @@ export function LoginForm({
             <X className="w-4 h-4" />
           </Button>
         )}
-        
+
         {/* Error Display */}
         {error && (
           <div className="px-6 pt-6">
@@ -138,42 +198,48 @@ export function LoginForm({
               : "Enter your email below to login to your account"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit}>
-            <FieldGroup>
+            <FieldGroup
+              className={
+                isSignUp ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-4"
+              }
+            >
               {isSignUp && (
                 <>
-                  <Field>
+                  <Field className="md:col-span-2">
                     <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
                     <Input
                       id="fullName"
                       name="fullName"
                       type="text"
-                      placeholder="John Doe"
+                      placeholder="Enter your full name"
                       value={formData.fullName}
                       onChange={handleInputChange}
                       required
                     />
                   </Field>
-                  <Field>
-                    <FieldLabel htmlFor="userName">Username</FieldLabel>
+                  <Field className="md:col-span-2">
+                    <FieldLabel htmlFor="userName">
+                      Username
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (Your unique identifier)
+                      </span>
+                    </FieldLabel>
                     <Input
                       id="userName"
                       name="userName"
                       type="text"
-                      placeholder="johndoe123"
+                      placeholder="Choose a unique username"
                       value={formData.userName}
                       onChange={handleInputChange}
                       required
                     />
-                    <FieldDescription className="text-xs text-muted-foreground">
-                      This will be your unique identifier on the platform
-                    </FieldDescription>
                   </Field>
                 </>
               )}
 
-              <Field>
+              <Field className={isSignUp ? "md:col-span-2" : ""}>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
@@ -186,7 +252,7 @@ export function LoginForm({
                 />
               </Field>
 
-              <Field>
+              <Field className={isSignUp ? "md:col-span-1" : ""}>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   {!isSignUp && (
@@ -198,34 +264,82 @@ export function LoginForm({
                     </a>
                   )}
                 </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="pr-10"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </Field>
 
               {isSignUp && (
-                <Field>
+                <Field className="md:col-span-1">
                   <FieldLabel htmlFor="confirmPassword">
                     Confirm Password
                   </FieldLabel>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      className={`pr-10 ${
+                        confirmPasswordError
+                          ? "border-red-500 focus:ring-red-500"
+                          : ""
+                      }`}
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={toggleConfirmPasswordVisibility}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  {confirmPasswordError && !isTyping && (
+                    <FieldDescription className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {confirmPasswordError}
+                    </FieldDescription>
+                  )}
                 </Field>
               )}
 
-              <Field>
-                <Button type="submit" disabled={isLoading} className="w-full">
+              <Field className={isSignUp ? "md:col-span-2" : ""}>
+                <Button
+                  type="submit"
+                  disabled={
+                    isLoading || (isSignUp && confirmPasswordError !== "")
+                  }
+                  className="w-full"
+                >
                   {isLoading
                     ? "Loading..."
                     : isSignUp
@@ -233,9 +347,9 @@ export function LoginForm({
                     : "Login"}
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   className="w-full flex items-center justify-center gap-2"
                   onClick={() => {
                     setIsLoading(true);
@@ -273,7 +387,9 @@ export function LoginForm({
                   )}
                 </Button>
 
-                <FieldDescription className="text-center">
+                <FieldDescription
+                  className={`text-center ${isSignUp ? "md:col-span-2" : ""}`}
+                >
                   {isSignUp ? (
                     <>
                       Already have an account?{" "}

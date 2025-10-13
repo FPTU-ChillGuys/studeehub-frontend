@@ -78,14 +78,18 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/Subscription')}>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/Subscription")}
+              >
                 <Sparkles />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/profile")}
+              >
                 <BadgeCheck />
                 Profile
               </DropdownMenuItem>
@@ -95,10 +99,12 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={async () => {
-              const { logout } = await import('@/lib/auth');
-              await logout();
-            }}>
+            <DropdownMenuItem
+              onClick={async () => {
+                const { logout } = await import("@/lib/auth");
+                await logout();
+              }}
+            >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

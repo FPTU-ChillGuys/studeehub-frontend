@@ -12,6 +12,7 @@ import { getFileIcon } from "@/components/notebook-detail/utils";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
+import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -69,7 +70,6 @@ const NotebookDetailPage = () => {
     };
     fetchMessages();
   }, [notebookId, setMessages]);
-
 
   //Get file upload and document management
   useEffect(() => {
@@ -250,8 +250,8 @@ const NotebookDetailPage = () => {
           getFileIcon={getFileIcon}
           completedDocsCount={completedDocsCount}
         />
-        
-         <ChatSection
+
+        <ChatSection
           notebook={notebook}
           messages={messages}
           handleSendMessage={handleSendMessage}
@@ -259,6 +259,7 @@ const NotebookDetailPage = () => {
           getFileIcon={getFileIcon}
           status={status}
         />
+        <FlashcardsPanel />
       </div>
 
       <UploadModal

@@ -15,7 +15,7 @@ export async function POST(req : Request) {
         const flashcardResponse = await GenerateFlashcardsFromContent(combinedContent);
 
         //Save flashcards to database
-        await createFlashcards(notebookId, flashcardResponse.title, flashcardResponse.flashcards);
+        await createFlashcards(notebookId, flashcardResponse.title, flashcardResponse.decks);
 
         return new Response(JSON.stringify({ success: true, flashcards: flashcardResponse }), {
             status: 200,

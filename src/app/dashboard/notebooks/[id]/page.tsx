@@ -30,6 +30,13 @@ const NotebookDetailPage = () => {
     []
   );
 
+  // Disable flashcard generation if no documents are selected
+  const [isDisabled, setIsDisabled] = useState(true);
+
+  useEffect(() => {
+    setIsDisabled(selectedDocuments.size === 0);
+  }, [selectedDocuments]);
+
   // Sample notebook data - In real app, fetch based on notebookId
   const [notebook, setNotebook] = useState<Notebook>({
     id: notebookId,
@@ -242,6 +249,7 @@ const NotebookDetailPage = () => {
 
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
+    setIsDisabled(true);
     const response = await fetch(`/api/flashcard`, {
       method: "POST",
       headers: {
@@ -258,8 +266,8 @@ const NotebookDetailPage = () => {
       // Map response to IFlashcard format
       const generatedFlashcard: FlashcardDeck = {
         id: nanoid(),
-        title: response.title,
-        cards: response?.flashcards?.map((fc: any) => ({
+        title: response.flashcards?.title,
+        cards: response?.flashcards?.decks?.map((fc: any) => ({
           front: {
             html: (
               <div className="flex items-center justify-center h-full w-full p-6">
@@ -276,10 +284,11 @@ const NotebookDetailPage = () => {
           },
           id: fc.id,
         })),
-        cardCount: response.flashcards.length,
+        cardCount: response?.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
     }
+    setIsDisabled(false);
   };
 
   //Get flashcards for this notebook
@@ -350,6 +359,7 @@ const NotebookDetailPage = () => {
           onGenerateFlashcards={onGenerateFlashcards}
           setFlashcards={setFlashcards}
           flashcards={flashcardsRef.current}
+          isDisabled={isDisabled}
         />
       </div>
 

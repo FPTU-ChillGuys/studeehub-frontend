@@ -33,7 +33,7 @@ export async function GenerateFlashcardsFromContent(content: string) {
     model: geminiFlashLite,
     schema: z.object({
       title: z.string().max(100).describe("The title of the flashcard set"),
-      flashcards: z
+      decks: z
         .array(
           z.object({
             front: z

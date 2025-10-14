@@ -10,6 +10,7 @@ interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
   flashcards: FlashcardDeck[];
   setFlashcards: React.Dispatch<React.SetStateAction<FlashcardDeck[]>>;
+  isDisabled?: boolean;
 }
 
 
@@ -18,6 +19,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onGenerateFlashcards,
   flashcards,
   setFlashcards,
+  isDisabled,
 }) => {
   const [view, setView] = useState<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
@@ -110,6 +112,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
             <Button 
               onClick={handleGenerateFlashcards} 
               className="w-full"
+              disabled={isDisabled}
             >
               Generate Flashcards
             </Button>

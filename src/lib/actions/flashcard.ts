@@ -54,11 +54,13 @@ export const createFlashcards = async (
 
 export const getFlashcardsByNotebookId = async (notebookId: string) => {
   try {
+    // Fetch flashcards and their associated decks in a single query
     const flashcardList = await db
       .select()
       .from(flashcard)
       .where(eq(flashcard.notebookId, notebookId));
 
+    // Get all decks associated with the fetched flashcards
     const DeckList = await db
       .select()
       .from(decks)
@@ -69,13 +71,12 @@ export const getFlashcardsByNotebookId = async (notebookId: string) => {
         )
       );
 
+    // Map decks to their corresponding flashcards
     const flashcardsListWithDecks = flashcardList.map((flashcardItem) => {
-      console.log("Processing Flashcard Item:", flashcardItem);
       return {
         id: flashcardItem.id,
         title: flashcardItem.title,
         cards: DeckList.filter((deckItem) => deckItem.flashcardId === flashcardItem.id).map((deckItem) => {
-            console.log("Deck Item Found:", deckItem);
             return {
               front: deckItem.front,
               back: deckItem.back,

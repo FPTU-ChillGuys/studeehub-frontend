@@ -11,6 +11,7 @@ interface FlashcardsPanelProps {
   flashcards: FlashcardDeck[];
   setFlashcards: React.Dispatch<React.SetStateAction<FlashcardDeck[]>>;
   isDisabled?: boolean;
+  onDeleteDeck?: (deckId: string) => void;
 }
 
 
@@ -20,6 +21,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   flashcards,
   setFlashcards,
   isDisabled,
+  onDeleteDeck,
 }) => {
   const [view, setView] = useState<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
@@ -38,6 +40,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
 
   const handleDeleteDeck = (deckId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (deckId && onDeleteDeck) onDeleteDeck(deckId);
     setFlashcards(flashcards.filter(deck => deck.id !== deckId));
   };
 

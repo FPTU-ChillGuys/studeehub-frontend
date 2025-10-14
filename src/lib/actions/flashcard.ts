@@ -92,3 +92,16 @@ export const getFlashcardsByNotebookId = async (notebookId: string) => {
     return [];
   }
 };
+
+export const deleteFlashcardById = async (flashcardId: string) => {
+  try {
+    // Delete decks associated with the flashcard
+    await db.delete(flashcard).where(eq(flashcard.id, flashcardId));
+
+    return { success: true };
+  } catch (e) {
+    console.error("Error deleting flashcard:", e);
+    return { success: false };
+  } 
+};
+     

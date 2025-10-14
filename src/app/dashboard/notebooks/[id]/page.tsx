@@ -329,6 +329,16 @@ const NotebookDetailPage = () => {
     fetchFlashcards();
   }, [notebookId, setFlashcards]);
 
+  const onDeleteDeck = async (deckId: string) => {
+    const response = await fetch(`/api/flashcard/${deckId}`, {
+      method: "DELETE",
+    }).then((res) => res.json());
+
+    if (response.success === true) {
+      console.log("Flashcard deck deleted:", deckId);
+      setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
+    }
+
   return (
     <SidebarInset>
       <NotebookHeader notebookTitle={notebook.title} />
@@ -359,6 +369,7 @@ const NotebookDetailPage = () => {
           onGenerateFlashcards={onGenerateFlashcards}
           setFlashcards={setFlashcards}
           flashcards={flashcardsRef.current}
+          onDeleteDeck={onDeleteDeck}
           isDisabled={isDisabled}
         />
       </div>

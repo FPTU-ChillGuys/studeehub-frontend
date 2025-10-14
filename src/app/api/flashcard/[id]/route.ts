@@ -1,4 +1,4 @@
-import { getFlashcardsByNotebookId } from "@/lib/actions/flashcard";
+import { deleteFlashcardById, getFlashcardsByNotebookId } from "@/lib/actions/flashcard";
 
 export async function GET(request: Request, params: { params: { id: string } }) {
     const { id } = await params.params;
@@ -22,4 +22,17 @@ export async function GET(request: Request, params: { params: { id: string } }) 
         { status: 200 }
     );
 
+}
+
+export async function DELETE(request: Request, params: { params: { id: string } }) {
+    const { id } = await params.params;
+
+    const response = await deleteFlashcardById(id);
+
+    return new Response(
+        JSON.stringify({
+            success: response.success,
+        }),
+        { status: response.success ? 200 : 500 }
+    );
 }

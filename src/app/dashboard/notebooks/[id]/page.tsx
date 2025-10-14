@@ -338,6 +338,7 @@ const NotebookDetailPage = () => {
       console.log("Flashcard deck deleted:", deckId);
       setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
     }
+  };
 
   return (
     <SidebarInset>

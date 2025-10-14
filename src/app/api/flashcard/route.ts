@@ -1,7 +1,6 @@
-import { createFlashcards, getFlashcardsByNotebookId } from "@/lib/actions/flashcard";
+import { createFlashcards } from "@/lib/actions/flashcard";
 import { getContentFromResourceId } from "@/lib/actions/resources";
 import { GenerateFlashcardsFromContent } from "@/lib/ai/chatbot/flashcard";
-import { FlashcardDeck } from "@/Types";
 
 
 export async function POST(req : Request) {

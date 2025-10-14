@@ -38,19 +38,18 @@ const NotebookDetailPage = () => {
   }, [selectedDocuments]);
 
   // Sample notebook data - In real app, fetch based on notebookId
-  const [notebook, setNotebook] = useState<Notebook>({
-    id: notebookId,
-    title: "Philosophy Textbook: Dialectical Materialism",
-    description:
-      "Study of fundamental principles of Marxist-Leninist philosophy",
-    createdDate: "2024-09-24",
-    lastModified: "2024-10-01",
-    documentsCount: 3,
-    totalQuestions: 45,
+  const [notebook, setNotebook, notebookRef] = useState<Notebook>({
+    id: "",
+    title: "Unknown Notebook",
+    createdDate: "",
+    lastModified: "",
+    documentsCount: 0,
+    totalQuestions: 0,
     status: "active",
-    thumbnail: "🏛️",
     documents: [],
+    thumbnail: "",
   });
+
 
   //Chatbot by Vercel AI SDK
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -84,6 +83,30 @@ const NotebookDetailPage = () => {
     };
     fetchMessages();
   }, [notebookId, setMessages]);
+
+  //Get notebook details
+  useEffect(() => {
+    const fetchNotebookDetails = async () => {
+      try {
+        const response = await fetch(`/api/notebook/${notebookId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched notebook details:", data);
+          if (data.success === true) {
+            setNotebook({ ...notebookRef.current,
+              id : data.notebook.id,
+              title : data.notebook.title,
+              description : data.notebook.description,
+            } as Notebook);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching notebook details:", error);
+      }
+    };
+
+    fetchNotebookDetails();
+  }, [notebookId, notebookRef, setNotebook]);
 
   //Get file upload and document management
   useEffect(() => {

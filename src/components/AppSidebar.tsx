@@ -33,11 +33,6 @@ const data = {
       icon: BookOpen,
     },
     {
-      title: "Flashcards",
-      url: "#",
-      icon: Origami,
-    },
-    {
       title: "Learning Path",
       url: "#",
       icon: Calendar,

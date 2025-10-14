@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import {
   decks,
@@ -13,10 +13,12 @@ export const createFlashcards = async (
   inputDeckSchema: InsertDeckParams[]
 ) => {
   try {
-    const validatedDecks = inputDeckSchema.map(deck => insertDeckSchema.parse({
-      ...deck,
-      notebookId,
-    }));
+    const validatedDecks = inputDeckSchema.map((deck) =>
+      insertDeckSchema.parse({
+        ...deck,
+        notebookId,
+      })
+    );
 
     const [flashcards] = await db
       .insert(flashcard)
@@ -28,11 +30,13 @@ export const createFlashcards = async (
 
     const [deckList] = await db
       .insert(decks)
-      .values(validatedDecks.map(deck => ({
-        flashcardId: flashcards.id,
-        front: deck.front,
-        back: deck.back,
-      })))
+      .values(
+        validatedDecks.map((deck) => ({
+          flashcardId: flashcards.id,
+          front: deck.front,
+          back: deck.back,
+        }))
+      )
       .returning();
 
     return {
@@ -50,13 +54,38 @@ export const createFlashcards = async (
 
 export const getFlashcardsByNotebookId = async (notebookId: string) => {
   try {
-    const flashcardsList = await db
+    const flashcardList = await db
       .select()
       .from(flashcard)
-      .leftJoin(decks, eq(flashcard.id, decks.flashcardId))
       .where(eq(flashcard.notebookId, notebookId));
 
-    return flashcardsList;
+    const DeckList = await db
+      .select()
+      .from(decks)
+      .where(
+        inArray(
+          decks.flashcardId,
+          flashcardList.map((f) => f.id)
+        )
+      );
+
+    const flashcardsListWithDecks = flashcardList.map((flashcardItem) => {
+      console.log("Processing Flashcard Item:", flashcardItem);
+      return {
+        id: flashcardItem.id,
+        title: flashcardItem.title,
+        cards: DeckList.filter((deckItem) => deckItem.flashcardId === flashcardItem.id).map((deckItem) => {
+            console.log("Deck Item Found:", deckItem);
+            return {
+              front: deckItem.front,
+              back: deckItem.back,
+            };
+        }),
+      };
+    });
+
+
+    return flashcardsListWithDecks;
   } catch (e) {
     console.error("Error fetching flashcards:", e);
     return [];

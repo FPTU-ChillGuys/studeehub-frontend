@@ -12,9 +12,6 @@ export async function POST(req : Request) {
 
         const contents = await getContentFromResourceId(Array.isArray(resourceIds) ? resourceIds : [resourceIds]);
         const combinedContent = contents.map(c => c.content).join("\n\n");
-
-        console.log("Combined content length:", combinedContent.length);
-
         const flashcardResponse = await GenerateFlashcardsFromContent(combinedContent);
 
         //Save flashcards to database
@@ -30,29 +27,3 @@ export async function POST(req : Request) {
     }
 }
 
-export async function GET(params : { params: { notebookId: string } }) {
-    const { notebookId } = await params.params;
-
-    const response = await getFlashcardsByNotebookId(notebookId);
-
-    const flashcardsList  = response.map((flashcard) => {
-        return {
-            id : flashcard.flashcard.id,
-            title : flashcard.flashcard.title,
-            cardCount : response.filter(f => f.flashcard.id === flashcard.flashcard.id).length,
-            cards : response.filter(f => f.flashcard.id === flashcard.flashcard.id).map(f => ({
-                front : f.decks?.front || "" ,
-                back : f.decks?.back || "",
-            })) 
-        }
-    })
-
-    return new Response(
-        JSON.stringify({
-            success: true,
-            flashcards: flashcardsList,
-        }),
-        { status: 200 }
-    );
-
-}

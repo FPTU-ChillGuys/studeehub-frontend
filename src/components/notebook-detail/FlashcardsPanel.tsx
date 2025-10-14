@@ -4,6 +4,7 @@ import { FlashcardArray, IFlashcard } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
+import { nanoid } from "nanoid";
 
 interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
@@ -23,6 +24,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   
   
   const handleDeckClick = (deck: FlashcardDeck) => {
+    console.log("Selected Deck:", deck);
     setSelectedDeck(deck);
     setView("detail");
   };
@@ -66,8 +68,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
             {flashcards.length > 0 ? (
               flashcards.map((deck) => (
                 <div
-                  key={deck.id}
-                  onClick={() => handleDeckClick(deck)}
+                  key={nanoid()}
+                  onClick={() => { handleDeckClick(deck)}}
                   className="p-4 border border-border rounded-lg hover:bg-accent cursor-pointer transition-colors group"
                 >
                   <div className="flex items-start justify-between">

@@ -14,7 +14,7 @@ import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import { IFlashcard } from "react-quizlet-flashcard";
-import 'react-quizlet-flashcard/dist/index.css'
+import "react-quizlet-flashcard/dist/index.css";
 import { nanoid } from "nanoid";
 
 const NotebookDetailPage = () => {
@@ -26,8 +26,9 @@ const NotebookDetailPage = () => {
   const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] =
     useState<Set<string>>(new Set());
 
-  const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>([]);
-
+  const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>(
+    []
+  );
 
   // Sample notebook data - In real app, fetch based on notebookId
   const [notebook, setNotebook] = useState<Notebook>({
@@ -242,39 +243,82 @@ const NotebookDetailPage = () => {
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
     const response = await fetch(`/api/flashcard`, {
-      method : "POST",
-      headers : {
-        "Content-Type" : "application/json"
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      body : JSON.stringify({
-        notebookId : notebookId,
-        resourceIds : Array.from(selectedDocumentsRef.current) ?? []
-      })
-    }).then(res => res.json());
+      body: JSON.stringify({
+        notebookId: notebookId,
+        resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+      }),
+    }).then((res) => res.json());
 
     if (response.success === true) {
-        console.log("Flashcards generated:", response);
-        // Map response to IFlashcard format
-        const generatedFlashcard : FlashcardDeck = {
-          id : nanoid(),
-          title : response.title,
-          cards : response.flashcards.map((fc: any) => ({
-            front : {
-                html : (<div className="flex items-center justify-center h-full w-full p-6">{fc.front}</div>)
-            },
-            back : {
-                html : (<div className="flex items-center justify-center h-full w-full p-6">{fc.back}</div>)
-            },
-            id : fc.id,
+      console.log("Flashcards generated:", response);
+      // Map response to IFlashcard format
+      const generatedFlashcard: FlashcardDeck = {
+        id: nanoid(),
+        title: response.title,
+        cards: response?.flashcards?.map((fc: any) => ({
+          front: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.front}
+              </div>
+            ),
+          },
+          back: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.back}
+              </div>
+            ),
+          },
+          id: fc.id,
         })),
-        cardCount : response.flashcards.length,
-        }; 
-        setFlashcards([...flashcardsRef.current, generatedFlashcard])
+        cardCount: response.flashcards.length,
+      };
+      setFlashcards([...flashcardsRef.current, generatedFlashcard]);
     }
-  }
+  };
 
-  
-
+  //Get flashcards for this notebook
+  useEffect(() => {
+    const fetchFlashcards = async () => {
+      const response = await fetch(`/api/flashcard/${notebookId}`);
+      const data = await response.json();
+      if (data.success === true) {
+        console.log("Fetched flashcards:", data.flashcards);
+        const fetchedFlashcards: FlashcardDeck[] = data.flashcards.map(
+          (fc: any) => ({
+            id: fc.id,
+            title: fc.title,
+            cardCount: fc.cardCount,
+            cards: fc.cards.map((card: any, index: number) => ({
+              front: {
+                html: (
+                  <div className="flex items-center justify-center h-full w-full p-6">
+                    {card?.front || "No content"}
+                  </div>
+                ),
+              },
+              back: {
+                html: (
+                  <div className="flex items-center justify-center h-full w-full p-6">
+                    {card?.back || "No content"}
+                  </div>
+                ),
+              },
+            })),
+          })
+        );
+        setFlashcards(fetchedFlashcards);
+      } else {
+        console.error("Failed to fetch flashcards:", data.message);
+      }
+    };
+    fetchFlashcards();
+  }, [notebookId, setFlashcards]);
 
   return (
     <SidebarInset>
@@ -302,7 +346,7 @@ const NotebookDetailPage = () => {
           getFileIcon={getFileIcon}
           status={status}
         />
-        <FlashcardsPanel 
+        <FlashcardsPanel
           onGenerateFlashcards={onGenerateFlashcards}
           setFlashcards={setFlashcards}
           flashcards={flashcardsRef.current}

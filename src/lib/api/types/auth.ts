@@ -24,12 +24,22 @@ export interface RegisterRequest {
   // Add any additional registration fields here
 }
 
+export interface RegisterRequestWithClientUri extends RegisterRequest {
+  clientUri: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+  tokens?: AuthTokens;
+}
+
 export interface GoogleLoginRequest {
   idToken: string;
 }
 
-export interface GoogleAuthResponse extends AuthResponse {
-}
+export interface GoogleAuthResponse extends AuthResponse {}
 
 export interface AuthError extends Error {
   status?: number;

@@ -52,31 +52,35 @@ const HomePage = () => {
     {
       icon: Brain,
       title: "AI-Powered Learning",
-      description: "Upload your documents and let AI generate personalized review questions tailored to your learning style.",
+      description:
+        "Upload your documents and let AI generate personalized review questions tailored to your learning style.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted"
+      bgColor: "bg-gradient-to-br from-accent to-muted",
     },
     {
       icon: Target,
       title: "Personalized Learning Paths",
-      description: "Get customized study plans that adapt to your progress and help you achieve your academic goals.",
+      description:
+        "Get customized study plans that adapt to your progress and help you achieve your academic goals.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted"
+      bgColor: "bg-gradient-to-br from-accent to-muted",
     },
     {
       icon: Users,
       title: "Community Learning",
-      description: "Connect with fellow learners, ask questions, and share knowledge in our vibrant Q&A forum.",
+      description:
+        "Connect with fellow learners, ask questions, and share knowledge in our vibrant Q&A forum.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted"
+      bgColor: "bg-gradient-to-br from-accent to-muted",
     },
     {
       icon: TrendingUp,
       title: "Progress Tracking",
-      description: "Monitor your learning journey with detailed analytics, achievements, and performance insights.",
+      description:
+        "Monitor your learning journey with detailed analytics, achievements, and performance insights.",
       color: "text-primary",
-      bgColor: "bg-gradient-to-br from-accent to-muted"
-    }
+      bgColor: "bg-gradient-to-br from-accent to-muted",
+    },
   ];
 
   const benefits = [
@@ -337,7 +341,12 @@ const HomePage = () => {
                 return result;
               }}
               onSignUp={async (email, password, fullName, userName) => {
-                const result = await signUp(email, password, fullName, userName);
+                const result = await signUp(
+                  email,
+                  password,
+                  fullName,
+                  userName
+                );
                 if (result?.success) {
                   handleCloseLogin();
                 }

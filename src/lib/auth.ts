@@ -1,6 +1,10 @@
 // Authentication utilities
 import { AuthService } from "./api/services/auth";
-import { signIn, signOut as nextAuthSignOut, getSession } from 'next-auth/react';
+import {
+  signIn,
+  signOut as nextAuthSignOut,
+  getSession,
+} from "next-auth/react";
 
 import { User } from "@/Types";
 
@@ -55,7 +59,7 @@ export const logout = async (): Promise<void> => {
 };
 
 export const redirectBasedOnRole = (user: User): void => {
-  if (user.role === "admin" || user.role === "teacher") {
+  if (user.role === "admin") {
     window.location.href = "/admin";
   } else {
     window.location.href = "/dashboard";
@@ -69,8 +73,6 @@ export const isAdmin = (user: User | null): boolean => {
 
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
-  const user = getCurrentUser();
-
   // Check if token is still valid
   const accessToken = localStorage.getItem("accessToken");
   if (!accessToken) return false;
@@ -82,31 +84,17 @@ export const isAuthenticated = (): boolean => {
 // Google OAuth login
 export const loginWithGoogle = async (): Promise<void> => {
   try {
-    const result = await signIn('google', { 
-      callbackUrl: '/',
-      redirect: false 
+    const result = await signIn("google", {
+      callbackUrl: "/auth/callback",
+      redirect: true,
     });
-    
+
     if (result?.error) {
-      console.error('Google sign in error:', result.error);
+      console.error("Google sign in error:", result.error);
       return;
     }
-    
-    const session = await getServerSession();
-    if (session?.user) {
-      const user: User = {
-        id: session.user.id || '',
-        email: session.user.email || '',
-        name: session.user.name || '',
-        role: (session.user.role as 'student' | 'teacher' | 'admin') || 'student',
-        avatar: session.user.image || undefined
-      };
-      
-      setCurrentUser(user);
-      redirectBasedOnRole(user);
-    }
   } catch (error) {
-    console.error('Error during Google sign in:', error);
+    console.error("Error during Google sign in:", error);
   }
 };
 

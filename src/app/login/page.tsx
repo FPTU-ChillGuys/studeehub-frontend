@@ -11,7 +11,12 @@ export default function Page() {
     return result;
   };
 
-  const handleSignUp = async (email: string, password: string, fullName: string, userName: string) => {
+  const handleSignUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    userName: string
+  ) => {
     const result = await signUp(email, password, fullName, userName);
     return result;
   };

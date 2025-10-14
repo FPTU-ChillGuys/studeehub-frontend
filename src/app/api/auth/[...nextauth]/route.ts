@@ -1,9 +1,9 @@
-import NextAuth, { DefaultSession, Session, Account, Profile, User as NextAuthUser } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import { AuthService } from '@/lib/api/services/auth';
+import NextAuth, { DefaultSession } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { AuthService } from "@/lib/api/services/auth";
 
 // Extend the built-in types
-declare module 'next-auth' {
+declare module "next-auth" {
   interface Session {
     user: {
       id: string;
@@ -13,7 +13,7 @@ declare module 'next-auth' {
       email?: string | null;
       image?: string | null;
       role?: string;
-    } & DefaultSession['user'];
+    } & DefaultSession["user"];
   }
 
   // Extend the built-in User type
@@ -37,7 +37,6 @@ async function verifyWithBackend(idToken: string) {
       refreshToken: tokens.refreshToken,
     };
   } catch (error) {
-    console.error('Backend verification error:', error);
     throw error;
   }
 }
@@ -49,17 +48,21 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code',
-          scope: 'openid email profile',
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+          scope: "openid email profile",
         },
       },
     }),
   ],
+  pages: {
+    signIn: "/",
+    error: "/",
+  },
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'google' && account.id_token) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && account.id_token) {
         try {
           // Verify the Google token with your backend
           const backendResponse = await verifyWithBackend(account.id_token);
@@ -67,10 +70,9 @@ const handler = NextAuth({
           // Store the backend tokens in the user object
           user.accessToken = backendResponse.accessToken;
           user.refreshToken = backendResponse.refreshToken;
-          
+
           return true;
-        } catch (error) {
-          console.error('Authentication error:', error);
+        } catch {
           return false;
         }
       }
@@ -81,7 +83,7 @@ const handler = NextAuth({
       if (user) {
         token.accessToken = user.accessToken || account?.access_token;
         token.refreshToken = user.refreshToken || account?.refresh_token;
-        token.role = user.role || 'user';
+        token.role = user.role || "user";
         token.id = user.id;
       }
       return token;
@@ -98,11 +100,11 @@ const handler = NextAuth({
   },
   secret: process.env.NEXTAUTH_SECRET!,
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
     maxAge: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 24 hours
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };

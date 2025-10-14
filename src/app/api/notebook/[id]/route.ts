@@ -10,7 +10,6 @@ export async function GET(
   const { id: notebookId } = await params;
   //Get notebooks from database by notebookId
   const notebook = await getNotebookById(notebookId);
-  console.log("Fetched notebook:", notebook);
   if (!notebook) {
     return new Response(
       JSON.stringify({ success : false, message: "Notebook not found" }),

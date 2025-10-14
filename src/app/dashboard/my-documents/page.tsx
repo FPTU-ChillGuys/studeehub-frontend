@@ -121,7 +121,7 @@ const NotebooksPage = () => {
     };
 
     // Create the notebook in the database
-    await fetch("/api/notebook", {
+    const response = await fetch("/api/notebook", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -133,6 +133,13 @@ const NotebooksPage = () => {
         thumbnail: thumbnail || "📚",
       }),
     });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        newNotebook.id = data.notebook.id; // Update with real ID from backend
+      }
+    }
 
     setNotebooks((prev) => [newNotebook, ...prev]);
   };

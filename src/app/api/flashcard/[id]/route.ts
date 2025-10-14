@@ -1,9 +1,9 @@
 import { getFlashcardsByNotebookId } from "@/lib/actions/flashcard";
 
-export async function GET(request: Request, params: { params: { notebookId: string } }) {
-    const { notebookId } = await params.params;
+export async function GET(request: Request, params: { params: { id: string } }) {
+    const { id } = await params.params;
 
-    const response = await getFlashcardsByNotebookId(notebookId);
+    const response = await getFlashcardsByNotebookId(id);
 
     const flashcardsList  = response.map((flashcard) => {
         return {

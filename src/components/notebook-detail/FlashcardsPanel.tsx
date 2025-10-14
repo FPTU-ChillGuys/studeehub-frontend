@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "react-quizlet-flashcard/dist/index.css";
-import { FlashcardArray, IFlashcard } from "react-quizlet-flashcard";
+import { FlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
@@ -48,19 +48,15 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   // List View
   if (view === "list") {
     return (
-      <div className="w-[30%] flex flex-col border-l border-border overflow-hidden">
+      <div className="w-[27%] flex flex-col border-l border-border overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-border bg-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Flashcards
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Manage your flashcard decks
-              </p>
-            </div>
-          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-1">
+            Flashcards
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Manage your flashcard decks
+          </p>
         </div>
 
         {/* Content */}
@@ -124,31 +120,29 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
 
   // Detail View
   return (
-    <div className="w-[30%] flex flex-col border-l border-border overflow-hidden">
+    <div className="w-[27%] flex flex-col border-l border-border overflow-hidden">
       {/* Header with Back Button */}
       <div className="p-4 border-b border-border bg-card">
         <button
           onClick={handleBackToList}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to list
         </button>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">
-            {selectedDeck?.title}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {selectedDeck?.cardCount} cards
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold text-foreground mb-1">
+          {selectedDeck?.title}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {selectedDeck?.cardCount} cards
+        </p>
       </div>
 
       {/* Flashcard Display */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-auto">
         {selectedDeck && selectedDeck.cards.length > 0 && (
-          <div >
-            <FlashcardArray className="max-w-80" deck={selectedDeck.cards} />
+          <div className="w-full max-w-sm">
+            <FlashcardArray deck={selectedDeck.cards} />
           </div>
         )}
       </div>

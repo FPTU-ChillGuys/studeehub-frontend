@@ -66,7 +66,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
           <p className="text-xs text-muted-foreground">
             {selectedDocuments.size > 0
               ? `${selectedDocuments.size} documents selected for chat`
-              : "Select documents to chat with AI"}
+              : "Select documents to chat with AI and generate flashcards"}
           </p>
           {completedDocsCount > 0 && (
             <div className="flex gap-1">

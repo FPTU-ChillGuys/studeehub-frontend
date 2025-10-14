@@ -1,9 +1,10 @@
 import React from "react";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 import DocumentCard from "./DocumentCard";
 import DocumentSearch from "./DocumentSearch";
+import Link from "next/link";
 
 interface DocumentsPanelProps {
   documents: Document[];
@@ -31,17 +32,19 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   completedDocsCount,
 }) => {
   return (
-    <div className="w-[30%] flex flex-col">
+    <div className="w-[23%] flex flex-col border-r border-border">
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center gap-3 mb-3">
+          <Link href="/dashboard/my-documents">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </Link>
+          <div className="flex-1">
             <h2 className="text-lg font-semibold text-foreground">
               Documents
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Manage documents within this notebook
-            </p>
           </div>
           <Button
             onClick={() => setIsUploadModalOpen(true)}
@@ -52,6 +55,9 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
             Upload
           </Button>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Manage documents within this notebook
+        </p>
       </div>
 
       {/* Selected Documents Info */}
@@ -60,7 +66,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
           <p className="text-xs text-muted-foreground">
             {selectedDocuments.size > 0
               ? `${selectedDocuments.size} documents selected for chat`
-              : "Select documents to chat with AI"}
+              : "Select documents to chat with AI and generate flashcards"}
           </p>
           {completedDocsCount > 0 && (
             <div className="flex gap-1">

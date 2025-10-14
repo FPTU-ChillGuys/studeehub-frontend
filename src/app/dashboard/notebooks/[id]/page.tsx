@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
 import UploadModal from "@/components/modals/UploadModal";
-import { Notebook, Document, ChatMessage } from "@/Types";
+import { Notebook, Document, ChatMessage, FlashcardDeck } from "@/Types";
 import NotebookHeader from "@/components/notebook-detail/NotebookHeader";
 import ChatSection from "@/components/notebook-detail/ChatSection";
 import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
@@ -12,6 +12,10 @@ import { getFileIcon } from "@/components/notebook-detail/utils";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
+import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
+import { IFlashcard } from "react-quizlet-flashcard";
+import "react-quizlet-flashcard/dist/index.css";
+import { nanoid } from "nanoid";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -21,6 +25,17 @@ const NotebookDetailPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] =
     useState<Set<string>>(new Set());
+
+  const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>(
+    []
+  );
+
+  // Disable flashcard generation if no documents are selected
+  const [isDisabled, setIsDisabled] = useState(true);
+
+  useEffect(() => {
+    setIsDisabled(selectedDocuments.size === 0);
+  }, [selectedDocuments]);
 
   // Sample notebook data - In real app, fetch based on notebookId
   const [notebook, setNotebook] = useState<Notebook>({
@@ -69,7 +84,6 @@ const NotebookDetailPage = () => {
     };
     fetchMessages();
   }, [notebookId, setMessages]);
-
 
   //Get file upload and document management
   useEffect(() => {
@@ -233,20 +247,104 @@ const NotebookDetailPage = () => {
     sendMessage({ text: message });
   };
 
+  //Generate flashcards from selected documents
+  const onGenerateFlashcards = async () => {
+    setIsDisabled(true);
+    const response = await fetch(`/api/flashcard`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        notebookId: notebookId,
+        resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+      }),
+    }).then((res) => res.json());
+
+    if (response.success === true) {
+      console.log("Flashcards generated:", response);
+      // Map response to IFlashcard format
+      const generatedFlashcard: FlashcardDeck = {
+        id: nanoid(),
+        title: response.flashcards?.title,
+        cards: response?.flashcards?.decks?.map((fc: any) => ({
+          front: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.front}
+              </div>
+            ),
+          },
+          back: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.back}
+              </div>
+            ),
+          },
+          id: fc.id,
+        })),
+        cardCount: response?.flashcards?.decks?.length,
+      };
+      setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+    }
+    setIsDisabled(false);
+  };
+
+  //Get flashcards for this notebook
+  useEffect(() => {
+    const fetchFlashcards = async () => {
+      const response = await fetch(`/api/flashcard/${notebookId}`);
+      const data = await response.json();
+      if (data.success === true) {
+        console.log("Fetched flashcards:", data.flashcards);
+        const fetchedFlashcards: FlashcardDeck[] = data.flashcards.map(
+          (fc: any) => ({
+            id: fc.id,
+            title: fc.title,
+            cardCount: fc.cardCount,
+            cards: fc.cards.map((card: any, index: number) => ({
+              front: {
+                html: (
+                  <div className="flex items-center justify-center h-full w-full p-6">
+                    {card?.front || "No content"}
+                  </div>
+                ),
+              },
+              back: {
+                html: (
+                  <div className="flex items-center justify-center h-full w-full p-6">
+                    {card?.back || "No content"}
+                  </div>
+                ),
+              },
+            })),
+          })
+        );
+        setFlashcards(fetchedFlashcards);
+      } else {
+        console.error("Failed to fetch flashcards:", data.message);
+      }
+    };
+    fetchFlashcards();
+  }, [notebookId, setFlashcards]);
+
+  const onDeleteDeck = async (deckId: string) => {
+    const response = await fetch(`/api/flashcard/${deckId}`, {
+      method: "DELETE",
+    }).then((res) => res.json());
+
+    if (response.success === true) {
+      console.log("Flashcard deck deleted:", deckId);
+      setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
+    }
+  };
+
   return (
     <SidebarInset>
       <NotebookHeader notebookTitle={notebook.title} />
 
       <div className="flex flex-1 h-[calc(100vh-4rem)]">
-        <ChatSection
-          notebook={notebook}
-          messages={messages}
-          handleSendMessage={handleSendMessage}
-          selectedDocuments={selectedDocuments}
-          getFileIcon={getFileIcon}
-          status={status}
-        />
-
         <DocumentsPanel
           documents={filteredDocuments}
           selectedDocuments={selectedDocuments}
@@ -258,6 +356,22 @@ const NotebookDetailPage = () => {
           setIsUploadModalOpen={setIsUploadModalOpen}
           getFileIcon={getFileIcon}
           completedDocsCount={completedDocsCount}
+        />
+
+        <ChatSection
+          notebook={notebook}
+          messages={messages}
+          handleSendMessage={handleSendMessage}
+          selectedDocuments={selectedDocuments}
+          getFileIcon={getFileIcon}
+          status={status}
+        />
+        <FlashcardsPanel
+          onGenerateFlashcards={onGenerateFlashcards}
+          setFlashcards={setFlashcards}
+          flashcards={flashcardsRef.current}
+          onDeleteDeck={onDeleteDeck}
+          isDisabled={isDisabled}
         />
       </div>
 

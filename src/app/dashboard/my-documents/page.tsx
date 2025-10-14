@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -36,72 +35,74 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Notebook } from "@/Types";
 import CreateNotebookModal from "@/components/modals/CreateNotebookModal";
+import useStateRef from "react-usestateref";
+import { useEffect } from "react";
 
 const NotebooksPage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingNotebook, setEditingNotebook] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useStateRef("");
+  const [viewMode, setViewMode] = useStateRef<"grid" | "list">("grid");
+  const [filterStatus, setFilterStatus] = useStateRef<string>("all");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useStateRef(false);
+  const [editingNotebook, setEditingNotebook] = useStateRef<string | null>(
+    null
+  );
+  const [editTitle, setEditTitle] = useStateRef("");
+  const [openDropdown, setOpenDropdown] = useStateRef<string | null>(null);
+
+  //Get userId from localStorage
+  const [userId, setUserId, userIdRef] = useStateRef<string | null>(null);
 
   // Sample notebooks data
-  const [notebooks, setNotebooks] = useState<Notebook[]>([
-    {
-      id: "1",
-      title: "Philosophy Textbook: Dialectical Materialism",
-      description:
-        "Study of fundamental principles of Marxist-Leninist philosophy",
-      createdDate: "2024-09-24",
-      lastModified: "2024-10-01",
-      documentsCount: 3,
-      totalQuestions: 45,
-      status: "active",
-      documents: [],
-      thumbnail: "🏛️",
-    },
-    {
-      id: "2",
-      title: "MVP Project Presentation Guide",
-      description:
-        "Documentation guide for effective project presentation and delivery",
-      createdDate: "2024-10-05",
-      lastModified: "2024-10-05",
-      documentsCount: 0,
-      totalQuestions: 0,
-      status: "active",
-      documents: [],
-      thumbnail: "🧑‍🏫",
-    },
-    {
-      id: "3",
-      title: "React & Next.js Development Guide",
-      description:
-        "Comprehensive guide for modern React development with Next.js",
-      createdDate: "2024-09-15",
-      lastModified: "2024-09-28",
-      documentsCount: 5,
-      totalQuestions: 78,
-      status: "active",
-      documents: [],
-      thumbnail: "⚛️",
-    },
-    {
-      id: "4",
-      title: "Database Design Principles",
-      description: "Advanced concepts in database design and optimization",
-      createdDate: "2024-09-10",
-      lastModified: "2024-09-20",
-      documentsCount: 4,
-      totalQuestions: 56,
-      status: "active",
-      documents: [],
-      thumbnail: "🗄️",
-    },
-  ]);
+  const [notebooks, setNotebooks] = useStateRef<Notebook[]>([]);
 
-  const handleCreateNotebook = (
+  //Get userId from localStorage
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      const userObj = JSON.parse(user);
+      setUserId(userObj.id);
+    }
+    console.log("User ID:", userIdRef.current);
+  }, [setUserId, userIdRef]);
+
+  // Fetch notebooks from the server
+  useEffect(() => {
+    const fetchNotebooks = async () => {
+      if (!userIdRef.current) return;
+      const response = await fetch(`/api/notebook/user/${userIdRef.current}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        if (data.notebooks.length === 0) {
+          setNotebooks([]);
+          return;
+        }
+        console.log("Fetched Notebooks:", data.notebooks);
+        setNotebooks(
+          data?.notebooks?.map((notebook: any) => ({
+            id: notebook.id,
+            title: notebook.title,
+            description: notebook.description,
+            createdDate: notebook.createdDate,
+            lastModified: notebook.updatedDate,
+            documentsCount: 0,
+            totalQuestions: 0,
+            status: notebook.status,
+            documents: [],
+            thumbnail: notebook.thumbnail,
+          }) as Notebook)
+        );
+      }
+    };
+
+    fetchNotebooks();
+  }, [userIdRef, setNotebooks]);
+
+  const handleCreateNotebook = async (
     title: string,
     description?: string,
     thumbnail?: string
@@ -118,6 +119,27 @@ const NotebooksPage = () => {
       documents: [],
       thumbnail: thumbnail || "📚",
     };
+
+    // Create the notebook in the database
+    const response = await fetch("/api/notebook", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: userIdRef.current,
+        title,
+        description: description || "",
+        thumbnail: thumbnail || "📚",
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        newNotebook.id = data.notebook.id; // Update with real ID from backend
+      }
+    }
 
     setNotebooks((prev) => [newNotebook, ...prev]);
   };
@@ -138,8 +160,15 @@ const NotebooksPage = () => {
     setEditTitle("");
   };
 
-  const handleDeleteNotebook = (id: string) => {
+  const handleDeleteNotebook = async(id: string) => {
     if (confirm("Are you sure you want to delete this notebook?")) {
+      // Delete the notebook from the database
+      await fetch(`/api/notebook/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
     }
   };
@@ -150,7 +179,7 @@ const NotebooksPage = () => {
     setOpenDropdown(null); // Close dropdown when starting edit
   };
 
-  const filteredNotebooks = notebooks.filter((notebook) => {
+  const filteredNotebooks = notebooks?.filter((notebook) => {
     const matchesSearch =
       notebook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notebook.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -309,7 +338,7 @@ const NotebooksPage = () => {
         {/* Notebooks */}
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredNotebooks.map((notebook) => (
+            {filteredNotebooks?.map((notebook) => (
               <Link
                 key={notebook.id}
                 href={`/dashboard/notebooks/${notebook.id}`}

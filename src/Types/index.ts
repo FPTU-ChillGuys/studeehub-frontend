@@ -1,3 +1,5 @@
+import { IFlashcard } from "react-quizlet-flashcard";
+
 // User types
 export interface User {
   id: string;
@@ -87,4 +89,11 @@ export interface PaginatedResponse<T> {
   limit: number;
   hasNext: boolean;
   hasPrev: boolean;
+}
+
+export interface FlashcardDeck {
+  id: string;
+  title: string;
+  cardCount: number;
+  cards: IFlashcard[];
 }

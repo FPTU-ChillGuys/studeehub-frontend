@@ -3,175 +3,25 @@ import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, IFlashcard } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
+import { FlashcardDeck } from "@/Types";
 
 interface FlashcardsPanelProps {
-  onSetDecks: () => void;
-  onClearDecks: () => void;
-  decks: IFlashcard[];
+  onGenerateFlashcards: () => void;
+  flashcards: FlashcardDeck[];
+  setFlashcards: React.Dispatch<React.SetStateAction<FlashcardDeck[]>>;
 }
 
-interface FlashcardDeck {
-  id: string;
-  title: string;
-  createdAt: string;
-  cardCount: number;
-  cards: IFlashcard[];
-}
+
 
 const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
-  onSetDecks,
+  onGenerateFlashcards,
+  flashcards,
+  setFlashcards,
 }) => {
   const [view, setView] = useState<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
   
-  // Sample flashcard decks - replace with real data later
-  const [flashcardDecks, setFlashcardDecks] = useState<FlashcardDeck[]>([
-    {
-      id: "1",
-      title: "Philosophy Basics",
-      createdAt: "2024-10-10",
-      cardCount: 5,
-      cards: [
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">What is Dialectical Materialism?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">A philosophical approach that views matter as the fundamental substance in nature, and mind or consciousness as the result of material processes.</p>
-              </div>
-            )
-          }
-        },
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">Who developed the concept of Dialectical Materialism?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">Karl Marx and Friedrich Engels developed this philosophical framework in the 19th century.</p>
-              </div>
-            )
-          }
-        },
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">What are the three laws of dialectics?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">1. Unity and conflict of opposites<br/>2. Transformation of quantity into quality<br/>3. Negation of negation</p>
-              </div>
-            )
-          }
-        },
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">What is materialism in philosophy?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">Materialism is the philosophical view that all phenomena, including mental states and consciousness, can be explained by material causes and processes.</p>
-              </div>
-            )
-          }
-        },
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">What is the difference between dialectics and metaphysics?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">Dialectics views things in motion and change, considering their internal contradictions. Metaphysics views things as static and unchanging.</p>
-              </div>
-            )
-          }
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "Historical Context",
-      createdAt: "2024-10-12",
-      cardCount: 3,
-      cards: [
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">When was The Communist Manifesto published?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">The Communist Manifesto was published in 1848.</p>
-              </div>
-            )
-          }
-        },
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">What historical period influenced Marx&apos;s work?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">The Industrial Revolution and its social consequences greatly influenced Marx&apos;s philosophical and economic theories.</p>
-              </div>
-            )
-          }
-        },
-        {
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-lg font-medium">What is historical materialism?</p>
-              </div>
-            )
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                <p className="text-center text-base">Historical materialism is the application of dialectical materialism to the study of society and history, emphasizing economic factors as the driving force of social change.</p>
-              </div>
-            )
-          }
-        }
-      ]
-    }
-  ]);
-
+  
   const handleDeckClick = (deck: FlashcardDeck) => {
     setSelectedDeck(deck);
     setView("detail");
@@ -184,11 +34,11 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
 
   const handleDeleteDeck = (deckId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFlashcardDecks(flashcardDecks.filter(deck => deck.id !== deckId));
+    setFlashcards(flashcards.filter(deck => deck.id !== deckId));
   };
 
   const handleGenerateFlashcards = () => {
-    onSetDecks();
+    onGenerateFlashcards();
   };
 
   // List View
@@ -213,8 +63,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Deck List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {flashcardDecks.length > 0 ? (
-              flashcardDecks.map((deck) => (
+            {flashcards.length > 0 ? (
+              flashcards.map((deck) => (
                 <div
                   key={deck.id}
                   onClick={() => handleDeckClick(deck)}
@@ -227,9 +77,6 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {deck.cardCount} cards
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Created: {deck.createdAt}
                       </p>
                     </div>
                     <button

@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
 import UploadModal from "@/components/modals/UploadModal";
-import { Notebook, Document, ChatMessage } from "@/Types";
+import { Notebook, Document, ChatMessage, FlashcardDeck } from "@/Types";
 import NotebookHeader from "@/components/notebook-detail/NotebookHeader";
 import ChatSection from "@/components/notebook-detail/ChatSection";
 import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
@@ -15,6 +15,7 @@ import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import { IFlashcard } from "react-quizlet-flashcard";
 import 'react-quizlet-flashcard/dist/index.css'
+import { nanoid } from "nanoid";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -25,7 +26,7 @@ const NotebookDetailPage = () => {
   const [selectedDocuments, setSelectedDocuments, selectedDocumentsRef] =
     useState<Set<string>>(new Set());
 
- const [decks, setDecks, decksRef] = useState<IFlashcard[]>([]);
+  const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>([]);
 
 
   // Sample notebook data - In real app, fetch based on notebookId
@@ -238,7 +239,8 @@ const NotebookDetailPage = () => {
     sendMessage({ text: message });
   };
 
-  const onSetDecks = async () => {
+  //Generate flashcards from selected documents
+  const onGenerateFlashcards = async () => {
     const response = await fetch(`/api/flashcard`, {
       method : "POST",
       headers : {
@@ -251,31 +253,28 @@ const NotebookDetailPage = () => {
     }).then(res => res.json());
 
     if (response.success === true) {
-        console.log("Flashcards generated:", response.flashcards);
+        console.log("Flashcards generated:", response);
         // Map response to IFlashcard format
-        const generatedDecks: IFlashcard[] = response.flashcards.map((fc: any) => ({
+        const generatedFlashcard : FlashcardDeck = {
+          id : nanoid(),
+          title : response.title,
+          cards : response.flashcards.map((fc: any) => ({
             front : {
-                html : (
-                    <div className="flex items-center justify-center h-full w-full p-6">
-                        <p className="text-center text-lg font-medium">{fc.front}</p>
-                    </div>
-                )
+                html : (<div className="flex items-center justify-center h-full w-full p-6">{fc.front}</div>)
             },
             back : {
-                html : (
-                    <div className="flex items-center justify-center h-full w-full p-6">
-                        <p className="text-center text-base">{fc.back}</p>
-                    </div>
-                )
-            }
-        }));
-        setDecks(generatedDecks);
+                html : (<div className="flex items-center justify-center h-full w-full p-6">{fc.back}</div>)
+            },
+            id : fc.id,
+        })),
+        cardCount : response.flashcards.length,
+        }; 
+        setFlashcards([...flashcardsRef.current, generatedFlashcard])
     }
   }
 
-  const onClearDecks = () => {
-     setDecks([]);
-  }
+  
+
 
   return (
     <SidebarInset>
@@ -304,9 +303,9 @@ const NotebookDetailPage = () => {
           status={status}
         />
         <FlashcardsPanel 
-          onSetDecks={onSetDecks}
-          onClearDecks={onClearDecks}
-          decks={decksRef.current}
+          onGenerateFlashcards={onGenerateFlashcards}
+          setFlashcards={setFlashcards}
+          flashcards={flashcardsRef.current}
         />
       </div>
 

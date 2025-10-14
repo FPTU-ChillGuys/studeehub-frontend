@@ -32,6 +32,7 @@ export async function GenerateFlashcardsFromContent(content: string) {
   const { object: flashcardObject } = await generateObject({
     model: geminiFlashLite,
     schema: z.object({
+      title: z.string().max(100).describe("The title of the flashcard set"),
       flashcards: z
         .array(
           z.object({

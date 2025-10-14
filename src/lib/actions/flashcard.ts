@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import {
-  deck,
+  decks,
   flashcard,
   InsertDeckParams,
   insertDeckSchema,
@@ -9,6 +9,7 @@ import {
 
 export const createFlashcards = async (
   notebookId: string,
+  title: string,
   inputDeckSchema: InsertDeckParams[]
 ) => {
   try {
@@ -21,11 +22,12 @@ export const createFlashcards = async (
       .insert(flashcard)
       .values({
         notebookId: notebookId,
+        title: title,
       })
       .returning();
 
-    const [decks] = await db
-      .insert(deck)
+    const [deckList] = await db
+      .insert(decks)
       .values(validatedDecks.map(deck => ({
         flashcardId: flashcards.id,
         front: deck.front,
@@ -36,7 +38,7 @@ export const createFlashcards = async (
     return {
       success: true,
       flashcardId: flashcards.id,
-      deckId: decks.id,
+      deckId: deckList.id,
     };
   } catch (e) {
     if (e instanceof Error) {
@@ -51,7 +53,7 @@ export const getFlashcardsByNotebookId = async (notebookId: string) => {
     const flashcardsList = await db
       .select()
       .from(flashcard)
-      .leftJoin(deck, eq(flashcard.id, deck.flashcardId))
+      .leftJoin(decks, eq(flashcard.id, decks.flashcardId))
       .where(eq(flashcard.notebookId, notebookId));
 
     return flashcardsList;

@@ -5,14 +5,15 @@ import { z } from "zod";
 
 
 
-export const flashcard = pgTable("flashcards", { 
+export const flashcard = pgTable("flashcard", { 
     id : varchar("id").primaryKey().$defaultFn(() => nanoid()),
+    title : varchar("title").notNull(),
     notebookId: varchar("notebook_id").notNull(),
     createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
     updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull()
 });
 
-export const deck = pgTable("deck", {
+export const decks = pgTable("decks", {
     id : varchar("id").primaryKey().$defaultFn(() => nanoid()),
     flashcardId: varchar("flashcard_id").references(() => flashcard.id, {
         onDelete: "cascade"
@@ -24,5 +25,5 @@ export const deck = pgTable("deck", {
 export const insertFlashcardSchema = createInsertSchema(flashcard).extend({}).omit({id: true, createdAt: true, updatedAt: true, notebookId: true});
 export type InsertFlashcardParams = z.infer<typeof insertFlashcardSchema>;
 
-export const insertDeckSchema = createInsertSchema(deck).extend({}).omit({id: true, flashcardId: true});
+export const insertDeckSchema = createInsertSchema(decks).extend({}).omit({id: true, flashcardId: true});
 export type InsertDeckParams = z.infer<typeof insertDeckSchema>;

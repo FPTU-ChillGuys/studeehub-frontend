@@ -29,7 +29,7 @@ export class AuthService {
     console.log("Register request data:", requestData); // Temporary debug log
 
     const response = await apiClient.post<AuthResponse | string>(
-      "/auths/register",
+      "/auth/register",
       requestData
     );
 
@@ -72,7 +72,7 @@ export class AuthService {
     credentials: LoginRequest
   ): Promise<{ user: User; tokens: AuthTokens }> {
     const response = await apiClient.post<AuthResponse>(
-      "/auths/login",
+      "/auth/login",
       credentials
     );
 
@@ -107,7 +107,7 @@ export class AuthService {
   static async logout(): Promise<void> {
     try {
       // Call logout API if available
-      await apiClient.post("/auths/logout");
+      // await apiClient.post("/auth/logout");
     } finally {
       // Clear tokens regardless of API response
       apiClient.clearToken();
@@ -156,7 +156,7 @@ export class AuthService {
     googleToken: string
   ): Promise<{ tokens: AuthTokens }> {
     const response = await apiClient.post<GoogleAuthResponse>(
-      "/auths/google-login",
+      "/auth/google-login",
       {
         idToken: googleToken,
       }
@@ -199,7 +199,7 @@ export class AuthService {
     try {
       // Call refresh endpoint (adjust based on your API)
       const response = await apiClient.post<AuthResponse>(
-        "/auths/refresh-token",
+        "/auth/refresh-token",
         {
           refreshToken,
         }

@@ -26,10 +26,10 @@ export class AuthService {
       clientUri,
     };
 
-    console.log("Register request data:", requestData); // Temporary debug log
+    console.log("Register request data:", requestData);
 
     const response = await apiClient.post<AuthResponse>(
-      "/auth/register",
+      "/auths/register",
       requestData
     );
 
@@ -43,7 +43,7 @@ export class AuthService {
     credentials: LoginRequest
   ): Promise<{ user: User; tokens: AuthTokens }> {
     const response = await apiClient.post<AuthResponse>(
-      "/auth/login",
+      "/auths/login",
       credentials
     );
 
@@ -127,7 +127,7 @@ export class AuthService {
     googleToken: string
   ): Promise<{ tokens: AuthTokens }> {
     const response = await apiClient.post<GoogleAuthResponse>(
-      "/auth/google-login",
+      "/auths/google-login",
       {
         idToken: googleToken,
       }
@@ -170,7 +170,7 @@ export class AuthService {
     try {
       // Call refresh endpoint (adjust based on your API)
       const response = await apiClient.post<AuthResponse>(
-        "/auth/refresh-token",
+        "/auths/refresh-token",
         {
           refreshToken,
         }

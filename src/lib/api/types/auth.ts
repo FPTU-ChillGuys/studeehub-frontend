@@ -31,8 +31,7 @@ export interface RegisterRequestWithClientUri extends RegisterRequest {
 export interface RegisterResponse {
   success: boolean;
   message: string;
-  user?: User;
-  tokens?: AuthTokens;
+  data?: string;
 }
 
 export interface GoogleLoginRequest {

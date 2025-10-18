@@ -26,13 +26,13 @@ interface LoginFormProps extends React.ComponentProps<"div"> {
   onLogin?: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string }> | void;
+  ) => Promise<{ success: boolean; message?: string }> | void;
   onSignUp?: (
     email: string,
     password: string,
     fullName: string,
     userName: string
-  ) => Promise<{ success: boolean; error?: string }> | void;
+  ) => Promise<{ success: boolean; message?: string }> | void;
   onClose?: () => void;
   showCloseButton?: boolean;
 }
@@ -62,6 +62,7 @@ export function LoginForm({
   // Validation states
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>("");
   const [isTyping, setIsTyping] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState<{success: boolean; message?: string} | null>(null);
 
   // useEffect cho validation realtime
   React.useEffect(() => {
@@ -105,29 +106,38 @@ export function LoginForm({
         // Kiểm tra có lỗi validation không
         if (confirmPasswordError) {
           setError(confirmPasswordError);
+          setIsLoading(false);
           return;
         }
         if (formData.password !== formData.confirmPassword) {
           setError("Passwords don't match!");
+          setIsLoading(false);
           return;
         }
         if (!formData.userName.trim()) {
           setError("Username is required");
+          setIsLoading(false);
           return;
         }
+        
         const result = await onSignUp?.(
           formData.email,
           formData.password,
           formData.fullName,
           formData.userName
         );
-        if (result?.error) {
-          setError(result.error);
+        
+        if (result) {
+          if (result.success) {
+            setRegistrationSuccess({ success: true, message: result.message });
+          } else if (result.message) {
+            setError(result.message);
+          }
         }
       } else {
         const result = await onLogin?.(formData.email, formData.password);
-        if (result?.error) {
-          setError(result.error);
+        if (result?.message) {
+          setError(result.message);
         }
       }
     } catch (error) {
@@ -140,6 +150,7 @@ export function LoginForm({
 
   const toggleMode = () => {
     setError(null);
+    setRegistrationSuccess(null);
     setIsSignUp(!isSignUp);
     setFormData({
       email: "",
@@ -170,7 +181,7 @@ export function LoginForm({
     >
       <Card className="relative w-full">
         {/* Close Button */}
-        {showCloseButton && onClose && (
+        {!registrationSuccess && showCloseButton && onClose && (
           <Button
             variant="ghost"
             size="sm"
@@ -181,12 +192,49 @@ export function LoginForm({
           </Button>
         )}
 
-        {/* Error Display */}
-        {error && (
-          <div className="px-6 pt-6">
-            <ErrorDisplay error={error} />
+        {/* Success Message */}
+        {registrationSuccess ? (
+          <div className="p-6 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <svg
+                className="h-6 w-6 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-medium text-gray-900">
+              Registration Successful!
+            </h3>
+            <div className="mt-2 text-sm text-gray-500">
+              {registrationSuccess.message || 'Your account has been created successfully. You can now sign in.'}
+            </div>
+            <div className="mt-6">
+              <Button
+                onClick={() => {
+                  setRegistrationSuccess(null);
+                  toggleMode(); // Switch to login form
+                }}
+              >
+                Back to Login
+              </Button>
+            </div>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Error Display */}
+            {error && (
+              <div className="px-6 pt-6">
+                <ErrorDisplay error={error} />
+              </div>
+            )}
 
         <CardHeader>
           <CardTitle>
@@ -418,6 +466,8 @@ export function LoginForm({
             </FieldGroup>
           </form>
         </CardContent>
+          </>
+        )}
       </Card>
     </div>
   );

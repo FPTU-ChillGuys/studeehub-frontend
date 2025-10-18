@@ -28,44 +28,15 @@ export class AuthService {
 
     console.log("Register request data:", requestData); // Temporary debug log
 
-    const response = await apiClient.post<AuthResponse | string>(
+    const response = await apiClient.post<AuthResponse>(
       "/auth/register",
       requestData
     );
 
-    // Check if response is the expected token structure (object with accessToken)
-    if (
-      typeof response.data === "object" &&
-      response.data !== null &&
-      "accessToken" in response.data
-    ) {
-      const authData = response.data as AuthResponse;
-
-      // If tokens are provided, set them up
-      apiClient.setToken(authData.accessToken);
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("refreshToken", authData.refreshToken);
-      }
-
-      const user = this.decodeToken(authData.accessToken);
-      return {
-        success: true,
-        message: "Registration and login successful",
-        user,
-        tokens: {
-          accessToken: authData.accessToken,
-          refreshToken: authData.refreshToken,
-        },
-      };
-    } else {
-      // Registration successful but no auto-login (response is string or different format)
-      return {
-        success: true,
-        message:
-          "Registration successful! Please check your email for verification, then login to your account.",
-      };
-    }
+    return {
+      success: response.success,
+      message: response.message,
+    };
   }
 
   static async login(
@@ -95,7 +66,7 @@ export class AuthService {
 
   static getCurrentUser(): User | null {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = apiClient.getToken();
       if (!token) return null;
 
       return this.decodeToken(token);

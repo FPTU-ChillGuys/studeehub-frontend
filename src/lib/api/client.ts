@@ -19,10 +19,10 @@ class APIClient {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.accessToken = this.getTokenFromStorage();
+    this.accessToken = this.getToken();
   }
 
-  private getTokenFromStorage(): string | null {
+  getToken(): string | null {
     if (typeof window !== "undefined") {
       return localStorage.getItem("accessToken");
     }

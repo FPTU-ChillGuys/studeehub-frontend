@@ -348,7 +348,7 @@ const HomePage = () => {
                   userName
                 );
                 if (result?.success) {
-                  handleCloseLogin();
+                  //handleCloseLogin();
                 }
                 return result;
               }}

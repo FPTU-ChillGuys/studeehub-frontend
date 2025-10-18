@@ -4,7 +4,6 @@ import {
   authenticateUser,
   setCurrentUser,
   redirectBasedOnRole,
-  User,
 } from "@/lib/auth";
 import { ApiError } from "@/Types";
 
@@ -20,7 +19,7 @@ export function useAuth() {
         redirectBasedOnRole(user);
         return { success: true };
       } else {
-        return { success: false, error: "Invalid email or password!" };
+        return { success: false, message: "Invalid email or password!" };
       }
     } catch (error) {
       if (error instanceof ApiError) {
@@ -44,13 +43,13 @@ export function useAuth() {
           }
         }
 
-        return { success: false, error: errorMessage };
+        return { success: false, message: errorMessage };
       }
 
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
 
-      return { success: false, error: errorMessage };
+      return { success: false, message: errorMessage };
     }
   };
 
@@ -68,19 +67,7 @@ export function useAuth() {
         userName,
       });
 
-      if (result.success) {
-        // If user data is returned (auto-login case)
-        if (result.user) {
-          setCurrentUser(result.user);
-          redirectBasedOnRole(result.user);
-          return { success: true, message: result.message };
-        } else {
-          // Registration successful but need manual login
-          return { success: true, error: result.message };
-        }
-      } else {
-        return { success: false, error: result.message };
-      }
+      return { success: result.success, message: result.message };
     } catch (error) {
       const errorMessage = "Sign up failed. Please try again.";
 
@@ -105,7 +92,7 @@ export function useAuth() {
           }
         }
 
-        return { success: false, error: errorMessage };
+        return { success: false, message: errorMessage };
       }
 
       // Handle regular Error (like token decoding errors)
@@ -113,21 +100,21 @@ export function useAuth() {
         if (error.message.includes("missing authentication tokens")) {
           return {
             success: false,
-            error:
+            message:
               "Registration successful! Please check your email and then login to your account.",
           };
         } else if (error.message.includes("Invalid token format")) {
           return {
             success: false,
-            error:
+            message:
               "Registration completed but there was an issue with authentication. Please try logging in.",
           };
         } else {
-          return { success: false, error: error.message };
+          return { success: false, message: error.message };
         }
       }
 
-      return { success: false, error: errorMessage };
+      return { success: false, message: errorMessage };
     }
   };
 

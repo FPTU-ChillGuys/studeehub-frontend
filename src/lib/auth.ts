@@ -23,7 +23,7 @@ export const authenticateUser = async (
     return response.user;
   } catch (error) {
     console.error("Authentication failed:", error);
-    return null;
+    throw error;
   }
 };
 

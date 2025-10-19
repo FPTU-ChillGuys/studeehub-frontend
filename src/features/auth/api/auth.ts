@@ -22,8 +22,8 @@ export const authenticateUser = async (
     if (!response?.ok) {
       return null;
     }
-    const session = await getSession();
-    return session?.user as User;
+    
+    return await getCurrentUser();
   } catch (error) {
     console.error("Authentication failed:", error);
     throw error;

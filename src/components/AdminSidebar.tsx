@@ -70,7 +70,7 @@ export function AdminSidebar({
     ? {
         name: user.name,
         email: user.email,
-        avatar: user.avatar || "https://github.com/shadcn.png",
+        avatar: user.image || "https://github.com/shadcn.png",
       }
     : {
         name: "Admin",

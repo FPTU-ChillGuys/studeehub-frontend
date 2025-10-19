@@ -98,18 +98,19 @@ const handler = NextAuth({
       if (user) {
         token.accessToken = user.accessToken || account?.access_token;
         token.refreshToken = user.refreshToken || account?.refresh_token;
-        token.role = user.role || "user";
+        token.role = user.role;
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token.user) {
+      if (token) {
         session.user = {
           ...session.user,
-          ...token.user,
-          accessToken: token.accessToken as string,
-          refreshToken: token.refreshToken as string,
+          ...token,
         };
       }
       return session;

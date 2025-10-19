@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { User } from "@/lib/auth";
+import { User } from "@/Types";
 import { isAdmin } from "@/features/auth/api/auth";
 import { getCurrentUser } from "@/features/auth/api/auth";
 
@@ -22,21 +22,24 @@ export function AuthGuard({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
+    getCurrentUser().then((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
 
-    // Redirect if auth required but not authenticated
-    if (requireAuth && !currentUser) {
-      window.location.href = "/";
-      return;
-    }
+      // Redirect if auth required but not authenticated
+      if (requireAuth && !currentUser) {
+        window.location.href = "/";
+        return;
+      }
 
-    // Redirect if admin required but not admin
-    if (requireAdmin && !isAdmin(currentUser)) {
-      window.location.href = "/user/my-documents";
-      return;
-    }
+      // Redirect if admin required but not admin
+      if (requireAdmin && !isAdmin(currentUser)) {
+        window.location.href = "/user/my-documents";
+        return;
+      }
+    });
+
+    
   }, [requireAuth, requireAdmin]);
 
   if (loading) {

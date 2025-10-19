@@ -26,7 +26,7 @@ export default function AuthCallbackPage() {
         email: session.user.email || "",
         name: session.user.name || "",
         role: (session.user.role as "user" | "admin") || "user",
-        avatar: session.user.image || undefined,
+        image: session.user.image || undefined,
       };
 
       redirectBasedOnRole(user);

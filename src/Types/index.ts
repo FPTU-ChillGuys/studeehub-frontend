@@ -8,6 +8,32 @@ export interface User {
   image?: string;
   role: "user" | "admin";
   avatar?: string;
+  // Additional profile fields from backend
+  address?: string;
+  userName?: string;
+  phoneNumber?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Detailed user profile from backend
+export interface UserProfile {
+  id: string;
+  fullName: string;
+  address: string;
+  email: string;
+  userName: string;
+  phoneNumber: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProfileResponse {
+  data: UserProfile;
+  success: boolean;
+  message: string;
+  errors: string[] | null;
+  errorType: number;
 }
 
 // Streak types

@@ -61,7 +61,11 @@ export function NavMain({
                 </CollapsibleContent>
               </Collapsible>
             ) : (
-              <SidebarMenuButton tooltip={item.title} asChild>
+              <SidebarMenuButton
+                tooltip={item.title}
+                asChild
+                className="hover:cursor-pointer"
+              >
                 <a href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>

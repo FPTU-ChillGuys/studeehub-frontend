@@ -42,6 +42,38 @@ class StreakService {
       throw error;
     }
   }
+
+  /**
+   * Get user streaks with automatic initialization if not exists
+   * This will call PUT first to ensure streak exists, then GET to retrieve it
+   * @param userId - User ID
+   * @param type - Streak type (default: 1 for login streaks)
+   */
+  async getOrInitializeStreaks(userId: string, type: number = 1): Promise<StreakResponse> {
+    try {
+      // First try to get existing streaks
+      return await this.getStreaks(userId, type);
+    } catch {
+      try {
+        // If GET fails (no streak exists), initialize with PUT first
+        console.log("[StreakService] No streaks found, initializing new streak...");
+        await this.updateStreak(userId, { type, isActive: true });
+        
+        // Then get the initialized streak
+        return await this.getStreaks(userId, type);
+      } catch (initError) {
+        console.error("[StreakService] Error initializing streak:", initError);
+        // If both fail, return empty response
+        return {
+          data: [],
+          success: true,
+          message: "No streaks available",
+          errors: null,
+          errorType: 0
+        };
+      }
+    }
+  }
 }
 
 const streakService = new StreakService();

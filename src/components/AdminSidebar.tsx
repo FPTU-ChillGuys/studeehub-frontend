@@ -69,12 +69,12 @@ export function AdminSidebar({
     ? {
         name: user.name,
         email: user.email,
-        avatar: user.image || "https://github.com/shadcn.png",
+        avatar: user.image || "", // Let AvatarFallback show initials if no image
       }
     : {
         name: "Admin",
-        email: "admin@studeehub.com",
-        avatar: "https://github.com/shadcn.png",
+        email: "admin@studeehub.com", 
+        avatar: "", // Let AvatarFallback show initials
       };
 
   return (

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { User } from "@/Types";
+import { User, UserProfile } from "@/Types";
 import { getCurrentUser } from "@/features/auth/";
 import streakService from "@/service/streakService";
+import userService from "@/service/userService";
 
 export interface ProfileStats {
   totalStudyHours: number;
@@ -91,11 +92,35 @@ export function useProfile() {
     try {
       setProfileData((prev) => ({ ...prev, loading: true, error: null }));
 
-      // Get user data
-      const user = await getCurrentUser();
+      // Get user data from session
+      const sessionUser = await getCurrentUser();
 
-      if (!user) {
+      if (!sessionUser) {
         throw new Error("User not authenticated");
+      }
+
+      // Fetch detailed user profile from backend
+      let detailedUser: User = sessionUser;
+      try {
+        const userProfileResponse = await userService.getUserProfile(
+          sessionUser.id
+        );
+        if (userProfileResponse.success && userProfileResponse.data) {
+          // Merge session user with detailed profile data
+          detailedUser = {
+            ...sessionUser,
+            name: userProfileResponse.data.fullName || sessionUser.name,
+            email: userProfileResponse.data.email || sessionUser.email,
+            address: userProfileResponse.data.address,
+            userName: userProfileResponse.data.userName,
+            phoneNumber: userProfileResponse.data.phoneNumber,
+            createdAt: userProfileResponse.data.createdAt,
+            updatedAt: userProfileResponse.data.updatedAt,
+          };
+        }
+      } catch (profileError) {
+        // Continue with session user data if profile fetch fails
+        console.error("Failed to fetch detailed user profile:", profileError);
       }
 
       // Fetch real streak data
@@ -103,16 +128,20 @@ export function useProfile() {
       let longestCount = 0;
 
       try {
-        const streakResponse = await streakService.getStreaks(user.id);
+        const streakResponse = await streakService.getOrInitializeStreaks(sessionUser.id);
 
         // Check if response is an array directly (backend returns array in data field)
         if (Array.isArray(streakResponse) && streakResponse.length > 0) {
           const loginStreak = streakResponse[0]; // Get the first streak (type 1)
           currentCount = loginStreak.currentCount;
           longestCount = loginStreak.longestCount;
-        } 
+        }
         // Check if response has data property with array
-        else if (streakResponse.data && Array.isArray(streakResponse.data) && streakResponse.data.length > 0) {
+        else if (
+          streakResponse.data &&
+          Array.isArray(streakResponse.data) &&
+          streakResponse.data.length > 0
+        ) {
           const loginStreak = streakResponse.data[0];
           currentCount = loginStreak.currentCount;
           longestCount = loginStreak.longestCount;
@@ -311,7 +340,7 @@ export function useProfile() {
       ];
 
       setProfileData({
-        user,
+        user: detailedUser,
         stats: mockStats,
         learningProgress: mockLearningProgress,
         recentActivity: mockRecentActivity,

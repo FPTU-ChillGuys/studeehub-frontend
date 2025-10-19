@@ -1,8 +1,16 @@
 "use client";
 
-import { Mail, MapPin, Calendar, Edit3 } from "lucide-react";
+import {
+  Mail,
+  MapPin,
+  Calendar,
+  Edit3,
+  User as UserIcon,
+  Phone,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { User } from "@/Types";
+import Image from "next/image";
 
 interface ProfileHeaderProps {
   user: User | null;
@@ -47,7 +55,7 @@ export function ProfileHeader({
         <div className="relative p-8 text-white">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <h1 className="text-2xl font-bold mb-2">User Not Found</h1>
+              <h1 className="text-2xl font-bold mb-2">User Not Found!</h1>
               <p className="opacity-90">
                 Please log in again to view your profile
               </p>
@@ -58,23 +66,22 @@ export function ProfileHeader({
     );
   }
 
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "Administrator";
-      default:
-        return "User";
-    }
-  };
-
   const getJoinDate = () => {
-    // Mock join date - in real app, this would come from user data
-    return "Jan 2024";
+    if (user.createdAt) {
+      const date = new Date(user.createdAt);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
+    }
+    return "Oct 2025"; // Fallback
   };
 
   const getLocation = () => {
-    // Mock location - in real app, this would come from user data
-    return "Ho Chi Minh, VN";
+    if (user.address && user.address.trim()) {
+      return user.address;
+    }
+    return "Ho Chi Minh"; // Fallback
   };
 
   return (
@@ -87,15 +94,21 @@ export function ProfileHeader({
             {/* Avatar */}
             <div className="w-24 h-24 bg-white/30 rounded-2xl flex items-center justify-center backdrop-blur-sm">
               {user.image ? (
-                <img
+                <Image
                   src={user.image}
                   alt={user.name}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-lg object-cover"
                 />
               ) : (
-                <div className="w-24 h-24 bg-white/60 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
+                <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {user.name
+                      .split(" ")
+                      .map((word) => word.charAt(0).toUpperCase())
+                      .slice(0, 2)
+                      .join("")}
                   </span>
                 </div>
               )}
@@ -105,9 +118,9 @@ export function ProfileHeader({
             <div className="space-y-3">
               <div>
                 <h1 className="text-3xl font-bold">{user.name}</h1>
-                <p className="text-lg opacity-90">
-                  {getRoleDisplayName(user.role)}
-                </p>
+                {user.userName && user.userName !== user.email && (
+                  <p className="text-white/80 text-lg">@{user.userName}</p>
+                )}
               </div>
 
               {/* Info Pills */}
@@ -116,10 +129,19 @@ export function ProfileHeader({
                   <Mail className="w-4 h-4" />
                   <span className="text-sm">{user.email}</span>
                 </div>
+
+                {user.phoneNumber && (
+                  <div className="flex items-center space-x-2 bg-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
+                    <Phone className="w-4 h-4" />
+                    <span className="text-sm">{user.phoneNumber}</span>
+                  </div>
+                )}
+
                 <div className="flex items-center space-x-2 bg-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
                   <MapPin className="w-4 h-4" />
                   <span className="text-sm">{getLocation()}</span>
                 </div>
+
                 <div className="flex items-center space-x-2 bg-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm">Joined {getJoinDate()}</span>

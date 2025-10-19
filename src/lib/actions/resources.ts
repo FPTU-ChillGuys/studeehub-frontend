@@ -82,3 +82,14 @@ export const getContentFromResourceId = async (resourceIds:  string[]) => {
     return [];
   }
 };
+
+export const deleteResourceById = async (resourceId: string) => {
+  try {
+    await db.delete(resources).where(eq(resources.id, resourceId));
+    return { success: true };
+  }
+  catch (e) {
+    console.error("Error deleting resource:", e);
+    return { success: false };
+  }
+};

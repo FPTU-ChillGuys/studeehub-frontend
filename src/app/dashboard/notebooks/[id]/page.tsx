@@ -363,6 +363,20 @@ const NotebookDetailPage = () => {
     }
   };
 
+  const handleDeleteResource = async (resourceId: string) => {
+    const response = await fetch(`/api/resource/${resourceId}`, {
+      method: "DELETE",
+    }).then((res) => res.json());
+    if (response.success === true) {
+      console.log("Resource deleted:", resourceId);
+      setNotebook((prev) => ({
+        ...prev,
+        documents: prev.documents.filter((doc) => doc.id !== resourceId),
+        documentsCount: prev.documentsCount - 1,
+      }));
+    }
+  };
+
   return (
     <SidebarInset>
       <NotebookHeader notebookTitle={notebook.title} />
@@ -379,6 +393,7 @@ const NotebookDetailPage = () => {
           setIsUploadModalOpen={setIsUploadModalOpen}
           getFileIcon={getFileIcon}
           completedDocsCount={completedDocsCount}
+          handleDeleteResource={handleDeleteResource}
         />
 
         <ChatSection

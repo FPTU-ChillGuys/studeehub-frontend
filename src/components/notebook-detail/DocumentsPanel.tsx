@@ -17,6 +17,7 @@ interface DocumentsPanelProps {
   setIsUploadModalOpen: (open: boolean) => void;
   getFileIcon: (type: string) => React.ReactNode;
   completedDocsCount: number;
+  handleDeleteResource: (docId: string) => void;
 }
 
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
@@ -30,6 +31,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   setIsUploadModalOpen,
   getFileIcon,
   completedDocsCount,
+  handleDeleteResource,
 }) => {
   return (
     <div className="w-[23%] flex flex-col border-r border-border">
@@ -106,6 +108,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
               isSelected={selectedDocuments.has(doc.id)}
               onToggleSelect={onToggleDocument}
               getFileIcon={getFileIcon}
+              handleDeleteResource={handleDeleteResource}
             />
           ))}
         </div>

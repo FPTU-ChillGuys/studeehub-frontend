@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, Eye, Download, MoreVertical } from "lucide-react";
+import { Calendar, Eye, Download, MoreVertical, Delete, DeleteIcon, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 
@@ -8,6 +8,7 @@ interface DocumentCardProps {
   isSelected: boolean;
   onToggleSelect: (docId: string, selected: boolean) => void;
   getFileIcon: (type: string) => React.ReactNode;
+  handleDeleteResource: (docId: string) => void;
 }
 
 const DocumentCard: React.FC<DocumentCardProps> = ({
@@ -15,7 +16,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   isSelected,
   onToggleSelect,
   getFileIcon,
+  handleDeleteResource,
 }) => {
+
   return (
     <div
       className={`bg-card border rounded-lg p-4 hover:shadow-sm transition-all ${
@@ -84,14 +87,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-1">
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-            <Eye className="w-3 h-3" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-            <Download className="w-3 h-3" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-            <MoreVertical className="w-3 h-3" />
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleDeleteResource(doc.id)}>
+            <CircleX className="w-3 h-3" color="#ff0000" />
           </Button>
         </div>
       </div>

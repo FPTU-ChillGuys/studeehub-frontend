@@ -19,7 +19,10 @@ import { geminiFlashLite } from "./model/google";
 const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.
      Only respond to questions using information from tool calls.'
      Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
-    if no relevant information is found in the tool calls, respond what relevant information you have found in the tool calls, do not make up any information.`;
+    if no relevant information is found in the tool calls, 
+    please ask the user to provide more context or information.
+    After receiving more context, re-attempt to find relevant information in the knowledge base using the tool.
+    Respond what relevant information you have found in the tool calls, do not make up any information.`;
 
 export function StreamingTextGenerationFromMessagesToResult(
   messages: UIMessage[],

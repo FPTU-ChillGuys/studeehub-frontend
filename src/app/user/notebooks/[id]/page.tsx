@@ -4,16 +4,16 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
 import UploadModal from "@/components/modals/UploadModal";
-import { Notebook, Document, ChatMessage, FlashcardDeck } from "@/Types";
+import { Notebook, Document, FlashcardDeck } from "@/Types";
 import NotebookHeader from "@/components/notebook-detail/NotebookHeader";
 import ChatSection from "@/components/notebook-detail/ChatSection";
 import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
 import { getFileIcon } from "@/components/notebook-detail/utils";
+import { LoadingNotebookDetail } from "@/components/notebook-detail";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
-import { IFlashcard } from "react-quizlet-flashcard";
 import "react-quizlet-flashcard/dist/index.css";
 import { nanoid } from "nanoid";
 import { uploadNotebookFile } from "@/features/notebook/api/upload";
@@ -30,6 +30,12 @@ const NotebookDetailPage = () => {
   const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>(
     []
   );
+
+  // Loading states
+  const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [isLoadingFlashcards, setIsLoadingFlashcards] = useState(true);
 
   // Disable flashcard generation if no documents are selected
   const [isDisabled, setIsDisabled] = useState(true);
@@ -70,6 +76,7 @@ const NotebookDetailPage = () => {
   //Load existing chat messages
   useEffect(() => {
     const fetchMessages = async () => {
+      setIsLoadingMessages(true);
       try {
         const response = await fetch(`/api/chatbot/${notebookId}`);
         if (response.ok) {
@@ -79,6 +86,8 @@ const NotebookDetailPage = () => {
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     };
     fetchMessages();
@@ -87,6 +96,7 @@ const NotebookDetailPage = () => {
   //Get notebook details
   useEffect(() => {
     const fetchNotebookDetails = async () => {
+      setIsLoadingNotebook(true);
       try {
         const response = await fetch(`/api/notebook/${notebookId}`);
         if (response.ok) {
@@ -102,6 +112,8 @@ const NotebookDetailPage = () => {
         }
       } catch (error) {
         console.error("Error fetching notebook details:", error);
+      } finally {
+        setIsLoadingNotebook(false);
       }
     };
 
@@ -111,6 +123,7 @@ const NotebookDetailPage = () => {
   //Get file upload and document management
   useEffect(() => {
     const fetchDocuments = async () => {
+      setIsLoadingDocuments(true);
       try {
         const response = await fetch(`/api/file/${notebookId}`);
         if (response.ok) {
@@ -137,6 +150,8 @@ const NotebookDetailPage = () => {
         }
       } catch (error) {
         console.error("Error fetching documents:", error);
+      } finally {
+        setIsLoadingDocuments(false);
       }
     };
 
@@ -306,36 +321,43 @@ const NotebookDetailPage = () => {
   //Get flashcards for this notebook
   useEffect(() => {
     const fetchFlashcards = async () => {
-      const response = await fetch(`/api/flashcard/${notebookId}`);
-      const data = await response.json();
-      if (data.success === true) {
-        console.log("Fetched flashcards:", data.flashcards);
-        const fetchedFlashcards: FlashcardDeck[] = data.flashcards.map(
-          (fc: any) => ({
-            id: fc.id,
-            title: fc.title,
-            cardCount: fc.cardCount,
-            cards: fc.cards.map((card: any, index: number) => ({
-              front: {
-                html: (
-                  <div className="flex items-center justify-center h-full w-full p-6">
-                    {card?.front || "No content"}
-                  </div>
-                ),
-              },
-              back: {
-                html: (
-                  <div className="flex items-center justify-center h-full w-full p-6">
-                    {card?.back || "No content"}
-                  </div>
-                ),
-              },
-            })),
-          })
-        );
-        setFlashcards(fetchedFlashcards);
-      } else {
-        console.error("Failed to fetch flashcards:", data.message);
+      setIsLoadingFlashcards(true);
+      try {
+        const response = await fetch(`/api/flashcard/${notebookId}`);
+        const data = await response.json();
+        if (data.success === true) {
+          console.log("Fetched flashcards:", data.flashcards);
+          const fetchedFlashcards: FlashcardDeck[] = data.flashcards.map(
+            (fc: any) => ({
+              id: fc.id,
+              title: fc.title,
+              cardCount: fc.cardCount,
+              cards: fc.cards.map((card: any) => ({
+                front: {
+                  html: (
+                    <div className="flex items-center justify-center h-full w-full p-6">
+                      {card?.front || "No content"}
+                    </div>
+                  ),
+                },
+                back: {
+                  html: (
+                    <div className="flex items-center justify-center h-full w-full p-6">
+                      {card?.back || "No content"}
+                    </div>
+                  ),
+                },
+              })),
+            })
+          );
+          setFlashcards(fetchedFlashcards);
+        } else {
+          console.error("Failed to fetch flashcards:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching flashcards:", error);
+      } finally {
+        setIsLoadingFlashcards(false);
       }
     };
     fetchFlashcards();
@@ -366,41 +388,52 @@ const NotebookDetailPage = () => {
     }
   };
 
+  // Check if any loading is in progress
+  const isLoading =
+    isLoadingNotebook ||
+    isLoadingDocuments ||
+    isLoadingMessages ||
+    isLoadingFlashcards;
+
   return (
     <SidebarInset>
       <NotebookHeader notebookTitle={notebook.title} />
 
-      <div className="flex flex-1 h-[calc(100vh-4rem)]">
-        <DocumentsPanel
-          documents={filteredDocuments}
-          selectedDocuments={selectedDocuments}
-          onToggleDocument={handleToggleDocument}
-          onSelectAll={handleSelectAll}
-          onClearSelection={handleClearSelection}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          setIsUploadModalOpen={setIsUploadModalOpen}
-          getFileIcon={getFileIcon}
-          completedDocsCount={completedDocsCount}
-          handleDeleteResource={handleDeleteResource}
-        />
+      {isLoading ? (
+        <LoadingNotebookDetail />
+      ) : (
+        <div className="flex flex-1 h-[calc(100vh-4rem)]">
+          <DocumentsPanel
+            documents={filteredDocuments}
+            selectedDocuments={selectedDocuments}
+            onToggleDocument={handleToggleDocument}
+            onSelectAll={handleSelectAll}
+            onClearSelection={handleClearSelection}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            setIsUploadModalOpen={setIsUploadModalOpen}
+            getFileIcon={getFileIcon}
+            completedDocsCount={completedDocsCount}
+            handleDeleteResource={handleDeleteResource}
+          />
 
-        <ChatSection
-          notebook={notebook}
-          messages={messages}
-          handleSendMessage={handleSendMessage}
-          selectedDocuments={selectedDocuments}
-          getFileIcon={getFileIcon}
-          status={status}
-        />
-        <FlashcardsPanel
-          onGenerateFlashcards={onGenerateFlashcards}
-          setFlashcards={setFlashcards}
-          flashcards={flashcardsRef.current}
-          onDeleteDeck={onDeleteDeck}
-          isDisabled={isDisabled}
-        />
-      </div>
+          <ChatSection
+            notebook={notebook}
+            messages={messages}
+            handleSendMessage={handleSendMessage}
+            selectedDocuments={selectedDocuments}
+            getFileIcon={getFileIcon}
+            status={status}
+          />
+          <FlashcardsPanel
+            onGenerateFlashcards={onGenerateFlashcards}
+            setFlashcards={setFlashcards}
+            flashcards={flashcardsRef.current}
+            onDeleteDeck={onDeleteDeck}
+            isDisabled={isDisabled}
+          />
+        </div>
+      )}
 
       <UploadModal
         isOpen={isUploadModalOpen}

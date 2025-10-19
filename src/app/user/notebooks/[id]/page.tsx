@@ -44,7 +44,6 @@ const NotebookDetailPage = () => {
     createdDate: "",
     lastModified: "",
     documentsCount: 0,
-    totalQuestions: 0,
     status: "active",
     documents: [],
     thumbnail: "",

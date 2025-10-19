@@ -30,7 +30,6 @@ export interface Notebook {
   createdDate: string;
   lastModified: string;
   documentsCount: number;
-  totalQuestions: number;
   status: "active" | "archived";
   documents: Document[];
   thumbnail?: string;

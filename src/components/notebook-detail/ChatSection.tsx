@@ -31,10 +31,6 @@ const ChatSection: React.FC<ChatSectionProps> = ({
             <h2 className="text-lg font-semibold text-foreground truncate">
               {notebook.title}
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {notebook.documentsCount} documents • {notebook.totalQuestions}{" "}
-              questions generated
-            </p>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { redirectBasedOnRole } from "@/features/auth/";
 import { authenticateUser } from "@/features/auth/";
 import { ApiError } from "@/Types";
 import { useSession } from "next-auth/react";
+import streakService from "@/service/streakService";
 
 export function useAuth() {
   const { data: session, update } = useSession();
@@ -12,6 +13,14 @@ export function useAuth() {
       const user = await authenticateUser(email, password);
 
       if (user) {
+        // Update streak after successful login
+        try {
+          await streakService.updateStreak(user.id);
+        } catch (streakError) {
+          // Don't fail login if streak update fails
+          console.error("Failed to update streak:", streakError);
+        }
+
         redirectBasedOnRole(user);
         return { success: true };
       } else {
@@ -137,6 +146,6 @@ export function useAuth() {
     login: handleLogin,
     signUp: handleSignUp,
     validateToken,
-    session
+    session,
   };
 }

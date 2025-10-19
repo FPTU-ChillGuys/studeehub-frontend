@@ -7,6 +7,30 @@ export interface User {
   email: string;
   image?: string;
   role: "user" | "admin";
+  avatar?: string;
+}
+
+// Streak types
+export interface Streak {
+  id: string;
+  type: number;
+  currentCount: number;
+  longestCount: number;
+  lastUpdated: string;
+  createdAt: string;
+}
+
+export interface StreakResponse {
+  data: Streak[];
+  success: boolean;
+  message: string;
+  errors: string[] | null;
+  errorType: number;
+}
+
+export interface UpdateStreakRequest {
+  type: number;
+  isActive: boolean;
 }
 
 // Document types

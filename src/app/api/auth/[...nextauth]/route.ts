@@ -83,9 +83,28 @@ const handler = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === "google" && account.id_token) {
         try {
-          const backendResponse = await AuthService.loginWithGoogle(account.id_token);
+          const backendResponse = await AuthService.loginWithGoogle(
+            account.id_token
+          );
           user.accessToken = backendResponse.accessToken;
           user.refreshToken = backendResponse.refreshToken;
+
+          // Decode JWT to get the real user ID from backend
+          try {
+            const payload = JSON.parse(
+              Buffer.from(
+                backendResponse.accessToken.split(".")[1],
+                "base64"
+              ).toString()
+            );
+
+            // Set user properties from JWT payload
+            user.id = payload.id || payload.sub; // Use 'id' claim, fallback to 'sub'
+            user.email = payload.email;
+            user.role = payload.role;
+          } catch (decodeError) {
+            console.error("Failed to decode JWT:", decodeError);
+          }
 
           return true;
         } catch {

@@ -30,6 +30,14 @@ import { LearningProgress } from "@/components/profile/LearningProgress";
 import { RecentActivity } from "@/components/profile/RecentActivity";
 import { Achievements } from "@/components/profile/Achievements";
 import { ProfileError } from "@/components/profile/ProfileError";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -152,285 +160,302 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="flex-1 p-6 md:p-10 w-full space-y-6">
-      {/* Profile Header */}
-      <ProfileHeader
-        user={user}
-        loading={loading}
-        onEditProfile={handleEditProfile}
-      />
+    <SidebarInset>
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Profile</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </header>
 
-      {/* Summary Statistics */}
-      <ProfileStats stats={stats} loading={loading} />
+      <main className="flex-1 p-6 md:p-10 w-full space-y-6">
+        {/* Profile Header */}
+        <ProfileHeader
+          user={user}
+          loading={loading}
+          onEditProfile={handleEditProfile}
+        />
 
-      {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+        {/* Summary Statistics */}
+        <ProfileStats stats={stats} loading={loading} />
 
-      {/* Main Content Area */}
-      {activeTab === "overview" && (
-        <div className="space-y-8">
-          {/* Learning Progress and Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Learning Progress */}
-            <LearningProgress
-              learningProgress={learningProgress}
-              loading={loading}
-            />
+        {/* Streak Banner */}
+        <StreakBanner stats={stats} userName={user?.name} loading={loading} />
 
-            {/* Recent Activity */}
-            <RecentActivity recentActivity={recentActivity} loading={loading} />
-          </div>
+        {/* Navigation Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                    activeTab === tab.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
-      )}
 
-      {/* Achievements Tab */}
-      {activeTab === "achievements" && (
-        <Achievements achievements={achievements} loading={loading} />
-      )}
+        {/* Main Content Area */}
+        {activeTab === "overview" && (
+          <div className="space-y-8">
+            {/* Learning Progress and Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Learning Progress */}
+              <LearningProgress
+                learningProgress={learningProgress}
+                loading={loading}
+              />
 
-      {/* Activity Tab */}
-      {activeTab === "activity" && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900">Activity Log</h2>
+              {/* Recent Activity */}
+              <RecentActivity
+                recentActivity={recentActivity}
+                loading={loading}
+              />
+            </div>
+          </div>
+        )}
 
-          {loading ? (
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl"
-                    >
-                      <div className="w-10 h-10 bg-gray-300 rounded-lg animate-pulse"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-300 rounded animate-pulse"></div>
-                        <div className="h-3 bg-gray-300 rounded w-3/4 animate-pulse"></div>
-                        <div className="flex space-x-4">
-                          <div className="h-3 bg-gray-300 rounded w-24 animate-pulse"></div>
-                          <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {detailedActivity.map((activity) => {
-                    const getIcon = (type: string) => {
-                      switch (type) {
-                        case "lesson_completed":
-                          return BookOpen;
-                        case "quiz_taken":
-                          return Target;
-                        case "question_answered":
-                          return MessageSquare;
-                        case "achievement_earned":
-                          return Award;
-                        case "study_session":
-                          return Clock;
-                        default:
-                          return Activity;
-                      }
-                    };
+        {/* Achievements Tab */}
+        {activeTab === "achievements" && (
+          <Achievements achievements={achievements} loading={loading} />
+        )}
 
-                    const Icon = getIcon(activity.type);
-                    return (
+        {/* Activity Tab */}
+        {activeTab === "activity" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Activity Log</h2>
+
+            {loading ? (
+              <Card className="shadow-lg">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, index) => (
                       <div
-                        key={activity.id}
-                        className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+                        key={index}
+                        className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl"
                       >
-                        <div
-                          className={`w-10 h-10 bg-white rounded-lg flex items-center justify-center ${activity.color}`}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">
-                            {activity.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {activity.description}
-                          </p>
-                          <div className="flex items-center space-x-4 mt-2">
-                            <span className="text-xs text-gray-500">
-                              {activity.timestamp}
-                            </span>
-                            <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
-                              {activity.subject}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {/* Questions Tab */}
-      {activeTab === "questions" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Questions & Answers
-            </h2>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Ask New Question
-            </Button>
-          </div>
-
-          {loading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Card key={index} className="shadow-lg">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
+                        <div className="w-10 h-10 bg-gray-300 rounded-lg animate-pulse"></div>
                         <div className="flex-1 space-y-2">
                           <div className="h-4 bg-gray-300 rounded animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-3/4 animate-pulse"></div>
                           <div className="flex space-x-4">
-                            <div className="h-3 bg-gray-300 rounded w-20 animate-pulse"></div>
+                            <div className="h-3 bg-gray-300 rounded w-24 animate-pulse"></div>
                             <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
                           </div>
                         </div>
-                        <div className="h-6 w-16 bg-gray-300 rounded animate-pulse"></div>
-                      </div>
-                      <div className="h-16 bg-gray-300 rounded animate-pulse"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {questions.map((q) => (
-                <Card key={q.id} className="shadow-lg">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900 mb-2">
-                            {q.question}
-                          </h3>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>{q.subject}</span>
-                            <span>•</span>
-                            <span>{q.date}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {q.status === "answered" && q.rating ? (
-                            <div className="flex items-center space-x-1">
-                              {[...Array(q.rating)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className="w-4 h-4 text-yellow-400 fill-current"
-                                />
-                              ))}
-                              <span className="text-sm text-gray-600 ml-2">
-                                {q.rating}/5
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
-                              Pending
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {q.answer && (
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <p className="text-gray-700">{q.answer}</p>
-                        </div>
-                      )}
-
-                      {q.status === "answered" && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span>Answered</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Settings Tab */}
-      {activeTab === "settings" && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-
-          <div className="space-y-6">
-            {settings.map((category) => {
-              const Icon = category.icon;
-              return (
-                <Card key={category.category} className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Icon className="w-5 h-5 text-blue-600" />
-                      <span>{category.category}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {category.options.map((option) => (
-                      <div
-                        key={option.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
-                      >
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">
-                            {option.label}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {option.description}
-                          </p>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
                       </div>
                     ))}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {detailedActivity.map((activity) => {
+                      const getIcon = (type: string) => {
+                        switch (type) {
+                          case "lesson_completed":
+                            return BookOpen;
+                          case "quiz_taken":
+                            return Target;
+                          case "question_answered":
+                            return MessageSquare;
+                          case "achievement_earned":
+                            return Award;
+                          case "study_session":
+                            return Clock;
+                          default:
+                            return Activity;
+                        }
+                      };
 
-      {/* Streak Banner */}
-      <StreakBanner stats={stats} userName={user?.name} loading={loading} />
-    </main>
+                      const Icon = getIcon(activity.type);
+                      return (
+                        <div
+                          key={activity.id}
+                          className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <div
+                            className={`w-10 h-10 bg-white rounded-lg flex items-center justify-center ${activity.color}`}
+                          >
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">
+                              {activity.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {activity.description}
+                            </p>
+                            <div className="flex items-center space-x-4 mt-2">
+                              <span className="text-xs text-gray-500">
+                                {activity.timestamp}
+                              </span>
+                              <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
+                                {activity.subject}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Questions Tab */}
+        {activeTab === "questions" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Questions & Answers
+              </h2>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                Ask New Question
+              </Button>
+            </div>
+
+            {loading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index} className="shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-300 rounded animate-pulse"></div>
+                            <div className="flex space-x-4">
+                              <div className="h-3 bg-gray-300 rounded w-20 animate-pulse"></div>
+                              <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                            </div>
+                          </div>
+                          <div className="h-6 w-16 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="h-16 bg-gray-300 rounded animate-pulse"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {questions.map((q) => (
+                  <Card key={q.id} className="shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 mb-2">
+                              {q.question}
+                            </h3>
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <span>{q.subject}</span>
+                              <span>•</span>
+                              <span>{q.date}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {q.status === "answered" && q.rating ? (
+                              <div className="flex items-center space-x-1">
+                                {[...Array(q.rating)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className="w-4 h-4 text-yellow-400 fill-current"
+                                  />
+                                ))}
+                                <span className="text-sm text-gray-600 ml-2">
+                                  {q.rating}/5
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {q.answer && (
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-gray-700">{q.answer}</p>
+                          </div>
+                        )}
+
+                        {q.status === "answered" && (
+                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span>Answered</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+
+            <div className="space-y-6">
+              {settings.map((category) => {
+                const Icon = category.icon;
+                return (
+                  <Card key={category.category} className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Icon className="w-5 h-5 text-blue-600" />
+                        <span>{category.category}</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {category.options.map((option) => (
+                        <div
+                          key={option.id}
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
+                        >
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">
+                              {option.label}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {option.description}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </main>
+    </SidebarInset>
   );
 }

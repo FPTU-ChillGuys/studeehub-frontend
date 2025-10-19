@@ -16,6 +16,7 @@ import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import { IFlashcard } from "react-quizlet-flashcard";
 import "react-quizlet-flashcard/dist/index.css";
 import { nanoid } from "nanoid";
+import { uploadNotebookFile } from "@/features/notebook/api/upload";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -140,7 +141,7 @@ const NotebookDetailPage = () => {
     };
 
     fetchDocuments();
-  }, [notebookId]);
+  }, [notebookId, setNotebook]);
 
   const handleUploadFiles = async (files: File[]) => {
     try {
@@ -169,27 +170,18 @@ const NotebookDetailPage = () => {
       //Upload files to backend
       let resourceIds: string[] = [];
       const uploadToServer = async () => {
-        const formData = new FormData();
-        files.forEach((file) => {
-          formData.append("files", file);
-        });
-        formData.append("notebookId", notebookId);
-
         // Upload files to server
         try {
-          const response = await fetch("/api/file/upload", {
-            method: "POST",
-            body: formData,
-          });
-          if (!response.ok) {
+          const response = await uploadNotebookFile(files, notebookId);
+
+          if (response.status !== 200) {
             throw new Error("Failed to upload files");
           }
-          const data = await response.json();
-          if (data.success === true) {
-            console.log("Files uploaded successfully:", data);
-            resourceIds = data.resourceIds || [];
+          if (response.data.success === true) {
+            console.log("Files uploaded successfully:", response.data);
+            resourceIds = response.data.resourceIds || [];
           } else {
-            console.error("File upload failed:", data.message);
+            console.error("File upload failed:", response.data.message);
           }
         } catch (error) {
           console.error("Error uploading files:", error);
@@ -221,8 +213,6 @@ const NotebookDetailPage = () => {
           lastModified: new Date().toISOString().split("T")[0],
         };
       });
-      console.log("Resource IDs after upload:", resourceIds);
-      console.log("Notebook after upload:", notebook);
     } catch (error) {
       console.error("Error in handleUploadFiles:", error);
     }

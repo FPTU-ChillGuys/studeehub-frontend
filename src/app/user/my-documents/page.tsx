@@ -135,7 +135,7 @@ const NotebooksPage = () => {
           setNotebooks([]);
           return;
         }
-        console.log("Fetched Notebooks:", data.notebooks);
+        // Get document counts for each notebook
         setNotebooks(
           data?.notebooks?.map(
             (notebook: any) =>
@@ -145,7 +145,7 @@ const NotebooksPage = () => {
                 description: notebook.description,
                 createdDate: notebook.createdDate,
                 lastModified: notebook.updatedDate,
-                documentsCount: 0,
+                documentsCount: notebook.resourceCount || 0,
                 status: notebook.status,
                 documents: [],
                 thumbnail: notebook.thumbnail,
@@ -236,8 +236,8 @@ const NotebooksPage = () => {
 
   const filteredNotebooks = notebooks?.filter((notebook) => {
     const matchesSearch =
-      notebook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notebook.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      notebook?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notebook?.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
       filterStatus === "all" || notebook.status === filterStatus;
     return matchesSearch && matchesFilter;

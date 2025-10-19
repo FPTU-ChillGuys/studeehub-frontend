@@ -13,3 +13,4 @@ export async function DELETE(request: Request, params: { params: { id: string } 
         { status: response.success ? 200 : 500 }
     );
 }
+

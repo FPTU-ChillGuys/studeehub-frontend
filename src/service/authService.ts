@@ -1,12 +1,17 @@
 import { apiClient } from "@/lib/api/client";
 import { User } from "@/Types";
-import { RegisterRequest, RegisterResponse, RegisterRequestWithClientUri, AuthResponse, LoginRequest, AuthTokens, GoogleAuthResponse } from "../features/auth/types/auth";
-
-
+import { 
+  RegisterRequest, 
+  AuthResponse, 
+  LoginRequest, 
+  AuthTokens, 
+  RegisterRequestWithClientUri,
+} from "@/features/auth";
+import { getSession } from "next-auth/react";
 
 export class AuthService {
-  static async register(userData: RegisterRequest): Promise<RegisterResponse> {
-    // Get clientUri from environment variable
+  // Register a new user
+  static async register(userData: RegisterRequest): Promise<{ success: boolean; message: string }> {
     const clientUri = process.env.NEXT_PUBLIC_DEFAULT_CLIENT_URI;
 
     if (!clientUri) {
@@ -28,28 +33,17 @@ export class AuthService {
     );
 
     return {
-      success: response.success,
+      success: true,
       message: response.message,
     };
   }
 
-  static async login(
-    credentials: LoginRequest
-  ): Promise<{ user: User; tokens: AuthTokens; }> {
+  static async login(credentials: LoginRequest): Promise<{ user: User; tokens: AuthTokens }> {
     const response = await apiClient.post<AuthResponse>(
       "/auths/login",
       credentials
     );
-
-    // Set access token for future requests
-    apiClient.setToken(response.data.accessToken);
-
-    // Store refresh token
-    if (typeof window !== "undefined") {
-      localStorage.setItem("refreshToken", response.data.refreshToken);
-    }
-
-    // Decode JWT to get user info (simple decode without verification)
+    
     const user = this.decodeToken(response.data.accessToken);
 
     return {
@@ -58,28 +52,6 @@ export class AuthService {
     };
   }
 
-  static getCurrentUser(): User | null {
-    try {
-      const token = apiClient.getToken();
-      if (!token) return null;
-
-      return this.decodeToken(token);
-    } catch {
-      return null;
-    }
-  }
-
-  static async logout(): Promise<void> {
-    try {
-      // Call logout API if available
-      // await apiClient.post("/auth/logout");
-    } finally {
-      // Clear tokens regardless of API response
-      apiClient.clearToken();
-    }
-  }
-
-  // Simple JWT decode (client-side only, not for verification)
   private static decodeToken(token: string): User {
     try {
       // Validate token format
@@ -105,64 +77,84 @@ export class AuthService {
     }
   }
 
-  // Check if token is expired
-  static isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const expiry = payload.exp * 1000; // Convert to milliseconds
-      return Date.now() > expiry;
-    } catch {
-      return true; // Consider invalid tokens as expired
-    }
-  }
-
-  // Refresh token if needed
-  static async loginWithGoogle(
-    googleToken: string
-  ): Promise<{ tokens: AuthTokens; }> {
-    const response = await apiClient.post<GoogleAuthResponse>(
+  // Google OAuth login
+  static async loginWithGoogle(googleToken: string): Promise<AuthTokens> {
+    const response = await apiClient.post<AuthTokens>(
       "/auths/google-login",
       {
         idToken: googleToken,
       }
     );
 
-    // Set access token for future requests
-    apiClient.setToken(response.data.accessToken);
+    return response.data;
+  }
 
-    // Store refresh token
-    if (typeof window !== "undefined") {
-      localStorage.setItem("refreshToken", response.data.refreshToken);
+  static async getCurrentUser(): Promise<User | null> {
+    try {
+      const session = await getSession();
+      if (!session?.user) return null;
+
+      return {
+        id: session.user.id,
+        name: session.user.name || '',
+        email: session.user.email || '',
+        role: session.user.role as 'user' | 'admin' || 'user',
+      };
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
     }
+  }
 
-    // Store user data in localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+  // Check if token is expired
+  static isTokenExpired(token: string): boolean {
+    if (!token) return true;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch (error) {
+      console.error("Error checking token expiration:", error);
+      return true;
     }
+  }
 
-    return {
-      tokens: {
-        accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
-      },
-    };
+  // Get tokens from session
+  static async getTokens(): Promise<AuthTokens | null> {
+    try {
+      const session = await getSession();
+      if (!session?.user) return null;
+
+      if (session.user.accessToken && session.user.refreshToken) {
+        return {
+          accessToken: session.user.accessToken as string,
+          refreshToken: session.user.refreshToken as string,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting tokens:', error);
+      return null;
+    }
   }
 
   static async refreshTokenIfNeeded(): Promise<string | null> {
-    const accessToken = localStorage.getItem("accessToken");
-    const refreshToken = localStorage.getItem("refreshToken");
+    const tokens = await this.getTokens();
+    if (!tokens) {  
+      return null;
+    }
+    const accessToken = tokens.accessToken;
+    const refreshToken = tokens.refreshToken;
 
     if (!accessToken || !refreshToken) {
       return null;
     }
 
-    // Check if token is expired or will expire in 5 minutes
     if (!this.isTokenExpired(accessToken)) {
-      return accessToken; // Token is still valid
+      return accessToken;
     }
 
     try {
-      // Call refresh endpoint (adjust based on your API)
       const response = await apiClient.post<AuthResponse>(
         "/auths/refresh-token",
         {
@@ -170,15 +162,8 @@ export class AuthService {
         }
       );
 
-      // Update stored tokens
-      apiClient.setToken(response.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
-
       return response.data.accessToken;
     } catch {
-      // Refresh failed, clear tokens and redirect to login
-      apiClient.clearToken();
-      window.location.href = "/";
       return null;
     }
   }

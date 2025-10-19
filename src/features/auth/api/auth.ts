@@ -2,7 +2,7 @@ import { User } from "@/Types";
 
 import {
   signIn,
-  signOut as nextAuthSignOut,
+  signOut,
   getSession,
 } from "next-auth/react";
 import { AuthService } from "../../../service/authService";
@@ -13,46 +13,38 @@ export const authenticateUser = async (
   password: string
 ): Promise<User | null> => {
   try {
-    const response = await AuthService.login({ email, password });
+    const response = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
 
-    // Store user data in localStorage
-    setCurrentUser(response.user);
-
-    return response.user;
+    if (!response?.ok) {
+      return null;
+    }
+    
+    return await getCurrentUser();
   } catch (error) {
     console.error("Authentication failed:", error);
     throw error;
   }
 };
 
-export const getCurrentUser = (): User | null => {
+export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      return JSON.parse(userStr);
-    }
-
-    // Fallback: try to get user from token
-    return AuthService.getCurrentUser();
+    const session = await getSession();
+    return session?.user as User;
   } catch (error) {
     console.error("Error getting current user:", error);
+    return null;
   }
-  return null;
 };
 
-export const setCurrentUser = (user: User): void => {
-  localStorage.setItem("user", JSON.stringify(user));
-};
-
-export const logout = async (): Promise<void> => {
+export const logout = (): void => {
   try {
-    await nextAuthSignOut({ redirect: false });
-    await AuthService.logout();
+    signOut({ callbackUrl: '/' })
   } catch (error) {
     console.error("Logout error:", error);
-  } finally {
-    localStorage.removeItem("user");
-    window.location.href = "/";
   }
 };
 
@@ -70,12 +62,10 @@ export const isAdmin = (user: User | null): boolean => {
 };
 
 // Check if user is authenticated
-export const isAuthenticated = (): boolean => {
-  // Check if token is still valid
-  const accessToken = localStorage.getItem("accessToken");
-  if (!accessToken) return false;
-
-  return !AuthService.isTokenExpired(accessToken);
+export const isAuthenticated = async (): Promise<boolean> => {
+  const tokens = await AuthService.getTokens();
+  if (!tokens) return false;
+  return !AuthService.isTokenExpired(tokens.accessToken);
 };
 
 // Validate token with server and refresh if needed
@@ -95,27 +85,3 @@ export const loginWithGoogle = async (): Promise<void> => {
     console.error("Error during Google sign in:", error);
   }
 };
-
-export const getServerSession = async () => {
-  return await getSession();
-};
-
-export const validateToken = async (): Promise<User | null> => {
-  try {
-    const newToken = await AuthService.refreshTokenIfNeeded();
-    if (!newToken) {
-      return null;
-    }
-
-    const user = AuthService.getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
-    }
-
-    return user;
-  } catch (error) {
-    console.error("Token validation failed:", error);
-    localStorage.removeItem("user");
-    return null;
-  }
-}

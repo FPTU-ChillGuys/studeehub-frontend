@@ -2,7 +2,7 @@
 
 import { Calendar, Home, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/features/auth/api/auth";
+import { getCurrentUser } from "@/features/auth/";
 import { User } from "@/Types";
 
 import {
@@ -42,9 +42,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Get current user from localStorage
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
+    getCurrentUser().then((user) => {
+      console.log(user);
+      setUser(user);
+    });
   }, []);
 
   // Default user data if not logged in
@@ -52,7 +53,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? {
         name: user.name,
         email: user.email,
-        avatar: user.avatar || "https://github.com/shadcn.png",
+        avatar: user.image || "https://github.com/shadcn.png",
       }
     : {
         name: "Guest",

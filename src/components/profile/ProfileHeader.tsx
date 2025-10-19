@@ -91,9 +91,9 @@ export function ProfileHeader({ user, loading, onEditProfile }: ProfileHeaderPro
             <div className="w-24 h-24 bg-white/30 rounded-2xl flex items-center justify-center backdrop-blur-sm">
               <div className="w-16 h-16 border-2 border-white rounded-lg flex items-center justify-center">
                 <div className="w-12 h-12 border-2 border-white rounded-lg flex items-center justify-center">
-                  {user.avatar ? (
+                  {user.image ? (
                     <img 
-                      src={user.avatar} 
+                      src={user.image} 
                       alt={user.name}
                       className="w-8 h-8 rounded-lg object-cover"
                     />

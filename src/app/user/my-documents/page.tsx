@@ -112,12 +112,12 @@ const NotebooksPage = () => {
 
   //Get userId from localStorage
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      const userObj = JSON.parse(user);
-      setUserId(userObj.id);
-    }
-    console.log("User ID:", userIdRef.current);
+    AuthService.getCurrentUser().then((user) => {
+      if (user) {
+        setUserId(user.id);
+        console.log("User ID:", userIdRef.current);
+      }
+    });
   }, [setUserId, userIdRef]);
 
   // Fetch notebooks from the server

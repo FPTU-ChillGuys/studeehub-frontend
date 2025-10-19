@@ -38,6 +38,15 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
 
+  // Generate initials from user name
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase())
+      .slice(0, 2) // Take first 2 words
+      .join("");
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -45,11 +54,15 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:cursor-pointer"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                {user.avatar && (
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                )}
+                <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold">
+                  {getInitials(user.name)}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -64,11 +77,18 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
+            <DropdownMenuLabel
+              className="p-0 font-normal hover:cursor-pointer hover:bg-secondary"
+              onClick={() => router.push("/user/profile")}
+            >
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  {user.avatar && (
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                  )}
+                  <AvatarFallback className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -77,9 +97,10 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            <DropdownMenuGroup className="hover:cursor-pointer">
               <DropdownMenuItem
                 onClick={() => router.push("/user/subscription")}
+                className="hover:cursor-pointer"
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -89,11 +110,12 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onClick={() => router.push("/user/profile")}
+                className="hover:cursor-pointer"
               >
                 <BadgeCheck />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="hover:cursor-pointer">
                 <Settings />
                 Settings
               </DropdownMenuItem>
@@ -104,9 +126,12 @@ export function NavUser({
                 const { logout } = await import("@/features/auth/");
                 await logout();
               }}
+              className="hover:cursor-pointer group"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <LogOut className="mr-2 h-4 w-4 group-hover:text-red-500 transition-colors" />
+              <span className="group-hover:text-red-500 transition-colors">
+                Log out
+              </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

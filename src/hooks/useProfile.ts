@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
-import { User } from '@/Types';
+import { useState, useEffect } from "react";
+import { User, UserProfile } from "@/Types";
 import { getCurrentUser } from "@/features/auth/";
+import streakService from "@/service/streakService";
+import userService from "@/service/userService";
 
 export interface ProfileStats {
   totalStudyHours: number;
   lessonsCompleted: number;
   questionsAnswered: number;
-  currentStreak: number;
+  currentCount: number;
+  longestCount: number;
 }
 
 export interface LearningProgress {
@@ -50,7 +53,7 @@ export interface Question {
   answer: string;
   subject: string;
   date: string;
-  status: 'answered' | 'pending';
+  status: "answered" | "pending";
   rating?: number;
 }
 
@@ -73,7 +76,8 @@ export function useProfile() {
       totalStudyHours: 0,
       lessonsCompleted: 0,
       questionsAnswered: 0,
-      currentStreak: 0,
+      currentCount: 0,
+      longestCount: 0,
     },
     learningProgress: [],
     recentActivity: [],
@@ -86,13 +90,65 @@ export function useProfile() {
 
   const fetchProfileData = async () => {
     try {
-      setProfileData(prev => ({ ...prev, loading: true, error: null }));
+      setProfileData((prev) => ({ ...prev, loading: true, error: null }));
 
-      // Get user data
-      const user = await getCurrentUser();
+      // Get user data from session
+      const sessionUser = await getCurrentUser();
 
-      if (!user) {
-        throw new Error('User not authenticated');
+      if (!sessionUser) {
+        throw new Error("User not authenticated");
+      }
+
+      // Fetch detailed user profile from backend
+      let detailedUser: User = sessionUser;
+      try {
+        const userProfileResponse = await userService.getUserProfile(
+          sessionUser.id
+        );
+        if (userProfileResponse.success && userProfileResponse.data) {
+          // Merge session user with detailed profile data
+          detailedUser = {
+            ...sessionUser,
+            name: userProfileResponse.data.fullName || sessionUser.name,
+            email: userProfileResponse.data.email || sessionUser.email,
+            address: userProfileResponse.data.address,
+            userName: userProfileResponse.data.userName,
+            phoneNumber: userProfileResponse.data.phoneNumber,
+            createdAt: userProfileResponse.data.createdAt,
+            updatedAt: userProfileResponse.data.updatedAt,
+          };
+        }
+      } catch (profileError) {
+        // Continue with session user data if profile fetch fails
+        console.error("Failed to fetch detailed user profile:", profileError);
+      }
+
+      // Fetch real streak data
+      let currentCount = 0;
+      let longestCount = 0;
+
+      try {
+        const streakResponse = await streakService.getOrInitializeStreaks(sessionUser.id);
+
+        // Check if response is an array directly (backend returns array in data field)
+        if (Array.isArray(streakResponse) && streakResponse.length > 0) {
+          const loginStreak = streakResponse[0]; // Get the first streak (type 1)
+          currentCount = loginStreak.currentCount;
+          longestCount = loginStreak.longestCount;
+        }
+        // Check if response has data property with array
+        else if (
+          streakResponse.data &&
+          Array.isArray(streakResponse.data) &&
+          streakResponse.data.length > 0
+        ) {
+          const loginStreak = streakResponse.data[0];
+          currentCount = loginStreak.currentCount;
+          longestCount = loginStreak.longestCount;
+        }
+      } catch {
+        // Continue with default values if streak fetch fails
+        // This is not critical for profile display
       }
 
       // TODO: Replace with actual API calls when backend is ready
@@ -101,14 +157,15 @@ export function useProfile() {
         totalStudyHours: 247,
         lessonsCompleted: 342,
         questionsAnswered: 1567,
-        currentStreak: 23,
+        currentCount,
+        longestCount,
       };
 
       const mockLearningProgress: LearningProgress[] = [
         { subject: "Mathematics", progress: 85, color: "bg-blue-500" },
         { subject: "Physics", progress: 72, color: "bg-green-500" },
         { subject: "Chemistry", progress: 68, color: "bg-orange-500" },
-        { subject: "Biology", progress: 45, color: "bg-purple-500" }
+        { subject: "Biology", progress: 45, color: "bg-purple-500" },
       ];
 
       const mockRecentActivity: RecentActivity[] = [
@@ -117,29 +174,29 @@ export function useProfile() {
           duration: "3.5 hours",
           date: "2024-01-30",
           lessons: "5 lessons completed",
-          color: "bg-blue-500"
+          color: "bg-blue-500",
         },
         {
           subject: "Physics",
           duration: "2.5 hours",
           date: "2024-01-29",
           lessons: "3 lessons completed",
-          color: "bg-green-500"
+          color: "bg-green-500",
         },
         {
           subject: "Chemistry",
           duration: "4 hours",
           date: "2024-01-28",
           lessons: "6 lessons completed",
-          color: "bg-orange-500"
+          color: "bg-orange-500",
         },
         {
           subject: "Biology",
           duration: "1.5 hours",
           date: "2024-01-27",
           lessons: "2 lessons completed",
-          color: "bg-purple-500"
-        }
+          color: "bg-purple-500",
+        },
       ];
 
       const mockAchievements: Achievement[] = [
@@ -150,7 +207,7 @@ export function useProfile() {
           completed: true,
           earnedDate: "2024-01-15",
           color: "text-yellow-600",
-          bgColor: "bg-yellow-100"
+          bgColor: "bg-yellow-100",
         },
         {
           id: "week_streak",
@@ -159,7 +216,7 @@ export function useProfile() {
           completed: true,
           earnedDate: "2024-01-25",
           color: "text-orange-600",
-          bgColor: "bg-orange-100"
+          bgColor: "bg-orange-100",
         },
         {
           id: "hundred_questions",
@@ -168,7 +225,7 @@ export function useProfile() {
           completed: true,
           earnedDate: "2024-01-28",
           color: "text-blue-600",
-          bgColor: "bg-blue-100"
+          bgColor: "bg-blue-100",
         },
         {
           id: "month_champion",
@@ -177,7 +234,7 @@ export function useProfile() {
           completed: false,
           progress: 85,
           color: "text-purple-600",
-          bgColor: "bg-purple-100"
+          bgColor: "bg-purple-100",
         },
         {
           id: "perfect_week",
@@ -186,8 +243,8 @@ export function useProfile() {
           completed: false,
           progress: 60,
           color: "text-green-600",
-          bgColor: "bg-green-100"
-        }
+          bgColor: "bg-green-100",
+        },
       ];
 
       const mockDetailedActivity: DetailedActivity[] = [
@@ -198,7 +255,7 @@ export function useProfile() {
           description: "Finished lesson 5.2: Derivatives and Applications",
           timestamp: "2024-01-30 14:30",
           subject: "Mathematics",
-          color: "text-blue-600"
+          color: "text-blue-600",
         },
         {
           id: 2,
@@ -207,7 +264,7 @@ export function useProfile() {
           description: "Scored 95% on Thermodynamics Quiz",
           timestamp: "2024-01-30 12:15",
           subject: "Physics",
-          color: "text-green-600"
+          color: "text-green-600",
         },
         {
           id: 3,
@@ -216,7 +273,7 @@ export function useProfile() {
           description: "Helped solve organic chemistry problem",
           timestamp: "2024-01-30 10:45",
           subject: "Chemistry",
-          color: "text-orange-600"
+          color: "text-orange-600",
         },
         {
           id: 4,
@@ -225,7 +282,7 @@ export function useProfile() {
           description: "Reached 100 correct answers milestone",
           timestamp: "2024-01-29 16:20",
           subject: "General",
-          color: "text-purple-600"
+          color: "text-purple-600",
         },
         {
           id: 5,
@@ -234,37 +291,42 @@ export function useProfile() {
           description: "Studied Biology for 2.5 hours",
           timestamp: "2024-01-29 09:30",
           subject: "Biology",
-          color: "text-indigo-600"
-        }
+          color: "text-indigo-600",
+        },
       ];
 
       const mockQuestions: Question[] = [
         {
           id: 1,
-          question: "How do I solve quadratic equations using the quadratic formula?",
-          answer: "The quadratic formula is x = (-b ± √(b²-4ac)) / 2a. First identify a, b, and c from ax²+bx+c=0, then substitute into the formula...",
+          question:
+            "How do I solve quadratic equations using the quadratic formula?",
+          answer:
+            "The quadratic formula is x = (-b ± √(b²-4ac)) / 2a. First identify a, b, and c from ax²+bx+c=0, then substitute into the formula...",
           subject: "Mathematics",
           date: "2024-01-28",
           status: "answered",
-          rating: 5
+          rating: 5,
         },
         {
           id: 2,
-          question: "What is the difference between kinetic and potential energy?",
-          answer: "Kinetic energy is the energy of motion, while potential energy is stored energy due to position or configuration...",
+          question:
+            "What is the difference between kinetic and potential energy?",
+          answer:
+            "Kinetic energy is the energy of motion, while potential energy is stored energy due to position or configuration...",
           subject: "Physics",
           date: "2024-01-27",
           status: "answered",
-          rating: 4
+          rating: 4,
         },
         {
           id: 3,
           question: "How do I balance chemical equations?",
-          answer: "To balance chemical equations, ensure the same number of each type of atom on both sides...",
+          answer:
+            "To balance chemical equations, ensure the same number of each type of atom on both sides...",
           subject: "Chemistry",
           date: "2024-01-26",
           status: "answered",
-          rating: 5
+          rating: 5,
         },
         {
           id: 4,
@@ -273,12 +335,12 @@ export function useProfile() {
           subject: "Biology",
           date: "2024-01-25",
           status: "pending",
-          rating: undefined
-        }
+          rating: undefined,
+        },
       ];
 
       setProfileData({
-        user,
+        user: detailedUser,
         stats: mockStats,
         learningProgress: mockLearningProgress,
         recentActivity: mockRecentActivity,
@@ -288,13 +350,15 @@ export function useProfile() {
         loading: false,
         error: null,
       });
-
     } catch (error) {
-      console.error('Error fetching profile data:', error);
-      setProfileData(prev => ({
+      console.error("Error fetching profile data:", error);
+      setProfileData((prev) => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Failed to load profile data',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load profile data",
       }));
     }
   };

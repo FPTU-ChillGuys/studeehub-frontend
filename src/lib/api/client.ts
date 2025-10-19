@@ -11,8 +11,14 @@ export interface APIResponse<T> {
 }
 
 // API Client class
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://localhost:7114/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Validate API_BASE_URL at module load time
+if (!API_BASE_URL) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL is not defined. Please set it in your .env.local file."
+  );
+}
 
 class APIClient {
   private baseURL: string;
@@ -48,16 +54,10 @@ class APIClient {
     };
 
     try {
-      console.log("Making API request to:", url);
-      console.log("Request config:", config);
-
       const response = await fetch(url, config);
-      console.log("Response received:", response.status, response.statusText);
 
       // Check if response is ok
       if (!response.ok) {
-        console.error(`HTTP Error: ${response.status} ${response.statusText}`);
-
         const errorData: ApiErrorResponse = await response.json();
 
         if (response.status === 401) {
@@ -77,21 +77,11 @@ class APIClient {
 
       return data;
     } catch (error) {
-      console.error("API request failed:", error);
-      console.error("Request details:", { url, config });
-
       // If it's a fetch error (network), provide more details
       if (
         error instanceof TypeError &&
         error.message.includes("Failed to fetch")
       ) {
-        console.error("Network error details:", {
-          errorMessage: error.message,
-          errorStack: error.stack,
-          targetUrl: url,
-          isHttps: url.startsWith("https://"),
-          isCrossOrigin: !url.startsWith(window.location.origin),
-        });
         throw new Error(
           `Network error: Unable to connect to ${url}. This might be due to CORS policy, SSL certificate issues, or the API server not running.`
         );
@@ -102,8 +92,24 @@ class APIClient {
   }
 
   // HTTP methods
-  async get<T>(endpoint: string): Promise<APIResponse<T>> {
-    return this.request<T>(endpoint);
+  async get<T>(endpoint: string, options?: { params?: Record<string, string | number> }): Promise<APIResponse<T>> {
+    let url = endpoint;
+    
+    // Add query parameters if provided
+    if (options?.params) {
+      const queryString = new URLSearchParams(
+        Object.entries(options.params).reduce((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {} as Record<string, string>)
+      ).toString();
+      
+      if (queryString) {
+        url = `${endpoint}?${queryString}`;
+      }
+    }
+    
+    return this.request<T>(url);
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<APIResponse<T>> {

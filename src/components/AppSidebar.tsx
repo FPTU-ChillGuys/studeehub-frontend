@@ -53,12 +53,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? {
         name: user.name,
         email: user.email,
-        avatar: user.image || "https://github.com/shadcn.png",
+        avatar: user.image || "", // Let AvatarFallback show initials if no image
       }
     : {
-        name: "Guest",
+        name: "Guest", 
         email: "guest@example.com",
-        avatar: "https://github.com/shadcn.png",
+        avatar: "", // Let AvatarFallback show initials
       };
 
   // Filter nav items based on user role

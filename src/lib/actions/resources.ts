@@ -16,6 +16,10 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
     // Append the file name to the content
     const inputWithFileName =  content + `\n\nSource: ${fileName}`;
 
+    // Generate embeddings for the content
+    const embeddingResult = await generateEmbeddings(content);
+    console.log("Generated embeddings count:", embeddingResult.length);
+
     // Insert resource into the database
     const [resource] = await db
       .insert(resources)
@@ -23,10 +27,6 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
       .returning();
 
     console.log("Resource inserted with ID:", resource.id);
-
-    // Generate embeddings for the content
-    const embeddingResult = await generateEmbeddings(content);
-    console.log("Generated embeddings count:", embeddingResult.length);
 
     // Insert embeddings into the database
     if (embeddingResult.length > 0) {

@@ -35,6 +35,7 @@ import { Notebook } from "@/Types";
 import CreateNotebookModal from "@/components/modals/CreateNotebookModal";
 import useStateRef from "react-usestateref";
 import { useEffect } from "react";
+import { ConvertAnyToNotebook, NewNotebook } from "@/lib/mapping/notebook";
 
 // Helper function to format date in a user-friendly way
 const formatDate = (dateString: string): string => {
@@ -50,44 +51,44 @@ const formatDate = (dateString: string): string => {
   if (diffInSeconds < 60) {
     return "Just now";
   }
-  
+
   // Minutes ago (< 1 hour)
   if (diffInMinutes < 60) {
-    return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
+    return `${diffInMinutes} ${diffInMinutes === 1 ? "minute" : "minutes"} ago`;
   }
-  
+
   // Hours ago (< 24 hours)
   if (diffInHours < 24) {
-    return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+    return `${diffInHours} ${diffInHours === 1 ? "hour" : "hours"} ago`;
   }
-  
+
   // Days ago (< 7 days)
   if (diffInDays < 7) {
-    return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
+    return `${diffInDays} ${diffInDays === 1 ? "day" : "days"} ago`;
   }
-  
+
   // Weeks ago (< 30 days)
   if (diffInDays < 30) {
     const weeks = Math.floor(diffInDays / 7);
-    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    return `${weeks} ${weeks === 1 ? "week" : "weeks"} ago`;
   }
-  
+
   // Months ago (< 365 days)
   if (diffInDays < 365) {
     const months = Math.floor(diffInDays / 30);
-    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    return `${months} ${months === 1 ? "month" : "months"} ago`;
   }
-  
+
   // Years ago
   const years = Math.floor(diffInDays / 365);
-  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+  return `${years} ${years === 1 ? "year" : "years"} ago`;
 };
 
 // Helper function to format date to readable date string (DD/MM/YYYY)
 const formatDateToString = (dateString: string): string => {
   const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
@@ -137,19 +138,8 @@ const NotebooksPage = () => {
         }
         // Get document counts for each notebook
         setNotebooks(
-          data?.notebooks?.map(
-            (notebook: any) =>
-              ({
-                id: notebook.id,
-                title: notebook.title,
-                description: notebook.description,
-                createdDate: notebook.createdDate,
-                lastModified: notebook.updatedDate,
-                documentsCount: notebook.resourceCount || 0,
-                status: notebook.status,
-                documents: [],
-                thumbnail: notebook.thumbnail,
-              } as Notebook)
+          data?.notebooks?.map((notebook: any) =>
+            ConvertAnyToNotebook(notebook)
           )
         );
       }
@@ -163,17 +153,7 @@ const NotebooksPage = () => {
     description?: string,
     thumbnail?: string
   ) => {
-    const newNotebook: Notebook = {
-      id: Date.now().toString(),
-      title,
-      description,
-      createdDate: new Date().toISOString().split("T")[0],
-      lastModified: new Date().toISOString().split("T")[0],
-      documentsCount: 0,
-      status: "active",
-      documents: [],
-      thumbnail: thumbnail || "📚",
-    };
+    const newNotebook: Notebook = NewNotebook();
 
     // Create the notebook in the database
     const response = await fetch("/api/notebook", {
@@ -302,7 +282,9 @@ const NotebooksPage = () => {
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1 truncate">Active</p>
+                <p className="text-xs text-muted-foreground mb-1 truncate">
+                  Active
+                </p>
                 <p className="text-xl font-bold text-foreground">
                   {stats.active}
                 </p>
@@ -316,7 +298,9 @@ const NotebooksPage = () => {
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1 truncate">Documents</p>
+                <p className="text-xs text-muted-foreground mb-1 truncate">
+                  Documents
+                </p>
                 <p className="text-xl font-bold text-foreground">
                   {stats.totalDocuments}
                 </p>
@@ -481,9 +465,13 @@ const NotebooksPage = () => {
                       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
-                          <span className="font-medium">{formatDate(notebook.lastModified)}</span>
+                          <span className="font-medium">
+                            {formatDate(notebook.lastModified)}
+                          </span>
                         </div>
-                        <span className="pl-4 text-xs">{formatDateToString(notebook.lastModified)}</span>
+                        <span className="pl-4 text-xs">
+                          {formatDateToString(notebook.lastModified)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -500,10 +488,7 @@ const NotebooksPage = () => {
             </div>
             <div className="divide-y divide-border">
               {filteredNotebooks.map((notebook) => (
-                <Link
-                  key={notebook.id}
-                  href={`/user/notebooks/${notebook.id}`}
-                >
+                <Link key={notebook.id} href={`/user/notebooks/${notebook.id}`}>
                   <div className="p-6 hover:bg-muted/50 transition-colors cursor-pointer">
                     <div className="flex items-center gap-4">
                       <div className="text-3xl">{notebook.thumbnail}</div>
@@ -558,8 +543,12 @@ const NotebooksPage = () => {
                           <div className="flex items-center gap-2">
                             <Calendar className="w-3 h-3" />
                             <div className="flex flex-col gap-0.5">
-                              <span className="text-xs font-medium">{formatDate(notebook.lastModified)}</span>
-                              <span className="text-[10px]">{formatDateToString(notebook.lastModified)}</span>
+                              <span className="text-xs font-medium">
+                                {formatDate(notebook.lastModified)}
+                              </span>
+                              <span className="text-[10px]">
+                                {formatDateToString(notebook.lastModified)}
+                              </span>
                             </div>
                           </div>
                         </div>

@@ -32,7 +32,7 @@ export function AuthGuard({
 
     // Redirect if admin required but not admin
     if (requireAdmin && !isAdmin(currentUser)) {
-      window.location.href = "/dashboard";
+      window.location.href = "/user/my-documents";
       return;
     }
   }, [requireAuth, requireAdmin]);

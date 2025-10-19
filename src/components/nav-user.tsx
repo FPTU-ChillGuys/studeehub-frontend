@@ -79,7 +79,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/dashboard/Subscription")}
+                onClick={() => router.push("/user/subscription")}
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -88,7 +88,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push("/dashboard/profile")}
+                onClick={() => router.push("/user/profile")}
               >
                 <BadgeCheck />
                 Profile

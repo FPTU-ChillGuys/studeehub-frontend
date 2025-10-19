@@ -1,6 +1,7 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { AuthService } from "@/service/authService";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 // Extend the built-in types
 declare module "next-auth" {
@@ -28,21 +29,39 @@ declare module "next-auth" {
   }
 }
 
-// Function to verify Google token with your backend
-async function verifyWithBackend(idToken: string) {
-  try {
-    const { tokens } = await AuthService.loginWithGoogle(idToken);
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
-  } catch (error) {
-    throw error;
-  }
-}
-
 const handler = NextAuth({
   providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        try {
+          const { user, tokens } = await AuthService.login({
+            email: credentials.email,
+            password: credentials.password,
+          });
+
+          if (user) {
+            return {
+              ...user,
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error("Authorization error:", error);
+          return null;
+        }
+      },
+    }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -57,17 +76,14 @@ const handler = NextAuth({
     }),
   ],
   pages: {
-    signIn: "/",
-    error: "/",
+    signIn: "/auth/login",
+    error: "/auth/error",
   },
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && account.id_token) {
         try {
-          // Verify the Google token with your backend
-          const backendResponse = await verifyWithBackend(account.id_token);
-
-          // Store the backend tokens in the user object
+          const backendResponse = await AuthService.loginWithGoogle(account.id_token);
           user.accessToken = backendResponse.accessToken;
           user.refreshToken = backendResponse.refreshToken;
 
@@ -79,7 +95,6 @@ const handler = NextAuth({
       return true;
     },
     async jwt({ token, user, account }) {
-      // Initial sign in
       if (user) {
         token.accessToken = user.accessToken || account?.access_token;
         token.refreshToken = user.refreshToken || account?.refresh_token;
@@ -89,11 +104,13 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.accessToken = token.accessToken as string;
-        session.user.refreshToken = token.refreshToken as string;
+      if (token.user) {
+        session.user = {
+          ...session.user,
+          ...token.user,
+          accessToken: token.accessToken as string,
+          refreshToken: token.refreshToken as string,
+        };
       }
       return session;
     },

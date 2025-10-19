@@ -1,4 +1,5 @@
 import { ApiError, ApiErrorResponse } from "@/Types";
+import { getSession } from "next-auth/react";
 
 // API response wrapper từ backend
 export interface APIResponse<T> {
@@ -15,33 +16,17 @@ const API_BASE_URL =
 
 class APIClient {
   private baseURL: string;
-  private accessToken: string | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.accessToken = this.getToken();
   }
 
-  getToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("accessToken");
+  async getToken(): Promise<string | null> {
+    const session = await getSession();
+    if (session?.user?.accessToken) {
+      return session.user.accessToken;
     }
     return null;
-  }
-
-  setToken(token: string) {
-    this.accessToken = token;
-    if (typeof window !== "undefined") {
-      localStorage.setItem("accessToken", token);
-    }
-  }
-
-  clearToken() {
-    this.accessToken = null;
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    }
   }
 
   private async request<T>(
@@ -49,12 +34,13 @@ class APIClient {
     options: RequestInit = {}
   ): Promise<APIResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
+    const accessToken = await this.getToken();
 
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
-        ...(this.accessToken && {
-          Authorization: `Bearer ${this.accessToken}`,
+        ...(accessToken && {
+          Authorization: `Bearer ${accessToken}`,
         }),
         ...options.headers,
       },
@@ -75,7 +61,6 @@ class APIClient {
         const errorData: ApiErrorResponse = await response.json();
 
         if (response.status === 401) {
-          this.clearToken();
           window.location.href = "/";
         }
 

@@ -42,9 +42,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Get current user from localStorage
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
+    getCurrentUser().then((user) => {
+      setUser(user);
+    });
   }, []);
 
   // Default user data if not logged in

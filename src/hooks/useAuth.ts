@@ -1,19 +1,17 @@
-import { useRouter } from "next/navigation";
 import { AuthService } from "@/service/authService";
 import { redirectBasedOnRole } from "@/features/auth/";
-import { setCurrentUser } from "@/features/auth/";
 import { authenticateUser } from "@/features/auth/";
 import { ApiError } from "@/Types";
+import { useSession } from "next-auth/react";
 
 export function useAuth() {
-  const router = useRouter();
+  const { data: session, update } = useSession();
 
   const handleLogin = async (email: string, password: string) => {
     try {
       const user = await authenticateUser(email, password);
 
       if (user) {
-        setCurrentUser(user);
         redirectBasedOnRole(user);
         return { success: true };
       } else {
@@ -116,8 +114,29 @@ export function useAuth() {
     }
   };
 
+  const validateToken = async (): Promise<boolean> => {
+    try {
+      const newToken = await AuthService.refreshTokenIfNeeded();
+      if (!newToken) {
+        return false;
+      }
+
+      await update({
+        accessToken: newToken,
+        // Add any other session data that needs updating
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Token validation failed:", error);
+      return false;
+    }
+  };
+
   return {
     login: handleLogin,
     signUp: handleSignUp,
+    validateToken,
+    session
   };
 }

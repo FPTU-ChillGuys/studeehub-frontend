@@ -3,8 +3,7 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { redirectBasedOnRole } from "@/features/auth/api/auth";
-import { setCurrentUser } from "@/features/auth/api/auth";
+import { redirectBasedOnRole } from "@/features/auth";
 import { User } from "@/Types";
 
 export default function AuthCallbackPage() {
@@ -30,7 +29,6 @@ export default function AuthCallbackPage() {
         avatar: session.user.image || undefined,
       };
 
-      setCurrentUser(user);
       redirectBasedOnRole(user);
     }
   }, [session, status, router]);

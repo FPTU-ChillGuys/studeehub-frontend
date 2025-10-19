@@ -35,6 +35,7 @@ import { Notebook } from "@/Types";
 import CreateNotebookModal from "@/components/modals/CreateNotebookModal";
 import useStateRef from "react-usestateref";
 import { useEffect } from "react";
+import { AuthService } from "@/service/authService";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -55,12 +56,12 @@ const NotebooksPage = () => {
 
   //Get userId from localStorage
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      const userObj = JSON.parse(user);
-      setUserId(userObj.id);
-    }
-    console.log("User ID:", userIdRef.current);
+    AuthService.getCurrentUser().then((user) => {
+      if (user) {
+        setUserId(user.id);
+        console.log("User ID:", userIdRef.current);
+      }
+    });
   }, [setUserId, userIdRef]);
 
   // Fetch notebooks from the server

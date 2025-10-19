@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/Types';
-import { setCurrentUser } from "@/features/auth/";
 import { getCurrentUser } from "@/features/auth/";
-import { AuthService } from '@/service/authService';
 
 export interface ProfileStats {
   totalStudyHours: number;
@@ -91,13 +89,7 @@ export function useProfile() {
       setProfileData(prev => ({ ...prev, loading: true, error: null }));
 
       // Get user data
-      let user = getCurrentUser();
-      if (!user) {
-        user = AuthService.getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        }
-      }
+      const user = await getCurrentUser();
 
       if (!user) {
         throw new Error('User not authenticated');

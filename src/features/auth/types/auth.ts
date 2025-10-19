@@ -38,16 +38,5 @@ export interface GoogleLoginRequest {
   idToken: string;
 }
 
-export interface GoogleAuthResponse extends AuthResponse {}
-
-export interface AuthError extends Error {
-  status?: number;
-  data?: {
-    message?: string;
-    errors?: Record<string, string[]> | string[];
-    [key: string]: any;
-  };
-}
-
 export type { User };
 

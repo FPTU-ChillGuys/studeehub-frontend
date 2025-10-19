@@ -1,14 +1,8 @@
-import { apiClient } from "../client";
+import { apiClient } from "@/lib/api/client";
 import { User } from "@/Types";
-import {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  RegisterRequestWithClientUri,
-  RegisterResponse,
-  AuthTokens,
-  GoogleAuthResponse,
-} from "../types/auth";
+import { RegisterRequest, RegisterResponse, RegisterRequestWithClientUri, AuthResponse, LoginRequest, AuthTokens, GoogleAuthResponse } from "../features/auth/types/auth";
+
+
 
 export class AuthService {
   static async register(userData: RegisterRequest): Promise<RegisterResponse> {
@@ -41,7 +35,7 @@ export class AuthService {
 
   static async login(
     credentials: LoginRequest
-  ): Promise<{ user: User; tokens: AuthTokens }> {
+  ): Promise<{ user: User; tokens: AuthTokens; }> {
     const response = await apiClient.post<AuthResponse>(
       "/auths/login",
       credentials
@@ -125,7 +119,7 @@ export class AuthService {
   // Refresh token if needed
   static async loginWithGoogle(
     googleToken: string
-  ): Promise<{ tokens: AuthTokens }> {
+  ): Promise<{ tokens: AuthTokens; }> {
     const response = await apiClient.post<GoogleAuthResponse>(
       "/auths/google-login",
       {

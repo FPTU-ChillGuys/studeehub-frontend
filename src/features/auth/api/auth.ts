@@ -1,14 +1,12 @@
-// Authentication utilities
-import { AuthService } from "./api/services/auth";
+import { User } from "@/Types";
+
 import {
   signIn,
   signOut as nextAuthSignOut,
   getSession,
 } from "next-auth/react";
+import { AuthService } from "../../../service/authService";
 
-import { User } from "@/Types";
-
-export type { User };
 
 export const authenticateUser = async (
   email: string,
@@ -120,4 +118,4 @@ export const validateToken = async (): Promise<User | null> => {
     localStorage.removeItem("user");
     return null;
   }
-};
+}

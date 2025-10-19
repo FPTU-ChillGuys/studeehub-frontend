@@ -1,10 +1,8 @@
 import { useRouter } from "next/navigation";
-import { AuthService } from "@/lib/api/services/auth";
-import {
-  authenticateUser,
-  setCurrentUser,
-  redirectBasedOnRole,
-} from "@/lib/auth";
+import { AuthService } from "@/service/authService";
+import { redirectBasedOnRole } from "@/features/auth/";
+import { setCurrentUser } from "@/features/auth/";
+import { authenticateUser } from "@/features/auth/";
 import { ApiError } from "@/Types";
 
 export function useAuth() {

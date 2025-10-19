@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getCurrentUser, isAdmin, User } from "@/lib/auth";
+import { User } from "@/lib/auth";
+import { isAdmin } from "@/features/auth/api/auth";
+import { getCurrentUser } from "@/features/auth/api/auth";
 
 interface AuthGuardProps {
   children: React.ReactNode;

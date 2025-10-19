@@ -101,7 +101,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={async () => {
-                const { logout } = await import("@/lib/auth");
+                const { logout } = await import("@/features/auth/");
                 await logout();
               }}
             >

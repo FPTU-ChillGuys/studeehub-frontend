@@ -24,6 +24,7 @@ import {
   NotebookCard,
   NotebookListItem,
   EmptyNotebooks,
+  LoadingNotebooks,
 } from "@/components/my-documents";
 
 const NotebooksPage = () => {
@@ -36,6 +37,7 @@ const NotebooksPage = () => {
   );
   const [editTitle, setEditTitle] = useStateRef("");
   const [openDropdown, setOpenDropdown] = useStateRef<string | null>(null);
+  const [isLoading, setIsLoading] = useStateRef(true);
 
   //Get userId from localStorage
   const [userId, setUserId, userIdRef] = useStateRef<string | null>(null);
@@ -57,25 +59,33 @@ const NotebooksPage = () => {
   useEffect(() => {
     const fetchNotebooks = async () => {
       if (!userIdRef.current) return;
-      const response = await getNotebook(`user/${userIdRef.current}`);
-
-      const data = await response.json();
-      if (data.success) {
-        if (data.notebooks.length === 0) {
-          setNotebooks([]);
-          return;
+      
+      setIsLoading(true);
+      try {
+        const response = await getNotebook(`user/${userIdRef.current}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          if (data.notebooks.length === 0) {
+            setNotebooks([]);
+          } else {
+            // Get document counts for each notebook
+            setNotebooks(
+              data?.notebooks?.map((notebook: any) =>
+                ConvertAnyToNotebook(notebook)
+              )
+            );
+          }
         }
-        // Get document counts for each notebook
-        setNotebooks(
-          data?.notebooks?.map((notebook: any) =>
-            ConvertAnyToNotebook(notebook)
-          )
-        );
+      } catch (error) {
+        console.error("Error fetching notebooks:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchNotebooks();
-  }, [userId, userIdRef, setNotebooks]);
+  }, [userId, userIdRef, setNotebooks, setIsLoading]);
 
   const handleCreateNotebook = async (
     title: string,
@@ -202,7 +212,9 @@ const NotebooksPage = () => {
         />
 
         {/* Notebooks */}
-        {viewMode === "grid" ? (
+        {isLoading ? (
+          <LoadingNotebooks />
+        ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredNotebooks?.map((notebook) => (
               <NotebookCard
@@ -271,7 +283,7 @@ const NotebooksPage = () => {
           </div>
         )}
 
-        {filteredNotebooks.length === 0 && (
+        {!isLoading && filteredNotebooks.length === 0 && (
           <EmptyNotebooks
             hasFilters={!!searchTerm || filterStatus !== "all"}
             onCreateClick={() => setIsCreateModalOpen(true)}

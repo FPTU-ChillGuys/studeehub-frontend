@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/Types';
-import { getCurrentUser, setCurrentUser } from '@/lib/auth';
-import { AuthService } from '@/lib/api/services/auth';
+import { setCurrentUser } from "@/features/auth/";
+import { getCurrentUser } from "@/features/auth/";
+import { AuthService } from '@/service/authService';
 
 export interface ProfileStats {
   totalStudyHours: number;

@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { redirectBasedOnRole, setCurrentUser } from "@/lib/auth";
+import { redirectBasedOnRole } from "@/features/auth/api/auth";
+import { setCurrentUser } from "@/features/auth/api/auth";
 import { User } from "@/Types";
 
 export default function AuthCallbackPage() {

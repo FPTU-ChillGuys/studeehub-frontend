@@ -8,7 +8,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/features/auth/api/auth";
 import { User } from "@/Types";
 
 import {

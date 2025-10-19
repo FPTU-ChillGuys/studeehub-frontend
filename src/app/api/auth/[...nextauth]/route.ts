@@ -1,6 +1,6 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { AuthService } from "@/lib/api/services/auth";
+import { AuthService } from "@/service/authService";
 
 // Extend the built-in types
 declare module "next-auth" {

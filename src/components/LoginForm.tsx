@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { loginWithGoogle } from "@/lib/auth";
+import { loginWithGoogle } from "@/features/auth/api/auth";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

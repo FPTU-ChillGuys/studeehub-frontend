@@ -48,3 +48,6 @@ export interface AuthError extends Error {
     [key: string]: any;
   };
 }
+
+export type { User };
+

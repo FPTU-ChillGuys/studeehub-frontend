@@ -60,12 +60,11 @@ export function AdminSidebar({
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Get current user from localStorage
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
+    getCurrentUser().then(currentUser => {
+      setUser(currentUser);
+    });
   }, []);
 
-  // User data for admin
   const userData = user
     ? {
         name: user.name,

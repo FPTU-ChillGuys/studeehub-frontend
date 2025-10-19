@@ -36,15 +36,13 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 mb-3">
-          <Link href="/dashboard/my-documents">
+          <Link href="/user/my-documents">
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-foreground">
-              Documents
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Documents</h2>
           </div>
           <Button
             onClick={() => setIsUploadModalOpen(true)}

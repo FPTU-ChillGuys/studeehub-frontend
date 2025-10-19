@@ -62,7 +62,7 @@ export const redirectBasedOnRole = (user: User): void => {
   if (user.role === "admin") {
     window.location.href = "/admin";
   } else {
-    window.location.href = "/dashboard";
+    window.location.href = "/user/my-documents";
   }
 };
 

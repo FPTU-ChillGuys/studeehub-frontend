@@ -22,11 +22,7 @@ const NotebookHeader: React.FC<NotebookHeaderProps> = ({ notebookTitle }) => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/my-documents">
+            <BreadcrumbLink href="/user/my-documents">
               My Notebooks
             </BreadcrumbLink>
           </BreadcrumbItem>

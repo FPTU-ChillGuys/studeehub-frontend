@@ -18,10 +18,8 @@ import {
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
   DropdownMenu,
@@ -83,18 +81,21 @@ const NotebooksPage = () => {
         }
         console.log("Fetched Notebooks:", data.notebooks);
         setNotebooks(
-          data?.notebooks?.map((notebook: any) => ({
-            id: notebook.id,
-            title: notebook.title,
-            description: notebook.description,
-            createdDate: notebook.createdDate,
-            lastModified: notebook.updatedDate,
-            documentsCount: 0,
-            totalQuestions: 0,
-            status: notebook.status,
-            documents: [],
-            thumbnail: notebook.thumbnail,
-          }) as Notebook)
+          data?.notebooks?.map(
+            (notebook: any) =>
+              ({
+                id: notebook.id,
+                title: notebook.title,
+                description: notebook.description,
+                createdDate: notebook.createdDate,
+                lastModified: notebook.updatedDate,
+                documentsCount: 0,
+                totalQuestions: 0,
+                status: notebook.status,
+                documents: [],
+                thumbnail: notebook.thumbnail,
+              } as Notebook)
+          )
         );
       }
     };
@@ -160,7 +161,7 @@ const NotebooksPage = () => {
     setEditTitle("");
   };
 
-  const handleDeleteNotebook = async(id: string) => {
+  const handleDeleteNotebook = async (id: string) => {
     if (confirm("Are you sure you want to delete this notebook?")) {
       // Delete the notebook from the database
       await fetch(`/api/notebook/${id}`, {
@@ -202,10 +203,6 @@ const NotebooksPage = () => {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage>My Notebooks</BreadcrumbPage>
             </BreadcrumbItem>
@@ -339,10 +336,7 @@ const NotebooksPage = () => {
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredNotebooks?.map((notebook) => (
-              <Link
-                key={notebook.id}
-                href={`/dashboard/notebooks/${notebook.id}`}
-              >
+              <Link key={notebook.id} href={`/user/notebooks/${notebook.id}`}>
                 <div className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all duration-200 cursor-pointer group h-80 flex flex-col">
                   <div className="flex items-start justify-between mb-4">
                     <div className="text-4xl">{notebook.thumbnail}</div>
@@ -474,7 +468,7 @@ const NotebooksPage = () => {
               {filteredNotebooks.map((notebook) => (
                 <Link
                   key={notebook.id}
-                  href={`/dashboard/notebooks/${notebook.id}`}
+                  href={`/user/notebooks/${notebook.id}`}
                 >
                   <div className="p-6 hover:bg-muted/50 transition-colors cursor-pointer">
                     <div className="flex items-center gap-4">

@@ -1,6 +1,12 @@
 "use client";
 
-import { Calendar, Home, BookOpen } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  Settings,
+  FileText,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { User } from "@/Types";
@@ -16,29 +22,41 @@ import {
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 
-// Menu items.
-const data = {
+// Admin menu items
+const adminMenuData = {
   navMain: [
     {
       title: "Dashboard",
       url: "/admin",
-      icon: Home,
+      icon: LayoutDashboard,
       isActive: true,
     },
     {
-      title: "My Notebooks",
-      url: "/user/my-documents",
+      title: "Users Management",
+      url: "/admin/users",
+      icon: Users,
+    },
+    {
+      title: "Content Management",
+      url: "/admin/content",
       icon: BookOpen,
     },
     {
-      title: "Learning Path",
-      url: "#",
-      icon: Calendar,
+      title: "Reports",
+      url: "/admin/reports",
+      icon: FileText,
+    },
+    {
+      title: "Settings",
+      url: "/admin/settings",
+      icon: Settings,
     },
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AdminSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -47,7 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     setUser(currentUser);
   }, []);
 
-  // Default user data if not logged in
+  // User data for admin
   const userData = user
     ? {
         name: user.name,
@@ -55,16 +73,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: user.avatar || "https://github.com/shadcn.png",
       }
     : {
-        name: "Guest",
-        email: "guest@example.com",
+        name: "Admin",
+        email: "admin@studeehub.com",
         avatar: "https://github.com/shadcn.png",
       };
-
-  // Filter nav items based on user role
-  const navItems =
-    user?.role === "admin"
-      ? data.navMain // Admin sees all items including Dashboard
-      : data.navMain.filter((item) => item.title !== "Dashboard"); // Regular users don't see Dashboard
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -82,14 +94,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             />
           </div>
           <span className="text-lg font-bold text-foreground group-data-[collapsible=icon]:hidden transition-all duration-200">
-            StudeeHub
+            StudeeHub Admin
           </span>
         </div>
       </SidebarHeader>
 
       <SidebarHeader></SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain items={adminMenuData.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

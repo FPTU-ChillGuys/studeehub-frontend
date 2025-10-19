@@ -229,10 +229,6 @@ const CreateNotebookModal: React.FC<CreateNotebookModalProps> = ({
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 bg-muted-foreground/40 rounded-full"></span>
-                    0 questions
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-muted-foreground/40 rounded-full"></span>
                     {new Date().toLocaleDateString()}
                   </span>
                 </div>

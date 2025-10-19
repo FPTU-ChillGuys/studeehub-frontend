@@ -75,7 +75,7 @@ const NotebooksPage = () => {
     };
 
     fetchNotebooks();
-  }, [userIdRef, setNotebooks]);
+  }, [userId, userIdRef, setNotebooks]);
 
   const handleCreateNotebook = async (
     title: string,

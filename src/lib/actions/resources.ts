@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import { generateEmbeddings } from "../ai/chatbot/embedding";
 import { db } from "../db";
 import { embeddings } from "../db/schema/embedding";
@@ -91,5 +91,21 @@ export const deleteResourceById = async (resourceId: string) => {
   catch (e) {
     console.error("Error deleting resource:", e);
     return { success: false };
+  }
+};
+
+export const getResourceCountByNotebookId = async (notebookId: string) => {
+  try {
+    const countResult = await db.select({
+      count : count(resources.id)
+    })
+    .from(resources)
+    .where(eq(resources.notebookId, notebookId))
+
+    return countResult[0].count;
+  }
+  catch (e) {
+    console.error("Error counting resources:", e);
+    return 0;
   }
 };

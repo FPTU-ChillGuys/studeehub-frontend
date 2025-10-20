@@ -76,3 +76,4 @@ export const findRelevantContent = async (userQuery: {
 
   return similarGuides;
 };
+

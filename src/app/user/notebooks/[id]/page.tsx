@@ -73,6 +73,10 @@ const NotebookDetailPage = () => {
             messages,
             resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
             notebookId: notebookId,
+            //Get selected files names
+            fileNames: notebookRef.current.documents
+              .filter((doc) => selectedDocumentsRef.current.has(doc.id))
+              .map((doc) => doc.name),
           },
         };
       },

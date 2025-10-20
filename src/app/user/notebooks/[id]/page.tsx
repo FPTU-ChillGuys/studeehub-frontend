@@ -300,6 +300,14 @@ const NotebookDetailPage = () => {
         cardCount: response?.data.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+    } 
+    // Add toast notification for failure
+    else {
+      toast.error("Flashcard generation failed!", {
+        description:
+          response.data?.message ||
+          "Unable to generate flashcards. Please try again.",
+      });
     }
     setIsDisabled(false);
   };

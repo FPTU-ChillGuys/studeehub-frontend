@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Notebook } from "@/Types";
 import ChatMessage from "./ChatMessage";
 import MessageInput from "./MessageInput";
@@ -21,6 +21,16 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   getFileIcon,
   status,
 }) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, status]);
+
   return (
     <div className="w-[50%] flex flex-col">
       {/* Chat Header */}
@@ -36,7 +46,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
@@ -48,6 +58,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
               <p className="text-sm whitespace-pre-wrap"> Đang chờ...</p>
             </div>
         ))}
+        {/* Invisible element at the end for scrolling */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}

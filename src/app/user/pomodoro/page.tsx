@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePomodoroSettings } from "@/hooks/usePomodoroSettings";
 import { useSession } from "next-auth/react";
 import pomodoroService from "@/service/pomodoroService";
+import { soundManager } from "@/lib/sounds";
 
 type TimerMode = "pomodoro" | "shortBreak" | "longBreak";
 
@@ -193,6 +194,9 @@ const PomodoroPage = () => {
     const handleTimerComplete = async () => {
       if (timeLeft === 0 && isRunning && session?.user?.id) {
         try {
+          // Play completion sound
+          soundManager.playBell();
+
           // Complete current session - backend auto-creates next session if autoStartNext is enabled
           const nextSession = await pomodoroService.completeSession(
             session.user.id
@@ -288,6 +292,8 @@ const PomodoroPage = () => {
   };
 
   const handleStart = async () => {
+    soundManager.playClick();
+
     if (!session?.user?.id) {
       alert("Please login to use Pomodoro timer");
       return;
@@ -307,8 +313,13 @@ const PomodoroPage = () => {
     }
   };
 
-  const handlePause = () => setIsRunning(false);
+  const handlePause = () => {
+    soundManager.playClick();
+    setIsRunning(false);
+  };
+
   const handleReset = () => {
+    soundManager.playClick();
     setIsRunning(false);
     switch (currentMode) {
       case "pomodoro":
@@ -324,11 +335,14 @@ const PomodoroPage = () => {
   };
 
   const handleModeChange = (mode: TimerMode) => {
+    soundManager.playSwitch();
     setCurrentMode(mode);
     setIsRunning(false);
   };
 
   const handleSkip = async () => {
+    soundManager.playClick();
+
     if (!session?.user?.id) {
       alert("Please login to use Pomodoro timer");
       return;

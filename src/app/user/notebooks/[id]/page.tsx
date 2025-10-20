@@ -22,6 +22,7 @@ import { getNotebook } from "@/features/notebook/api/notebook";
 import { getFlashcards, postFlashcard } from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
+import { toast } from "sonner";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -180,6 +181,7 @@ const NotebookDetailPage = () => {
 
       //Upload files to backend
       let resourceIds: string[] = [];
+      let uploadStatus: "completed" | "error" = "completed";
       const uploadToServer = async () => {
         // Upload files to server
         try {
@@ -189,9 +191,16 @@ const NotebookDetailPage = () => {
             throw new Error("Failed to upload files");
           } else {
             resourceIds = response.data.resourceIds || [];
+            toast.success("Files uploaded successfully!", {
+              description: `${files.length} file(s) have been uploaded and are being processed.`,
+            });
           }
         } catch (error) {
+          uploadStatus = "error";
           console.error("Error uploading files:", error);
+          toast.error("Upload failed!", {
+            description: "Failed to upload files. Please try again.",
+          });
         }
       };
       // Run upload
@@ -209,7 +218,7 @@ const NotebookDetailPage = () => {
             ) {
               const updatedDoc = {
                 ...doc,
-                status: "completed" as const,
+                status: uploadStatus,
                 id: resourceIds[y],
               };
               y++;

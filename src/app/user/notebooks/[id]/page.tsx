@@ -19,7 +19,7 @@ import { nanoid } from "nanoid";
 import { uploadNotebookFile } from "@/features/notebook/api/upload";
 import { getChatbot } from "@/features/chatbot/api/chatbot";
 import { getNotebook } from "@/features/notebook/api/notebook";
-import { deleteFlashcard, getFlashcards, postFlashcard } from "@/features/flashcard/api/flashcard";
+import { getFlashcards, postFlashcard } from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
 

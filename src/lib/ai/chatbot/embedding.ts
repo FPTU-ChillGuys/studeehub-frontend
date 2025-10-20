@@ -1,5 +1,4 @@
 import { embed, embedMany } from "ai";
-import { embeddingModel } from "./model/ollama";
 import { cosineDistance, desc, gt, sql, and, eq } from "drizzle-orm";
 import { embeddings } from "@/lib/db/schema/embedding";
 import { db } from "@/lib/db";

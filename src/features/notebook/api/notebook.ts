@@ -1,9 +1,5 @@
 import { commonDelete, commonGet, commonPost, commonPut } from "@/features/common/api/common";
 
- const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
 const notebookBaseURL = "/api/notebook";
 
 export const postNotebook = (body?: any) => {

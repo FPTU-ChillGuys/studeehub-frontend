@@ -1,5 +1,5 @@
 import { createMessage } from "@/lib/actions/message";
-import { StreamingTextGenerationFromMessagesToResult, StreamingTextGenerationFromMessagesToResultWithErrorHandler } from "@/lib/ai/chatbot/chatbot";
+import { StreamingTextGenerationFromMessagesToResult } from "@/lib/ai/chatbot/chatbot";
 import { messageUIToDB } from "@/lib/mapping/message";
 import { UIMessage } from "ai";
 

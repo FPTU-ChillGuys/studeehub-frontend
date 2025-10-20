@@ -8,7 +8,6 @@ import {
 } from "ai";
 import { findRelevantContent } from "./embedding";
 import { z } from "zod";
-import { qwen3 } from "./model/ollama";
 import { geminiFlashLite } from "./model/google";
 
 // const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.

@@ -17,7 +17,7 @@ import useStateRef from "react-usestateref";
 import { useEffect } from "react";
 import { ConvertAnyToNotebook, NewNotebook } from "@/lib/mapping/notebook";
 import { AuthService } from "@/service/authService";
-import { getNotebook, postNotebook } from "@/features/notebook/api/notebook";
+import { deleteNotebook, getNotebook, postNotebook } from "@/features/notebook/api/notebook";
 import {
   NotebookStats,
   NotebookControls,
@@ -63,15 +63,14 @@ const NotebooksPage = () => {
       setIsLoading(true);
       try {
         const response = await getNotebook(`user/${userIdRef.current}`);
-        const data = await response.json();
-        
-        if (data.success) {
-          if (data.notebooks.length === 0) {
+
+        if (response.success) {
+          if (response.data.notebooks.length === 0) {
             setNotebooks([]);
           } else {
             // Get document counts for each notebook
             setNotebooks(
-              data?.notebooks?.map((notebook: any) =>
+              response.data.notebooks.map((notebook: any) =>
                 ConvertAnyToNotebook(notebook)
               )
             );
@@ -102,11 +101,8 @@ const NotebooksPage = () => {
       thumbnail: thumbnail || "📚",
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        newNotebook.id = data.notebook.id; // Update with real ID from backend
-      }
+    if (response.success && response.data.notebook) {
+      newNotebook.id = response.data.notebook.id; // Update with real ID from backend
     }
 
     setNotebooks((prev) => [newNotebook, ...prev]);
@@ -131,13 +127,10 @@ const NotebooksPage = () => {
   const handleDeleteNotebook = async (id: string) => {
     if (confirm("Are you sure you want to delete this notebook?")) {
       // Delete the notebook from the database
-      await fetch(`/api/notebook/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
+      const response = await deleteNotebook(id);
+      if (response.success) {
+        setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
+      }
     }
   };
 

@@ -1,3 +1,4 @@
+import { commonDelete, commonGet, commonPost, commonPut } from "@/features/common/api/common";
 
  const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -6,31 +7,17 @@
 const notebookBaseURL = "/api/notebook";
 
 export const postNotebook = (body?: any) => {
-  return fetch(`${notebookBaseURL}`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  });
+   return commonPost(`${notebookBaseURL}`, body);
 };
 
 export const getNotebook = (params? : string) => {
-    return fetch(`${notebookBaseURL}/${params}`, {
-        method: 'GET',
-        headers,
-    });
+    return commonGet(`${notebookBaseURL}/${params}`);
 };
 
 export const deleteNotebook = (params? : string) => {
-    return fetch(`${notebookBaseURL}/${params}`, {
-        method: 'DELETE',
-        headers,
-    });
+    return commonDelete(`${notebookBaseURL}/${params}`);
 };
 
 export const putNotebook = (params? : string, body?: any) => {
-    return fetch(`${notebookBaseURL}/${params}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(body),
-    });
+    return commonPut(`${notebookBaseURL}/${params}`, body);
 };

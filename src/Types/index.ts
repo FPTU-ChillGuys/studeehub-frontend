@@ -146,3 +146,10 @@ export interface FlashcardDeck {
   cardCount: number;
   cards: IFlashcard[];
 }
+
+export interface BaseResponse {
+  success: boolean;
+  message: string;
+  errors: string[] | null;
+  data?: any;
+}

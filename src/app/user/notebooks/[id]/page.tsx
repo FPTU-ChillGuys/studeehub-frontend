@@ -17,6 +17,10 @@ import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import "react-quizlet-flashcard/dist/index.css";
 import { nanoid } from "nanoid";
 import { uploadNotebookFile } from "@/features/notebook/api/upload";
+import { getChatbot } from "@/features/chatbot/api/chatbot";
+import { getNotebook } from "@/features/notebook/api/notebook";
+import { deleteFlashcard, getFlashcards, postFlashcard } from "@/features/flashcard/api/flashcard";
+import { getFile } from "@/features/file/api/file";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -78,11 +82,9 @@ const NotebookDetailPage = () => {
     const fetchMessages = async () => {
       setIsLoadingMessages(true);
       try {
-        const response = await fetch(`/api/chatbot/${notebookId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetched messages:", data);
-          setMessages(data.data || []);
+        const response = await getChatbot(`${notebookId}`);
+        if (response.success) {
+          setMessages(response.data.data || []);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -98,18 +100,15 @@ const NotebookDetailPage = () => {
     const fetchNotebookDetails = async () => {
       setIsLoadingNotebook(true);
       try {
-        const response = await fetch(`/api/notebook/${notebookId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetched notebook details:", data);
-          if (data.success === true) {
-            setNotebook({ ...notebookRef.current,
-              id : data.notebook.id,
-              title : data.notebook.title,
-              description : data.notebook.description,
+        const response = await getNotebook(`${notebookId}`);
+        if (response.success) {
+          setNotebook({ ...notebookRef.current,
+              // id : response.data.id,
+              // title : response.data.title,
+              // description : response.data.description,
+              ...response.data.notebook
             } as Notebook);
-          }
-        }
+          };
       } catch (error) {
         console.error("Error fetching notebook details:", error);
       } finally {
@@ -125,9 +124,9 @@ const NotebookDetailPage = () => {
     const fetchDocuments = async () => {
       setIsLoadingDocuments(true);
       try {
-        const response = await fetch(`/api/file/${notebookId}`);
-        if (response.ok) {
-          const data = await response.json();
+        const response = await getFile(`${notebookId}`);
+        if (response.success) {
+          const data = response.data;
           // Update documents in notebook state
           if (data.success === true) {
             // Get documents from response
@@ -189,14 +188,12 @@ const NotebookDetailPage = () => {
         try {
           const response = await uploadNotebookFile(files, notebookId);
 
-          if (response.status !== 200) {
+          if (!response.success) {
             throw new Error("Failed to upload files");
           }
           if (response.data.success === true) {
-            console.log("Files uploaded successfully:", response.data);
             resourceIds = response.data.resourceIds || [];
           } else {
-            console.error("File upload failed:", response.data.message);
           }
         } catch (error) {
           console.error("Error uploading files:", error);
@@ -249,10 +246,6 @@ const NotebookDetailPage = () => {
       newSelected.delete(resourceId);
     }
     setSelectedDocuments(newSelected);
-    console.log(
-      "Selected documents:",
-      Array.from(selectedDocumentsRef.current)
-    );
   };
 
   const handleSelectAll = () => {
@@ -260,10 +253,6 @@ const NotebookDetailPage = () => {
       .filter((d) => d.status === "completed")
       .map((d) => d.id);
     setSelectedDocuments(new Set(completedDocs));
-    console.log(
-      "Selected all documents:",
-      Array.from(selectedDocumentsRef.current)
-    );
   };
 
   const handleClearSelection = () => {
@@ -277,24 +266,27 @@ const NotebookDetailPage = () => {
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
     setIsDisabled(true);
-    const response = await fetch(`/api/flashcard`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        notebookId: notebookId,
-        resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
-      }),
-    }).then((res) => res.json());
+    // const response = await fetch(`/api/flashcard`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({
+    //     notebookId: notebookId,
+    //     resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+    //   }),
+    // }).then((res) => res.json());
+    const response = await postFlashcard({
+      notebookId: notebookId,
+      resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+    });
 
     if (response.success === true) {
-      console.log("Flashcards generated:", response);
       // Map response to IFlashcard format
       const generatedFlashcard: FlashcardDeck = {
         id: nanoid(),
-        title: response.flashcards?.title,
-        cards: response?.flashcards?.decks?.map((fc: any) => ({
+        title: response.data.flashcards?.title,
+        cards: response?.data.flashcards?.decks?.map((fc: any) => ({
           front: {
             html: (
               <div className="flex items-center justify-center h-full w-full p-6">
@@ -311,7 +303,7 @@ const NotebookDetailPage = () => {
           },
           id: fc.id,
         })),
-        cardCount: response?.flashcards?.decks?.length,
+        cardCount: response?.data.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
     }
@@ -323,11 +315,9 @@ const NotebookDetailPage = () => {
     const fetchFlashcards = async () => {
       setIsLoadingFlashcards(true);
       try {
-        const response = await fetch(`/api/flashcard/${notebookId}`);
-        const data = await response.json();
-        if (data.success === true) {
-          console.log("Fetched flashcards:", data.flashcards);
-          const fetchedFlashcards: FlashcardDeck[] = data.flashcards.map(
+        const response = await getFlashcards(`${notebookId}`);
+        if (response.success === true) {
+          const fetchedFlashcards: FlashcardDeck[] = response.data.flashcards.map(
             (fc: any) => ({
               id: fc.id,
               title: fc.title,
@@ -352,7 +342,7 @@ const NotebookDetailPage = () => {
           );
           setFlashcards(fetchedFlashcards);
         } else {
-          console.error("Failed to fetch flashcards:", data.message);
+          console.error("Failed to fetch flashcards:", response.data.message);
         }
       } catch (error) {
         console.error("Error fetching flashcards:", error);
@@ -369,17 +359,13 @@ const NotebookDetailPage = () => {
     }).then((res) => res.json());
 
     if (response.success === true) {
-      console.log("Flashcard deck deleted:", deckId);
       setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
     }
   };
 
   const handleDeleteResource = async (resourceId: string) => {
-    const response = await fetch(`/api/resource/${resourceId}`, {
-      method: "DELETE",
-    }).then((res) => res.json());
+    const response = await deleteFlashcard(resourceId);
     if (response.success === true) {
-      console.log("Resource deleted:", resourceId);
       setNotebook((prev) => ({
         ...prev,
         documents: prev.documents.filter((doc) => doc.id !== resourceId),

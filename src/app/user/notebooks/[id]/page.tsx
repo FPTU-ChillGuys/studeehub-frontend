@@ -19,7 +19,10 @@ import { nanoid } from "nanoid";
 import { uploadNotebookFile } from "@/features/notebook/api/upload";
 import { getChatbot } from "@/features/chatbot/api/chatbot";
 import { getNotebook } from "@/features/notebook/api/notebook";
-import { getFlashcards, postFlashcard } from "@/features/flashcard/api/flashcard";
+import {
+  getFlashcards,
+  postFlashcard,
+} from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
 import { toast } from "sonner";
@@ -61,7 +64,6 @@ const NotebookDetailPage = () => {
     documents: [],
     thumbnail: "",
   });
-
 
   //Chatbot by Vercel AI SDK
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -108,13 +110,14 @@ const NotebookDetailPage = () => {
       try {
         const response = await getNotebook(`${notebookId}`);
         if (response.success) {
-          setNotebook({ ...notebookRef.current,
-              // id : response.data.id,
-              // title : response.data.title,
-              // description : response.data.description,
-              ...response.data.notebook
-            } as Notebook);
-          };
+          setNotebook({
+            ...notebookRef.current,
+            // id : response.data.id,
+            // title : response.data.title,
+            // description : response.data.description,
+            ...response.data.notebook,
+          } as Notebook);
+        }
       } catch (error) {
         console.error("Error fetching notebook details:", error);
       } finally {
@@ -134,21 +137,21 @@ const NotebookDetailPage = () => {
         if (response.success) {
           const data = response.data;
           // Update documents in notebook state
-            // Get documents from response
-            const documents: Document[] =
-              data?.resources?.map((res: any) => ({
-                id: res.id,
-                name: res.fileName,
-                type: res.type,
-                url: res.url,
-                status: "completed",
-              })) || [];
-            setNotebook((prev) => ({
-              ...prev,
-              documents: documents,
-              documentsCount: documents.length,
-            }));
-          } 
+          // Get documents from response
+          const documents: Document[] =
+            data?.resources?.map((res: any) => ({
+              id: res.id,
+              name: res.fileName,
+              type: res.type,
+              url: res.url,
+              status: "completed",
+            })) || [];
+          setNotebook((prev) => ({
+            ...prev,
+            documents: documents,
+            documentsCount: documents.length,
+          }));
+        }
       } catch (error) {
         console.error("Error fetching documents:", error);
       } finally {
@@ -203,7 +206,8 @@ const NotebookDetailPage = () => {
           uploadStatus = "error";
           console.error("Error uploading files:", error);
           toast.error("Upload failed!", {
-            description: "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
+            description:
+              "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
           });
         }
       };
@@ -304,7 +308,7 @@ const NotebookDetailPage = () => {
         cardCount: response?.data.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
-    } 
+    }
     // Add toast notification for failure
     else {
       toast.error("Flashcard generation failed!", {
@@ -323,29 +327,31 @@ const NotebookDetailPage = () => {
       try {
         const response = await getFlashcards(`${notebookId}`);
         if (response.success === true) {
-          const fetchedFlashcards: FlashcardDeck[] = response.data.flashcards.map(
-            (fc: any) => ({
-              id: fc.id,
-              title: fc.title,
-              cardCount: fc.cardCount,
-              cards: fc.cards.map((card: any) => ({
-                front: {
-                  html: (
-                    <div className="flex items-center justify-center h-full w-full p-6">
-                      {card?.front || "No content"}
-                    </div>
-                  ),
-                },
-                back: {
-                  html: (
-                    <div className="flex items-center justify-center h-full w-full p-6">
-                      {card?.back || "No content"}
-                    </div>
-                  ),
-                },
-              })),
-            } as FlashcardDeck)
-          );
+          const fetchedFlashcards: FlashcardDeck[] =
+            response.data.flashcards.map(
+              (fc: any) =>
+                ({
+                  id: fc.id,
+                  title: fc.title,
+                  cardCount: fc.cardCount,
+                  cards: fc.cards.map((card: any) => ({
+                    front: {
+                      html: (
+                        <div className="flex items-center justify-center h-full w-full p-6">
+                          {card?.front || "No content"}
+                        </div>
+                      ),
+                    },
+                    back: {
+                      html: (
+                        <div className="flex items-center justify-center h-full w-full p-6">
+                          {card?.back || "No content"}
+                        </div>
+                      ),
+                    },
+                  })),
+                } as FlashcardDeck)
+            );
           setFlashcards(fetchedFlashcards);
         } else {
           console.error("Failed to fetch flashcards:", response.data.message);
@@ -389,49 +395,51 @@ const NotebookDetailPage = () => {
 
   return (
     <SidebarInset>
-      <NotebookHeader notebookTitle={notebook.title} />
+      <div className="h-auto">
+        <NotebookHeader notebookTitle={notebook.title} />
 
-      {isLoading ? (
-        <LoadingNotebookDetail />
-      ) : (
-        <div className="flex flex-1 h-[calc(100vh-4rem)]">
-          <DocumentsPanel
-            documents={filteredDocuments}
-            selectedDocuments={selectedDocuments}
-            onToggleDocument={handleToggleDocument}
-            onSelectAll={handleSelectAll}
-            onClearSelection={handleClearSelection}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            setIsUploadModalOpen={setIsUploadModalOpen}
-            getFileIcon={getFileIcon}
-            completedDocsCount={completedDocsCount}
-            handleDeleteResource={handleDeleteResource}
-          />
+        {isLoading ? (
+          <LoadingNotebookDetail />
+        ) : (
+          <div className="flex flex-1 h-[calc(100vh-4rem)]">
+            <DocumentsPanel
+              documents={filteredDocuments}
+              selectedDocuments={selectedDocuments}
+              onToggleDocument={handleToggleDocument}
+              onSelectAll={handleSelectAll}
+              onClearSelection={handleClearSelection}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              setIsUploadModalOpen={setIsUploadModalOpen}
+              getFileIcon={getFileIcon}
+              completedDocsCount={completedDocsCount}
+              handleDeleteResource={handleDeleteResource}
+            />
 
-          <ChatSection
-            notebook={notebook}
-            messages={messages}
-            handleSendMessage={handleSendMessage}
-            selectedDocuments={selectedDocuments}
-            getFileIcon={getFileIcon}
-            status={status}
-          />
-          <FlashcardsPanel
-            onGenerateFlashcards={onGenerateFlashcards}
-            setFlashcards={setFlashcards}
-            flashcards={flashcardsRef.current}
-            onDeleteDeck={onDeleteDeck}
-            isDisabled={isDisabled}
-          />
-        </div>
-      )}
+            <ChatSection
+              notebook={notebook}
+              messages={messages}
+              handleSendMessage={handleSendMessage}
+              selectedDocuments={selectedDocuments}
+              getFileIcon={getFileIcon}
+              status={status}
+            />
+            <FlashcardsPanel
+              onGenerateFlashcards={onGenerateFlashcards}
+              setFlashcards={setFlashcards}
+              flashcards={flashcardsRef.current}
+              onDeleteDeck={onDeleteDeck}
+              isDisabled={isDisabled}
+            />
+          </div>
+        )}
 
-      <UploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        onUpload={handleUploadFiles}
-      />
+        <UploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onUpload={handleUploadFiles}
+        />
+      </div>
     </SidebarInset>
   );
 };

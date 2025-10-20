@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Home, BookOpen } from "lucide-react";
+import { Calendar, Home, BookOpen, Timer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/features/auth/";
 import { User } from "@/Types";
@@ -31,6 +31,11 @@ const data = {
       icon: BookOpen,
     },
     {
+      title: "Pomodoro Timer",
+      url: "/user/pomodoro",
+      icon: Timer,
+    },
+    {
       title: "Learning Path",
       url: "#",
       icon: Calendar,
@@ -56,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: user.image || "", // Let AvatarFallback show initials if no image
       }
     : {
-        name: "Guest", 
+        name: "Guest",
         email: "guest@example.com",
         avatar: "", // Let AvatarFallback show initials
       };

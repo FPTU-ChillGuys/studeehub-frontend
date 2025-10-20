@@ -13,10 +13,35 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { usePomodoroSettings } from "@/hooks/usePomodoroSettings";
+import { useSession } from "next-auth/react";
+import pomodoroService from "@/service/pomodoroService";
+import { soundManager } from "@/lib/sounds";
 
 type TimerMode = "pomodoro" | "shortBreak" | "longBreak";
 
+// Helper function to determine next mode in manual mode
+// Logic: Work -> ShortBreak/LongBreak -> Work
+// Long break occurs after completing longBreakInterval pomodoros
+const getNextModeManual = (
+  currentMode: TimerMode,
+  completedPomodoros: number,
+  longBreakInterval: number
+): TimerMode => {
+  if (currentMode === "pomodoro") {
+    // After completing a pomodoro, check if it's time for long break
+    if (completedPomodoros % longBreakInterval === 0) {
+      return "longBreak";
+    } else {
+      return "shortBreak";
+    }
+  } else {
+    // After any break, go back to work
+    return "pomodoro";
+  }
+};
+
 const PomodoroPage = () => {
+  const { data: session } = useSession();
   const {
     settings: userSettings,
     updateSettings,
@@ -24,6 +49,10 @@ const PomodoroPage = () => {
   } = usePomodoroSettings();
   const [currentMode, setCurrentMode] = useState<TimerMode>("pomodoro");
   const [isRunning, setIsRunning] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [shouldAutoContinue, setShouldAutoContinue] = useState(false);
+  const [pomodoroCount, setPomodoroCount] = useState(0); // Track completed pomodoros in manual mode
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -115,11 +144,10 @@ const PomodoroPage = () => {
         alert("Failed to save settings. Please try again.");
       }
     }
-  }; // Initialize time based on current mode
-  useEffect(() => {
-    // Stop timer when settings change to prevent confusion
-    setIsRunning(false);
+  };
 
+  // Initialize time based on current mode and settings
+  useEffect(() => {
     switch (currentMode) {
       case "pomodoro":
         setTimeLeft(settings.pomodoro * 60);
@@ -132,6 +160,14 @@ const PomodoroPage = () => {
         break;
     }
   }, [currentMode, settings]);
+
+  // Handle auto-continue separately to avoid conflicts with settings changes
+  useEffect(() => {
+    if (shouldAutoContinue) {
+      setIsRunning(true);
+      setShouldAutoContinue(false);
+    }
+  }, [shouldAutoContinue]);
 
   // Timer countdown logic
   useEffect(() => {
@@ -155,12 +191,69 @@ const PomodoroPage = () => {
 
   // Handle timer completion
   useEffect(() => {
-    if (timeLeft === 0 && isRunning) {
-      setIsRunning(false);
-      // Here you could add notification or sound
-      alert(`${currentMode === "pomodoro" ? "Pomodoro" : "Break"} completed!`);
-    }
-  }, [timeLeft, isRunning, currentMode]);
+    const handleTimerComplete = async () => {
+      if (timeLeft === 0 && isRunning && session?.user?.id) {
+        try {
+          // Play completion sound
+          soundManager.playBell();
+
+          // Complete current session - backend auto-creates next session if autoStartNext is enabled
+          const nextSession = await pomodoroService.completeSession(
+            session.user.id
+          );
+
+          alert(
+            `${currentMode === "pomodoro" ? "Pomodoro" : "Break"} completed!`
+          );
+
+          if (nextSession && settings.autoStartNext) {
+            // Case 1: autoStartNext = true, backend created next session
+            setCurrentSessionId(nextSession.id);
+
+            // Map backend session type to our TimerMode
+            const nextMode = mapSessionTypeToMode(nextSession.type);
+
+            // Set flag to auto-continue
+            setShouldAutoContinue(true);
+            setCurrentMode(nextMode);
+          } else {
+            // Case 2: autoStartNext = false, manually switch to next mode
+
+            // Increment pomodoro count if completing a pomodoro session
+            let newPomodoroCount = pomodoroCount;
+            if (currentMode === "pomodoro") {
+              newPomodoroCount = pomodoroCount + 1;
+              setPomodoroCount(newPomodoroCount);
+            }
+
+            const nextMode = getNextModeManual(
+              currentMode,
+              newPomodoroCount,
+              settings.longBreakInterval
+            );
+
+            setCurrentMode(nextMode);
+            // Timer stops, user must click START
+            setIsRunning(false);
+          }
+        } catch (error) {
+          console.error("Failed to complete session:", error);
+          alert("Failed to complete session. Please try again.");
+          setIsRunning(false);
+        }
+      }
+    };
+
+    handleTimerComplete();
+  }, [
+    timeLeft,
+    isRunning,
+    currentMode,
+    session,
+    settings.autoStartNext,
+    settings.longBreakInterval,
+    pomodoroCount,
+  ]);
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -170,9 +263,63 @@ const PomodoroPage = () => {
       .padStart(2, "0")}`;
   };
 
-  const handleStart = () => setIsRunning(true);
-  const handlePause = () => setIsRunning(false);
+  // Convert mode to session type (1: Work, 2: Short Break, 3: Long Break)
+  const getSessionType = (mode: TimerMode): number => {
+    switch (mode) {
+      case "pomodoro":
+        return 1;
+      case "shortBreak":
+        return 2;
+      case "longBreak":
+        return 3;
+      default:
+        return 1;
+    }
+  };
+
+  // Map backend session type to our TimerMode
+  const mapSessionTypeToMode = (type: string): TimerMode => {
+    switch (type) {
+      case "Work":
+        return "pomodoro";
+      case "ShortBreak":
+        return "shortBreak";
+      case "LongBreak":
+        return "longBreak";
+      default:
+        return "pomodoro";
+    }
+  };
+
+  const handleStart = async () => {
+    soundManager.playClick();
+
+    if (!session?.user?.id) {
+      alert("Please login to use Pomodoro timer");
+      return;
+    }
+
+    try {
+      // Call API to start session
+      const sessionResponse = await pomodoroService.startSession(
+        session.user.id,
+        getSessionType(currentMode)
+      );
+      setCurrentSessionId(sessionResponse.id);
+      setIsRunning(true);
+    } catch (error) {
+      console.error("Failed to start session:", error);
+      alert("Failed to start timer session. Please try again.");
+    }
+  };
+
+  const handlePause = () => {
+    soundManager.playClick();
+    setIsRunning(false);
+  };
+
   const handleReset = () => {
+    soundManager.playClick();
     setIsRunning(false);
     switch (currentMode) {
       case "pomodoro":
@@ -188,19 +335,56 @@ const PomodoroPage = () => {
   };
 
   const handleModeChange = (mode: TimerMode) => {
+    soundManager.playSwitch();
     setCurrentMode(mode);
     setIsRunning(false);
   };
 
-  const handleSkip = () => {
-    setIsRunning(false);
-    // Auto switch to next mode based on current mode
-    if (currentMode === "pomodoro") {
-      setCurrentMode("shortBreak");
-    } else if (currentMode === "shortBreak") {
-      setCurrentMode("pomodoro");
-    } else {
-      setCurrentMode("pomodoro");
+  const handleSkip = async () => {
+    soundManager.playClick();
+
+    if (!session?.user?.id) {
+      alert("Please login to use Pomodoro timer");
+      return;
+    }
+
+    try {
+      // Skip current session - backend auto-creates next session if autoStartNext is enabled
+      const nextSession = await pomodoroService.skipSession(session.user.id);
+
+      if (nextSession && settings.autoStartNext) {
+        // Case 1: autoStartNext = true, backend created next session
+        setCurrentSessionId(nextSession.id);
+
+        // Map backend session type to our TimerMode
+        const nextMode = mapSessionTypeToMode(nextSession.type);
+
+        // Set flag to auto-continue
+        setShouldAutoContinue(true);
+        setCurrentMode(nextMode);
+      } else {
+        // Case 2: autoStartNext = false, manually switch to next mode
+
+        // Increment pomodoro count if skipping a pomodoro session
+        let newPomodoroCount = pomodoroCount;
+        if (currentMode === "pomodoro") {
+          newPomodoroCount = pomodoroCount + 1;
+          setPomodoroCount(newPomodoroCount);
+        }
+
+        const nextMode = getNextModeManual(
+          currentMode,
+          newPomodoroCount,
+          settings.longBreakInterval
+        );
+
+        setCurrentMode(nextMode);
+        // Timer stops, user must click START
+        setIsRunning(false);
+      }
+    } catch (error) {
+      console.error("Failed to skip session:", error);
+      alert("Failed to skip session. Please try again.");
     }
   };
 

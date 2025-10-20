@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       if (!result?.success) {
         return new Response(
           JSON.stringify({
-            message: "Failed to create resource",
+            message: "Failed to create resource. Please try again or try upload smaller files under 1000 words.",
           }),
           { status: 500 }
         );

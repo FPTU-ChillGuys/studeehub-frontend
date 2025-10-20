@@ -195,7 +195,12 @@ const NotebookDetailPage = () => {
           const response = await uploadNotebookFile(files, notebookId);
 
           if (!response.success) {
-            throw new Error("Failed to upload files");
+            uploadStatus = "error";
+            toast.error("Upload failed!", {
+              description:
+                response.data?.message ||
+                "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
+            });
           } else {
             resourceIds = response.data.resourceIds || [];
             toast.success("Files uploaded successfully!", {

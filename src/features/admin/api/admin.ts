@@ -1,8 +1,8 @@
 import { apiClient } from "@/lib/api/client";
-import { UserMetricsResponse } from "../";
+import { UserMetrics } from "../";
 
-export async function getUserMetrics(): Promise<UserMetricsResponse> {
-  const response = await apiClient.get<UserMetricsResponse>("/users/metrics");
+export async function getUserMetrics(): Promise<UserMetrics> {
+  const response = await apiClient.get<UserMetrics>("/metrics/admin/metrics");
 
   if (!response.success) {
     throw new Error(response.message || 'Failed to fetch user metrics');

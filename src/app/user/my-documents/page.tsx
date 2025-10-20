@@ -50,7 +50,6 @@ const NotebooksPage = () => {
     AuthService.getCurrentUser().then((user) => {
       if (user) {
         setUserId(user.id);
-        console.log("User ID:", userIdRef.current);
       }
     });
   }, [setUserId, userIdRef]);

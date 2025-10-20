@@ -84,7 +84,7 @@ const NotebookDetailPage = () => {
       try {
         const response = await getChatbot(`${notebookId}`);
         if (response.success) {
-          setMessages(response.data.data || []);
+          setMessages(response.data.messages || []);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -128,7 +128,6 @@ const NotebookDetailPage = () => {
         if (response.success) {
           const data = response.data;
           // Update documents in notebook state
-          if (data.success === true) {
             // Get documents from response
             const documents: Document[] =
               data?.resources?.map((res: any) => ({
@@ -143,10 +142,7 @@ const NotebookDetailPage = () => {
               documents: documents,
               documentsCount: documents.length,
             }));
-          } else if (data.success === false || data.success === undefined) {
-            console.error("Failed to fetch documents:", data.message);
-          }
-        }
+          } 
       } catch (error) {
         console.error("Error fetching documents:", error);
       } finally {
@@ -266,16 +262,6 @@ const NotebookDetailPage = () => {
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
     setIsDisabled(true);
-    // const response = await fetch(`/api/flashcard`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     notebookId: notebookId,
-    //     resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
-    //   }),
-    // }).then((res) => res.json());
     const response = await postFlashcard({
       notebookId: notebookId,
       resourceIds: Array.from(selectedDocumentsRef.current) ?? [],

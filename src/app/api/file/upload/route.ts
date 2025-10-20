@@ -19,7 +19,6 @@ export async function POST(req: Request) {
       if (file.type !== "application/pdf") {
         return new Response(
           JSON.stringify({
-            success: false,
             message: "Only PDF files are supported",
           }),
           { status: 400 }
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
     const notebookId = formData.get("notebookId") as string;
     if (!notebookId) {
       return new Response(
-        JSON.stringify({ success: false, message: "No notebookId provided" }),
+        JSON.stringify({ message: "No notebookId provided" }),
         { status: 400 }
       );
     }
@@ -64,7 +63,6 @@ export async function POST(req: Request) {
       if (!result?.success) {
         return new Response(
           JSON.stringify({
-            success: false,
             message: "Failed to create resource",
           }),
           { status: 500 }
@@ -80,7 +78,6 @@ export async function POST(req: Request) {
     // Return the created resource IDs
     return new Response(
       JSON.stringify({
-        success: true,
         resourceIds,
       }),
       { status: 200 }
@@ -89,7 +86,6 @@ export async function POST(req: Request) {
     console.error("File upload error:", error);
     return new Response(
       JSON.stringify({
-        success: false,
         message: "File upload failed",
         error: error instanceof Error ? error.message : String(error),
       }),

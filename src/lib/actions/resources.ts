@@ -11,22 +11,17 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
     //Check validation
     const { content , fileName, type, url } = insertResourceSchema.parse(input);
 
-    console.log("Inserting resource into database...");
-
     // Append the file name to the content
     const inputWithFileName =  content + `\n\nSource: ${fileName}`;
 
     // Generate embeddings for the content
     const embeddingResult = await generateEmbeddings(content);
-    console.log("Generated embeddings count:", embeddingResult.length);
 
     // Insert resource into the database
     const [resource] = await db
       .insert(resources)
       .values({ content: inputWithFileName, notebookId, fileName, type, url })
       .returning();
-
-    console.log("Resource inserted with ID:", resource.id);
 
     // Insert embeddings into the database
     if (embeddingResult.length > 0) {
@@ -38,8 +33,6 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
         }))
       );
     }
-
-    console.log("Resource and embeddings created with ID:", resource.id);
 
     return { success: true, resourceId: resource.id };
   } catch (e) {

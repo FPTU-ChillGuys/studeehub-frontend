@@ -41,7 +41,6 @@ export function StreamingTextGenerationFromMessagesToResult(
         }),
         execute: async ({ question }) => {
           const response = findRelevantContent({ query: question, resourceIds });
-          console.log("Response from findRelevantContent:", response);
           return response;
         },
       }),

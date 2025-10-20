@@ -26,7 +26,6 @@ export const generateEmbeddings = async (
       },
     },
   });
-  console.log("Generated embeddings:", embeddings);
   return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
 };
 
@@ -42,7 +41,6 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
       },
     },
   });
-  console.log("Generated single embedding:", embedding);
   return embedding;
 };
 
@@ -63,8 +61,6 @@ export const findRelevantContent = async (userQuery: {
   ) {
     return [];
   }
-
-  console.log("Resource IDs for embedding search:", userQuery.resourceIds);
 
   const resourceIds = Array.isArray(userQuery.resourceIds)
     ? userQuery.resourceIds

@@ -16,7 +16,6 @@ export async function GET(request: Request, params: { params: { id: string } }) 
 
     return new Response(
         JSON.stringify({
-            success: true,
             flashcards: flashcardsList,
         }),
         { status: 200 }
@@ -30,9 +29,7 @@ export async function DELETE(request: Request, params: { params: { id: string } 
     const response = await deleteFlashcardById(id);
 
     return new Response(
-        JSON.stringify({
-            success: response.success,
-        }),
+        JSON.stringify({}),
         { status: response.success ? 200 : 500 }
     );
 }

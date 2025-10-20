@@ -9,7 +9,6 @@ export async function GET(req: Request, params: { params: { notebookId: string }
 
     return new Response(
         JSON.stringify({
-            success: true,
             resources: resourcesList,
         }),
         { status: 200 }

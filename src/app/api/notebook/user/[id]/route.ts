@@ -14,7 +14,6 @@ export async function GET(
   for (let i = 0; i < notebooksList!.length; i++) {
     const notebook = notebooksList![i];
     const resourceCount = await getResourceCountByNotebookId(notebook.id);
-    console.log(`Notebook ID: ${notebook.id}, Resource Count: ${resourceCount}`);
     notebooksWithResourceCount.push({
       ...notebook,
       resourceCount
@@ -23,7 +22,6 @@ export async function GET(
 
   return new Response(
     JSON.stringify({
-      success: true,
       notebooks: notebooksWithResourceCount,
     }),
     { status: 200 }

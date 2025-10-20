@@ -10,5 +10,6 @@ export const uploadNotebookFile = async (
   });
   formData.append("notebookId", notebookId);
 
-  return commonPost("/api/file/upload", formData);
+  // Don't set Content-Type header - browser will set it automatically with boundary
+  return commonPost("/api/file/upload", formData, {});
 };

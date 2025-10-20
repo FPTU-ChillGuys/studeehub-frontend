@@ -6,8 +6,6 @@ import { UIMessage } from "ai";
 export async function POST(req: Request) {
   const { messages, resourceIds, notebookId }: { messages: UIMessage[] , resourceIds: string | string[] , notebookId: string } = await req.json();
 
-  console.log("Resource IDs received in request:", resourceIds);
-
   //Get last message
   const lastMessage = messages[messages.length - 1];
   const convertedMessage = messageUIToDB(notebookId, lastMessage);

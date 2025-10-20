@@ -28,7 +28,6 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   
   
   const handleDeckClick = (deck: FlashcardDeck) => {
-    console.log("Selected Deck:", deck);
     setSelectedDeck(deck);
     setView("detail");
   };

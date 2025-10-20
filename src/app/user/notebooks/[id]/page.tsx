@@ -4,18 +4,28 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
 import UploadModal from "@/components/modals/UploadModal";
-import { Notebook, Document, ChatMessage, FlashcardDeck } from "@/Types";
+import { Notebook, Document, FlashcardDeck } from "@/Types";
 import NotebookHeader from "@/components/notebook-detail/NotebookHeader";
 import ChatSection from "@/components/notebook-detail/ChatSection";
 import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
 import { getFileIcon } from "@/components/notebook-detail/utils";
+import { LoadingNotebookDetail } from "@/components/notebook-detail";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
-import { IFlashcard } from "react-quizlet-flashcard";
 import "react-quizlet-flashcard/dist/index.css";
 import { nanoid } from "nanoid";
+import { uploadNotebookFile } from "@/features/notebook/api/upload";
+import { getChatbot } from "@/features/chatbot/api/chatbot";
+import { getNotebook } from "@/features/notebook/api/notebook";
+import {
+  getFlashcards,
+  postFlashcard,
+} from "@/features/flashcard/api/flashcard";
+import { getFile } from "@/features/file/api/file";
+import { deleteResource } from "@/features/resource/api/resource";
+import { toast } from "sonner";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -29,6 +39,12 @@ const NotebookDetailPage = () => {
   const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>(
     []
   );
+
+  // Loading states
+  const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [isLoadingFlashcards, setIsLoadingFlashcards] = useState(true);
 
   // Disable flashcard generation if no documents are selected
   const [isDisabled, setIsDisabled] = useState(true);
@@ -44,12 +60,10 @@ const NotebookDetailPage = () => {
     createdDate: "",
     lastModified: "",
     documentsCount: 0,
-    totalQuestions: 0,
     status: "active",
     documents: [],
     thumbnail: "",
   });
-
 
   //Chatbot by Vercel AI SDK
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -61,6 +75,10 @@ const NotebookDetailPage = () => {
             messages,
             resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
             notebookId: notebookId,
+            //Get selected files names
+            fileNames: notebookRef.current.documents
+              .filter((doc) => selectedDocumentsRef.current.has(doc.id))
+              .map((doc) => doc.name),
           },
         };
       },
@@ -70,15 +88,16 @@ const NotebookDetailPage = () => {
   //Load existing chat messages
   useEffect(() => {
     const fetchMessages = async () => {
+      setIsLoadingMessages(true);
       try {
-        const response = await fetch(`/api/chatbot/${notebookId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetched messages:", data);
-          setMessages(data.data || []);
+        const response = await getChatbot(`${notebookId}`);
+        if (response.success) {
+          setMessages(response.data.messages || []);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     };
     fetchMessages();
@@ -87,21 +106,22 @@ const NotebookDetailPage = () => {
   //Get notebook details
   useEffect(() => {
     const fetchNotebookDetails = async () => {
+      setIsLoadingNotebook(true);
       try {
-        const response = await fetch(`/api/notebook/${notebookId}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetched notebook details:", data);
-          if (data.success === true) {
-            setNotebook({ ...notebookRef.current,
-              id : data.notebook.id,
-              title : data.notebook.title,
-              description : data.notebook.description,
-            } as Notebook);
-          }
+        const response = await getNotebook(`${notebookId}`);
+        if (response.success) {
+          setNotebook({
+            ...notebookRef.current,
+            // id : response.data.id,
+            // title : response.data.title,
+            // description : response.data.description,
+            ...response.data.notebook,
+          } as Notebook);
         }
       } catch (error) {
         console.error("Error fetching notebook details:", error);
+      } finally {
+        setIsLoadingNotebook(false);
       }
     };
 
@@ -111,37 +131,36 @@ const NotebookDetailPage = () => {
   //Get file upload and document management
   useEffect(() => {
     const fetchDocuments = async () => {
+      setIsLoadingDocuments(true);
       try {
-        const response = await fetch(`/api/file/${notebookId}`);
-        if (response.ok) {
-          const data = await response.json();
+        const response = await getFile(`${notebookId}`);
+        if (response.success) {
+          const data = response.data;
           // Update documents in notebook state
-          if (data.success === true) {
-            // Get documents from response
-            const documents: Document[] =
-              data?.resources?.map((res: any) => ({
-                id: res.id,
-                name: res.fileName,
-                type: res.type,
-                url: res.url,
-                status: "completed",
-              })) || [];
-            setNotebook((prev) => ({
-              ...prev,
-              documents: documents,
-              documentsCount: documents.length,
-            }));
-          } else if (data.success === false || data.success === undefined) {
-            console.error("Failed to fetch documents:", data.message);
-          }
+          // Get documents from response
+          const documents: Document[] =
+            data?.resources?.map((res: any) => ({
+              id: res.id,
+              name: res.fileName,
+              type: res.type,
+              url: res.url,
+              status: "completed",
+            })) || [];
+          setNotebook((prev) => ({
+            ...prev,
+            documents: documents,
+            documentsCount: documents.length,
+          }));
         }
       } catch (error) {
         console.error("Error fetching documents:", error);
+      } finally {
+        setIsLoadingDocuments(false);
       }
     };
 
     fetchDocuments();
-  }, [notebookId]);
+  }, [notebookId, setNotebook]);
 
   const handleUploadFiles = async (files: File[]) => {
     try {
@@ -169,31 +188,32 @@ const NotebookDetailPage = () => {
 
       //Upload files to backend
       let resourceIds: string[] = [];
+      let uploadStatus: "completed" | "error" = "completed";
       const uploadToServer = async () => {
-        const formData = new FormData();
-        files.forEach((file) => {
-          formData.append("files", file);
-        });
-        formData.append("notebookId", notebookId);
-
         // Upload files to server
         try {
-          const response = await fetch("/api/file/upload", {
-            method: "POST",
-            body: formData,
-          });
-          if (!response.ok) {
-            throw new Error("Failed to upload files");
-          }
-          const data = await response.json();
-          if (data.success === true) {
-            console.log("Files uploaded successfully:", data);
-            resourceIds = data.resourceIds || [];
+          const response = await uploadNotebookFile(files, notebookId);
+
+          if (!response.success) {
+            uploadStatus = "error";
+            toast.error("Upload failed!", {
+              description:
+                response.data?.message ||
+                "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
+            });
           } else {
-            console.error("File upload failed:", data.message);
+            resourceIds = response.data.resourceIds || [];
+            toast.success("Files uploaded successfully!", {
+              description: `${files.length} file(s) have been uploaded and are being processed.`,
+            });
           }
         } catch (error) {
+          uploadStatus = "error";
           console.error("Error uploading files:", error);
+          toast.error("Upload failed!", {
+            description:
+              "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
+          });
         }
       };
       // Run upload
@@ -211,7 +231,7 @@ const NotebookDetailPage = () => {
             ) {
               const updatedDoc = {
                 ...doc,
-                status: "completed" as const,
+                status: uploadStatus,
                 id: resourceIds[y],
               };
               y++;
@@ -222,8 +242,6 @@ const NotebookDetailPage = () => {
           lastModified: new Date().toISOString().split("T")[0],
         };
       });
-      console.log("Resource IDs after upload:", resourceIds);
-      console.log("Notebook after upload:", notebook);
     } catch (error) {
       console.error("Error in handleUploadFiles:", error);
     }
@@ -245,10 +263,6 @@ const NotebookDetailPage = () => {
       newSelected.delete(resourceId);
     }
     setSelectedDocuments(newSelected);
-    console.log(
-      "Selected documents:",
-      Array.from(selectedDocumentsRef.current)
-    );
   };
 
   const handleSelectAll = () => {
@@ -256,10 +270,6 @@ const NotebookDetailPage = () => {
       .filter((d) => d.status === "completed")
       .map((d) => d.id);
     setSelectedDocuments(new Set(completedDocs));
-    console.log(
-      "Selected all documents:",
-      Array.from(selectedDocumentsRef.current)
-    );
   };
 
   const handleClearSelection = () => {
@@ -273,24 +283,17 @@ const NotebookDetailPage = () => {
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
     setIsDisabled(true);
-    const response = await fetch(`/api/flashcard`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        notebookId: notebookId,
-        resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
-      }),
-    }).then((res) => res.json());
+    const response = await postFlashcard({
+      notebookId: notebookId,
+      resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+    });
 
     if (response.success === true) {
-      console.log("Flashcards generated:", response);
       // Map response to IFlashcard format
       const generatedFlashcard: FlashcardDeck = {
         id: nanoid(),
-        title: response.flashcards?.title,
-        cards: response?.flashcards?.decks?.map((fc: any) => ({
+        title: response.data.flashcards?.title,
+        cards: response?.data.flashcards?.decks?.map((fc: any) => ({
           front: {
             html: (
               <div className="flex items-center justify-center h-full w-full p-6">
@@ -307,9 +310,17 @@ const NotebookDetailPage = () => {
           },
           id: fc.id,
         })),
-        cardCount: response?.flashcards?.decks?.length,
+        cardCount: response?.data.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+    }
+    // Add toast notification for failure
+    else {
+      toast.error("Flashcard generation failed!", {
+        description:
+          response.data?.message ||
+          "Unable to generate flashcards. Please try again.",
+      });
     }
     setIsDisabled(false);
   };
@@ -317,36 +328,43 @@ const NotebookDetailPage = () => {
   //Get flashcards for this notebook
   useEffect(() => {
     const fetchFlashcards = async () => {
-      const response = await fetch(`/api/flashcard/${notebookId}`);
-      const data = await response.json();
-      if (data.success === true) {
-        console.log("Fetched flashcards:", data.flashcards);
-        const fetchedFlashcards: FlashcardDeck[] = data.flashcards.map(
-          (fc: any) => ({
-            id: fc.id,
-            title: fc.title,
-            cardCount: fc.cardCount,
-            cards: fc.cards.map((card: any, index: number) => ({
-              front: {
-                html: (
-                  <div className="flex items-center justify-center h-full w-full p-6">
-                    {card?.front || "No content"}
-                  </div>
-                ),
-              },
-              back: {
-                html: (
-                  <div className="flex items-center justify-center h-full w-full p-6">
-                    {card?.back || "No content"}
-                  </div>
-                ),
-              },
-            })),
-          })
-        );
-        setFlashcards(fetchedFlashcards);
-      } else {
-        console.error("Failed to fetch flashcards:", data.message);
+      setIsLoadingFlashcards(true);
+      try {
+        const response = await getFlashcards(`${notebookId}`);
+        if (response.success === true) {
+          const fetchedFlashcards: FlashcardDeck[] =
+            response.data.flashcards.map(
+              (fc: any) =>
+                ({
+                  id: fc.id,
+                  title: fc.title,
+                  cardCount: fc.cardCount,
+                  cards: fc.cards.map((card: any) => ({
+                    front: {
+                      html: (
+                        <div className="flex items-center justify-center h-full w-full p-6">
+                          {card?.front || "No content"}
+                        </div>
+                      ),
+                    },
+                    back: {
+                      html: (
+                        <div className="flex items-center justify-center h-full w-full p-6">
+                          {card?.back || "No content"}
+                        </div>
+                      ),
+                    },
+                  })),
+                } as FlashcardDeck)
+            );
+          setFlashcards(fetchedFlashcards);
+        } else {
+          console.error("Failed to fetch flashcards:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching flashcards:", error);
+      } finally {
+        setIsLoadingFlashcards(false);
       }
     };
     fetchFlashcards();
@@ -358,51 +376,75 @@ const NotebookDetailPage = () => {
     }).then((res) => res.json());
 
     if (response.success === true) {
-      console.log("Flashcard deck deleted:", deckId);
       setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
     }
   };
 
+  const handleDeleteResource = async (resourceId: string) => {
+    const response = await deleteResource(resourceId);
+    if (response.success === true) {
+      setNotebook((prev) => ({
+        ...prev,
+        documents: prev.documents.filter((doc) => doc.id !== resourceId),
+        documentsCount: prev.documentsCount - 1,
+      }));
+    }
+  };
+
+  // Check if any loading is in progress
+  const isLoading =
+    isLoadingNotebook ||
+    isLoadingDocuments ||
+    isLoadingMessages ||
+    isLoadingFlashcards;
+
   return (
     <SidebarInset>
-      <NotebookHeader notebookTitle={notebook.title} />
+      <div className="h-auto">
+        <NotebookHeader notebookTitle={notebook.title} />
 
-      <div className="flex flex-1 h-[calc(100vh-4rem)]">
-        <DocumentsPanel
-          documents={filteredDocuments}
-          selectedDocuments={selectedDocuments}
-          onToggleDocument={handleToggleDocument}
-          onSelectAll={handleSelectAll}
-          onClearSelection={handleClearSelection}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          setIsUploadModalOpen={setIsUploadModalOpen}
-          getFileIcon={getFileIcon}
-          completedDocsCount={completedDocsCount}
-        />
+        {isLoading ? (
+          <LoadingNotebookDetail />
+        ) : (
+          <div className="flex flex-1 h-[calc(100vh-4rem)]">
+            <DocumentsPanel
+              documents={filteredDocuments}
+              selectedDocuments={selectedDocuments}
+              onToggleDocument={handleToggleDocument}
+              onSelectAll={handleSelectAll}
+              onClearSelection={handleClearSelection}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              setIsUploadModalOpen={setIsUploadModalOpen}
+              getFileIcon={getFileIcon}
+              completedDocsCount={completedDocsCount}
+              handleDeleteResource={handleDeleteResource}
+            />
 
-        <ChatSection
-          notebook={notebook}
-          messages={messages}
-          handleSendMessage={handleSendMessage}
-          selectedDocuments={selectedDocuments}
-          getFileIcon={getFileIcon}
-          status={status}
-        />
-        <FlashcardsPanel
-          onGenerateFlashcards={onGenerateFlashcards}
-          setFlashcards={setFlashcards}
-          flashcards={flashcardsRef.current}
-          onDeleteDeck={onDeleteDeck}
-          isDisabled={isDisabled}
+            <ChatSection
+              notebook={notebook}
+              messages={messages}
+              handleSendMessage={handleSendMessage}
+              selectedDocuments={selectedDocuments}
+              getFileIcon={getFileIcon}
+              status={status}
+            />
+            <FlashcardsPanel
+              onGenerateFlashcards={onGenerateFlashcards}
+              setFlashcards={setFlashcards}
+              flashcards={flashcardsRef.current}
+              onDeleteDeck={onDeleteDeck}
+              isDisabled={isDisabled}
+            />
+          </div>
+        )}
+
+        <UploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onUpload={handleUploadFiles}
         />
       </div>
-
-      <UploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        onUpload={handleUploadFiles}
-      />
     </SidebarInset>
   );
 };

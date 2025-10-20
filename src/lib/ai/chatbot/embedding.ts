@@ -1,5 +1,4 @@
 import { embed, embedMany } from "ai";
-import { embeddingModel } from "./model/ollama";
 import { cosineDistance, desc, gt, sql, and, eq } from "drizzle-orm";
 import { embeddings } from "@/lib/db/schema/embedding";
 import { db } from "@/lib/db";
@@ -26,7 +25,6 @@ export const generateEmbeddings = async (
       },
     },
   });
-  console.log("Generated embeddings:", embeddings);
   return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
 };
 
@@ -42,7 +40,6 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
       },
     },
   });
-  console.log("Generated single embedding:", embedding);
   return embedding;
 };
 
@@ -64,8 +61,6 @@ export const findRelevantContent = async (userQuery: {
     return [];
   }
 
-  console.log("Resource IDs for embedding search:", userQuery.resourceIds);
-
   const resourceIds = Array.isArray(userQuery.resourceIds)
     ? userQuery.resourceIds
     : [userQuery.resourceIds];
@@ -81,3 +76,4 @@ export const findRelevantContent = async (userQuery: {
 
   return similarGuides;
 };
+

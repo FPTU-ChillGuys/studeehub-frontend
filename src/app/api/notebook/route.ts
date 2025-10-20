@@ -14,7 +14,6 @@ export async function POST (req: Request) {
 
         return new Response(
             JSON.stringify({
-                success: true,
                 notebook: newNotebook
             }),
             { status: 201 }
@@ -22,7 +21,7 @@ export async function POST (req: Request) {
     } catch (e) {
         console.error("Error processing request:", e);
         return new Response(
-            JSON.stringify({ success: false, message: "Internal Server Error" }),
+            JSON.stringify({ message: "Internal Server Error" }),
             { status: 500 }
         );
     }

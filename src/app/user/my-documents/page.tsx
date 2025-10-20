@@ -1,19 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import {
-  BookOpen,
-  Search,
-  MoreVertical,
-  Grid,
-  List,
-  Plus,
-  FileText,
-  MessageCircle,
-  Calendar,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { Plus } from "lucide-react";
 
 import {
   Breadcrumb,
@@ -21,21 +8,24 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Notebook } from "@/Types";
 import CreateNotebookModal from "@/components/modals/CreateNotebookModal";
 import useStateRef from "react-usestateref";
 import { useEffect } from "react";
+import { ConvertAnyToNotebook, NewNotebook } from "@/lib/mapping/notebook";
 import { AuthService } from "@/service/authService";
+import { deleteNotebook, getNotebook, postNotebook } from "@/features/notebook/api/notebook";
+import {
+  NotebookStats,
+  NotebookControls,
+  NotebookCard,
+  NotebookListItem,
+  EmptyNotebooks,
+  LoadingNotebooks,
+} from "@/components/my-documents";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -47,6 +37,7 @@ const NotebooksPage = () => {
   );
   const [editTitle, setEditTitle] = useStateRef("");
   const [openDropdown, setOpenDropdown] = useStateRef<string | null>(null);
+  const [isLoading, setIsLoading] = useStateRef(true);
 
   //Get userId from localStorage
   const [userId, setUserId, userIdRef] = useStateRef<string | null>(null);
@@ -59,7 +50,6 @@ const NotebooksPage = () => {
     AuthService.getCurrentUser().then((user) => {
       if (user) {
         setUserId(user.id);
-        console.log("User ID:", userIdRef.current);
       }
     });
   }, [setUserId, userIdRef]);
@@ -68,79 +58,50 @@ const NotebooksPage = () => {
   useEffect(() => {
     const fetchNotebooks = async () => {
       if (!userIdRef.current) return;
-      const response = await fetch(`/api/notebook/user/${userIdRef.current}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      if (data.success) {
-        if (data.notebooks.length === 0) {
-          setNotebooks([]);
-          return;
+      
+      setIsLoading(true);
+      try {
+        const response = await getNotebook(`user/${userIdRef.current}`);
+
+        if (response.success) {
+          if (response.data.notebooks.length === 0) {
+            setNotebooks([]);
+          } else {
+            // Get document counts for each notebook
+            setNotebooks(
+              response.data.notebooks.map((notebook: any) =>
+                ConvertAnyToNotebook(notebook)
+              )
+            );
+          }
         }
-        console.log("Fetched Notebooks:", data.notebooks);
-        setNotebooks(
-          data?.notebooks?.map(
-            (notebook: any) =>
-              ({
-                id: notebook.id,
-                title: notebook.title,
-                description: notebook.description,
-                createdDate: notebook.createdDate,
-                lastModified: notebook.updatedDate,
-                documentsCount: 0,
-                totalQuestions: 0,
-                status: notebook.status,
-                documents: [],
-                thumbnail: notebook.thumbnail,
-              } as Notebook)
-          )
-        );
+      } catch (error) {
+        console.error("Error fetching notebooks:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchNotebooks();
-  }, [userIdRef, setNotebooks]);
+  }, [userId, userIdRef, setNotebooks, setIsLoading]);
 
   const handleCreateNotebook = async (
     title: string,
     description?: string,
     thumbnail?: string
   ) => {
-    const newNotebook: Notebook = {
-      id: Date.now().toString(),
-      title,
-      description,
-      createdDate: new Date().toISOString().split("T")[0],
-      lastModified: new Date().toISOString().split("T")[0],
-      documentsCount: 0,
-      totalQuestions: 0,
-      status: "active",
-      documents: [],
-      thumbnail: thumbnail || "📚",
-    };
+    const newNotebook: Notebook = NewNotebook();
 
     // Create the notebook in the database
-    const response = await fetch("/api/notebook", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: userIdRef.current,
-        title,
-        description: description || "",
-        thumbnail: thumbnail || "📚",
-      }),
+    const response = await postNotebook({
+      userId: userIdRef.current,
+      title,
+      description: description || "",
+      thumbnail: thumbnail || "📚",
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        newNotebook.id = data.notebook.id; // Update with real ID from backend
-      }
+    if (response.success && response.data.notebook) {
+      newNotebook.id = response.data.notebook.id; // Update with real ID from backend
     }
 
     setNotebooks((prev) => [newNotebook, ...prev]);
@@ -165,13 +126,10 @@ const NotebooksPage = () => {
   const handleDeleteNotebook = async (id: string) => {
     if (confirm("Are you sure you want to delete this notebook?")) {
       // Delete the notebook from the database
-      await fetch(`/api/notebook/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
+      const response = await deleteNotebook(id);
+      if (response.success) {
+        setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
+      }
     }
   };
 
@@ -183,8 +141,8 @@ const NotebooksPage = () => {
 
   const filteredNotebooks = notebooks?.filter((notebook) => {
     const matchesSearch =
-      notebook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notebook.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      notebook?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notebook?.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
       filterStatus === "all" || notebook.status === filterStatus;
     return matchesSearch && matchesFilter;
@@ -194,7 +152,6 @@ const NotebooksPage = () => {
     total: notebooks.length,
     active: notebooks.filter((n) => n.status === "active").length,
     totalDocuments: notebooks.reduce((sum, n) => sum + n.documentsCount, 0),
-    totalQuestions: notebooks.reduce((sum, n) => sum + n.totalQuestions, 0),
   };
 
   return (
@@ -230,232 +187,53 @@ const NotebooksPage = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  Total Notebooks
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {stats.total}
-                </p>
-              </div>
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BookOpen className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Active</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {stats.active}
-                </p>
-              </div>
-              <div className="p-3 bg-green-500/10 rounded-lg">
-                <BookOpen className="w-6 h-6 text-green-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Documents</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {stats.totalDocuments}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-500/10 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Questions</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {stats.totalQuestions}
-                </p>
-              </div>
-              <div className="p-3 bg-purple-500/10 rounded-lg">
-                <MessageCircle className="w-6 h-6 text-purple-500" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <NotebookStats
+          total={stats.total}
+          active={stats.active}
+          totalDocuments={stats.totalDocuments}
+        />
 
         {/* Controls */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex gap-4">
-            <div className="relative flex-1 min-w-[300px]">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search notebooks..."
-                className="pl-10"
-              />
-            </div>
-
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-input rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors bg-background text-foreground"
-            >
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        <NotebookControls
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterStatus={filterStatus}
+          onFilterChange={setFilterStatus}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
 
         {/* Notebooks */}
-        {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {isLoading ? (
+          <LoadingNotebooks />
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredNotebooks?.map((notebook) => (
-              <Link key={notebook.id} href={`/user/notebooks/${notebook.id}`}>
-                <div className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all duration-200 cursor-pointer group h-80 flex flex-col">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-4xl">{notebook.thumbnail}</div>
-                    <DropdownMenu
-                      open={openDropdown === notebook.id}
-                      onOpenChange={(open) =>
-                        setOpenDropdown(open ? notebook.id : null)
-                      }
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            startEditingNotebook(notebook);
-                          }}
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit title
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteNotebook(notebook.id);
-                          }}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="flex-1 flex flex-col">
-                    {editingNotebook === notebook.id ? (
-                      <Input
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onBlur={() => {
-                          if (editTitle.trim()) {
-                            handleEditNotebook(notebook.id, editTitle.trim());
-                          } else {
-                            setEditingNotebook(null);
-                            setEditTitle("");
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            if (editTitle.trim()) {
-                              handleEditNotebook(notebook.id, editTitle.trim());
-                            }
-                          } else if (e.key === "Escape") {
-                            setEditingNotebook(null);
-                            setEditTitle("");
-                          }
-                        }}
-                        autoFocus
-                        className="font-semibold text-foreground mb-2 text-lg"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      />
-                    ) : (
-                      <h3
-                        className="font-semibold text-foreground mb-2 text-lg leading-tight line-clamp-2"
-                        title={notebook.title}
-                      >
-                        {notebook.title}
-                      </h3>
-                    )}
-
-                    {notebook.description && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
-                        {notebook.description}
-                      </p>
-                    )}
-
-                    <div className="space-y-3 mt-auto">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Documents:
-                        </span>
-                        <span className="px-2 py-1 bg-secondary text-secondary-foreground rounded text-xs font-medium">
-                          {notebook.documentsCount}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Questions:
-                        </span>
-                        <span className="px-2 py-1 bg-secondary text-secondary-foreground rounded text-xs font-medium">
-                          {notebook.totalQuestions}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
-                        <span>{notebook.lastModified}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <NotebookCard
+                key={notebook.id}
+                notebook={notebook}
+                isEditing={editingNotebook === notebook.id}
+                editTitle={editTitle}
+                onEditTitleChange={setEditTitle}
+                onStartEdit={() => startEditingNotebook(notebook)}
+                onSaveEdit={() => {
+                  if (editTitle.trim()) {
+                    handleEditNotebook(notebook.id, editTitle.trim());
+                  } else {
+                    setEditingNotebook(null);
+                    setEditTitle("");
+                  }
+                }}
+                onCancelEdit={() => {
+                  setEditingNotebook(null);
+                  setEditTitle("");
+                }}
+                onDelete={() => handleDeleteNotebook(notebook.id)}
+                openDropdown={openDropdown === notebook.id}
+                onDropdownChange={(open) =>
+                  setOpenDropdown(open ? notebook.id : null)
+                }
+              />
             ))}
           </div>
         ) : (
@@ -467,145 +245,41 @@ const NotebooksPage = () => {
             </div>
             <div className="divide-y divide-border">
               {filteredNotebooks.map((notebook) => (
-                <Link
+                <NotebookListItem
                   key={notebook.id}
-                  href={`/user/notebooks/${notebook.id}`}
-                >
-                  <div className="p-6 hover:bg-muted/50 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-4">
-                      <div className="text-3xl">{notebook.thumbnail}</div>
-                      <div className="flex-1 min-w-0">
-                        {editingNotebook === notebook.id ? (
-                          <Input
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            onBlur={() => {
-                              if (editTitle.trim()) {
-                                handleEditNotebook(
-                                  notebook.id,
-                                  editTitle.trim()
-                                );
-                              } else {
-                                setEditingNotebook(null);
-                                setEditTitle("");
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                if (editTitle.trim()) {
-                                  handleEditNotebook(
-                                    notebook.id,
-                                    editTitle.trim()
-                                  );
-                                }
-                              } else if (e.key === "Escape") {
-                                setEditingNotebook(null);
-                                setEditTitle("");
-                              }
-                            }}
-                            autoFocus
-                            className="font-semibold text-foreground mb-1"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                          />
-                        ) : (
-                          <h3 className="font-semibold text-foreground truncate">
-                            {notebook.title}
-                          </h3>
-                        )}
-                        {notebook.description && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                            {notebook.description}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>{notebook.documentsCount} documents</span>
-                          <span>{notebook.totalQuestions} questions</span>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{notebook.lastModified}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2 py-1 text-xs rounded ${
-                            notebook.status === "active"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary text-secondary-foreground"
-                          }`}
-                        >
-                          {notebook.status}
-                        </span>
-                        <DropdownMenu
-                          open={openDropdown === notebook.id}
-                          onOpenChange={(open) =>
-                            setOpenDropdown(open ? notebook.id : null)
-                          }
-                        >
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                              }}
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                startEditingNotebook(notebook);
-                              }}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit title
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleDeleteNotebook(notebook.id);
-                              }}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                  notebook={notebook}
+                  isEditing={editingNotebook === notebook.id}
+                  editTitle={editTitle}
+                  onEditTitleChange={setEditTitle}
+                  onStartEdit={() => startEditingNotebook(notebook)}
+                  onSaveEdit={() => {
+                    if (editTitle.trim()) {
+                      handleEditNotebook(notebook.id, editTitle.trim());
+                    } else {
+                      setEditingNotebook(null);
+                      setEditTitle("");
+                    }
+                  }}
+                  onCancelEdit={() => {
+                    setEditingNotebook(null);
+                    setEditTitle("");
+                  }}
+                  onDelete={() => handleDeleteNotebook(notebook.id)}
+                  openDropdown={openDropdown === notebook.id}
+                  onDropdownChange={(open) =>
+                    setOpenDropdown(open ? notebook.id : null)
+                  }
+                />
               ))}
             </div>
           </div>
         )}
 
-        {filteredNotebooks.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              No notebooks found
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm || filterStatus !== "all"
-                ? "Try changing your filters or search terms"
-                : "You don't have any notebooks yet"}
-            </p>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create your first notebook
-            </Button>
-          </div>
+        {!isLoading && filteredNotebooks.length === 0 && (
+          <EmptyNotebooks
+            hasFilters={!!searchTerm || filterStatus !== "all"}
+            onCreateClick={() => setIsCreateModalOpen(true)}
+          />
         )}
       </div>
 

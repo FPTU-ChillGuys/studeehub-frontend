@@ -9,7 +9,11 @@ interface UploadModalProps {
   onUpload: (files: File[]) => void;
 }
 
-const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload }) => {
+const UploadModal: React.FC<UploadModalProps> = ({
+  isOpen,
+  onClose,
+  onUpload,
+}) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -87,7 +91,9 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload }) 
       <div className="bg-background border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-semibold text-foreground">Upload Documents</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            Upload Documents
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-accent rounded-lg transition-colors"
@@ -133,7 +139,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload }) 
               Choose Files
             </label>
             <p className="text-xs text-muted-foreground mt-4">
-              Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, MP4, AVI, MOV
+              Supported formats: PDF, DOC, DOCX
             </p>
           </div>
 

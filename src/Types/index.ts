@@ -80,7 +80,6 @@ export interface Notebook {
   createdDate: string;
   lastModified: string;
   documentsCount: number;
-  totalQuestions: number;
   status: "active" | "archived";
   documents: Document[];
   thumbnail?: string;
@@ -146,4 +145,11 @@ export interface FlashcardDeck {
   title: string;
   cardCount: number;
   cards: IFlashcard[];
+}
+
+export interface BaseResponse {
+  success: boolean;
+  message: string;
+  errors: string[] | null;
+  data?: any;
 }

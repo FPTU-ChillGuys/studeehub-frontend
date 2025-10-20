@@ -17,8 +17,6 @@ export const createMessage = async (notebookId : string, message: InsertMessageP
         })
         .returning();
 
-    console.log("Message created with ID:", createdMessage.id);
-
     return createdMessage;
 }
 

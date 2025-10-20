@@ -10,7 +10,6 @@ export async function GET(_req: Request, props : { params: Promise<{ id: string 
         console.error("Missing notebookId parameter in request");
         return new Response(
             JSON.stringify({
-                success: false,
                 error: "Missing notebookId parameter",
             }),
             { status: 400 }
@@ -22,41 +21,38 @@ export async function GET(_req: Request, props : { params: Promise<{ id: string 
 
     return new Response(
         JSON.stringify({
-            success: true,
-            data: messages,
+            messages,
         }),
         { status: 200 }
     );
 }
 
-export const POST = async (req: Request, props : { params: Promise<{ id: string }> }) => {
-    const params = await props.params;
-    const { id: notebookId } = params;
+// export const POST = async (req: Request, props : { params: Promise<{ id: string }> }) => {
+//     const params = await props.params;
+//     const { id: notebookId } = params;
 
-    if (!notebookId) {
-        console.error("Missing notebookId parameter in request");
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: "Missing notebookId parameter",
-            }),
-            { status: 400 }
-        );
-    }
+//     if (!notebookId) {
+//         console.error("Missing notebookId parameter in request");
+//         return new Response(
+//             JSON.stringify({
+//                 error: "Missing notebookId parameter",
+//             }),
+//             { status: 400 }
+//         );
+//     }
 
-    // Handle message sending logic here
-    const { lastMessage } = await req.json();
+//     // Handle message sending logic here
+//     const { lastMessage } = await req.json();
 
-    //Save last message to database
-    //Convert to InsertMessageParams type
-    const convertedMessage = messageUIToDB(notebookId, lastMessage);
-    await createMessage(notebookId, convertedMessage);
+//     //Save last message to database
+//     //Convert to InsertMessageParams type
+//     const convertedMessage = messageUIToDB(notebookId, lastMessage);
+//     await createMessage(notebookId, convertedMessage);
 
-    return new Response(
-        JSON.stringify({
-            success: true,
-            data: lastMessage,
-        }),
-        { status: 200 }
-    );
-}
+//     return new Response(
+//         JSON.stringify({
+//             lastMessage,
+//         }),
+//         { status: 200 }
+//     );
+// }

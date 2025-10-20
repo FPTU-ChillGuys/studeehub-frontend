@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import { generateEmbeddings } from "../ai/chatbot/embedding";
 import { db } from "../db";
 import { embeddings } from "../db/schema/embedding";
@@ -11,22 +11,17 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
     //Check validation
     const { content , fileName, type, url } = insertResourceSchema.parse(input);
 
-    console.log("Inserting resource into database...");
-
     // Append the file name to the content
     const inputWithFileName =  content + `\n\nSource: ${fileName}`;
+
+    // Generate embeddings for the content
+    const embeddingResult = await generateEmbeddings(content);
 
     // Insert resource into the database
     const [resource] = await db
       .insert(resources)
       .values({ content: inputWithFileName, notebookId, fileName, type, url })
       .returning();
-
-    console.log("Resource inserted with ID:", resource.id);
-
-    // Generate embeddings for the content
-    const embeddingResult = await generateEmbeddings(content);
-    console.log("Generated embeddings count:", embeddingResult.length);
 
     // Insert embeddings into the database
     if (embeddingResult.length > 0) {
@@ -38,8 +33,6 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
         }))
       );
     }
-
-    console.log("Resource and embeddings created with ID:", resource.id);
 
     return { success: true, resourceId: resource.id };
   } catch (e) {
@@ -80,5 +73,32 @@ export const getContentFromResourceId = async (resourceIds:  string[]) => {
   } catch (e) {
     console.error("Error fetching resource content:", e);
     return [];
+  }
+};
+
+export const deleteResourceById = async (resourceId: string) => {
+  try {
+    await db.delete(resources).where(eq(resources.id, resourceId));
+    return { success: true };
+  }
+  catch (e) {
+    console.error("Error deleting resource:", e);
+    return { success: false };
+  }
+};
+
+export const getResourceCountByNotebookId = async (notebookId: string) => {
+  try {
+    const countResult = await db.select({
+      count : count(resources.id)
+    })
+    .from(resources)
+    .where(eq(resources.notebookId, notebookId))
+
+    return countResult[0].count;
+  }
+  catch (e) {
+    console.error("Error counting resources:", e);
+    return 0;
   }
 };

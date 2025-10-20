@@ -1,7 +1,4 @@
-import {
-  deleteNotebookById,
-  getNotebookById,
-} from "@/lib/actions/notebook";
+import { deleteNotebookById, getNotebookById } from "@/lib/actions/notebook";
 
 export async function GET(
   req: Request,
@@ -11,14 +8,12 @@ export async function GET(
   //Get notebooks from database by notebookId
   const notebook = await getNotebookById(notebookId);
   if (!notebook) {
-    return new Response(
-      JSON.stringify({ success : false, message: "Notebook not found" }),
-      { status: 404 }
-    );
+    return new Response(JSON.stringify({ message: "Notebook not found" }), {
+      status: 404,
+    });
   }
-  return new Response(JSON.stringify({ success: true, notebook }), { status: 200 });
+  return new Response(JSON.stringify({ notebook }), { status: 200 });
 }
-
 
 export async function DELETE(
   req: Request,
@@ -31,7 +26,7 @@ export async function DELETE(
 
   return new Response(
     JSON.stringify({
-      success: true,
+      message: "Notebook deleted successfully",
     }),
     { status: 200 }
   );

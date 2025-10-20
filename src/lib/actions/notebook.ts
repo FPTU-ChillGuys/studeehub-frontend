@@ -22,7 +22,6 @@ export const createNotebook = async (
         thumbnail: validatedNotebook.thumbnail || "",
       })
       .returning();
-    console.log("Notebook created with ID:", createdNotebook.id);
 
     return createdNotebook;
   } catch (e) {

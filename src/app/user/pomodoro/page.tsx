@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Pause, RotateCcw, ChartArea } from "lucide-react";
+import { Pause, RotateCcw, ChartArea, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SettingsModal } from "@/components/pomodoro/SettingsModal";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -192,6 +192,18 @@ const PomodoroPage = () => {
     setIsRunning(false);
   };
 
+  const handleSkip = () => {
+    setIsRunning(false);
+    // Auto switch to next mode based on current mode
+    if (currentMode === "pomodoro") {
+      setCurrentMode("shortBreak");
+    } else if (currentMode === "shortBreak") {
+      setCurrentMode("pomodoro");
+    } else {
+      setCurrentMode("pomodoro");
+    }
+  };
+
   const getBackgroundColor = () => {
     switch (currentMode) {
       case "pomodoro":
@@ -334,6 +346,15 @@ const PomodoroPage = () => {
                     >
                       <RotateCcw className="w-5 h-5 mr-2" />
                       RESET
+                    </Button>
+                    <Button
+                      onClick={handleSkip}
+                      size="lg"
+                      variant="outline"
+                      className="bg-white/10 border-white/20 text-white hover:bg-white/20 px-8 py-3"
+                    >
+                      <SkipForward className="w-5 h-5 mr-2" />
+                      SKIP
                     </Button>
                   </div>
                 )}

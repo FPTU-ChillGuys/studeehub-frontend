@@ -21,6 +21,7 @@ import { getChatbot } from "@/features/chatbot/api/chatbot";
 import { getNotebook } from "@/features/notebook/api/notebook";
 import { deleteFlashcard, getFlashcards, postFlashcard } from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
+import { deleteResource } from "@/features/resource/api/resource";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -186,10 +187,8 @@ const NotebookDetailPage = () => {
 
           if (!response.success) {
             throw new Error("Failed to upload files");
-          }
-          if (response.data.success === true) {
-            resourceIds = response.data.resourceIds || [];
           } else {
+            resourceIds = response.data.resourceIds || [];
           }
         } catch (error) {
           console.error("Error uploading files:", error);
@@ -324,7 +323,7 @@ const NotebookDetailPage = () => {
                   ),
                 },
               })),
-            })
+            } as FlashcardDeck)
           );
           setFlashcards(fetchedFlashcards);
         } else {
@@ -350,7 +349,7 @@ const NotebookDetailPage = () => {
   };
 
   const handleDeleteResource = async (resourceId: string) => {
-    const response = await deleteFlashcard(resourceId);
+    const response = await deleteResource(resourceId);
     if (response.success === true) {
       setNotebook((prev) => ({
         ...prev,

@@ -7,7 +7,7 @@ export async function DELETE(
   const { id } = await params.params;
 
   const response = await deleteResourceById(id);
-
+  
   return new Response(JSON.stringify({}), {
     status: response.success ? 200 : 500,
   });

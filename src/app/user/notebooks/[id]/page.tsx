@@ -199,7 +199,7 @@ const NotebookDetailPage = () => {
           uploadStatus = "error";
           console.error("Error uploading files:", error);
           toast.error("Upload failed!", {
-            description: "Failed to upload files. Please try again.",
+            description: "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
           });
         }
       };

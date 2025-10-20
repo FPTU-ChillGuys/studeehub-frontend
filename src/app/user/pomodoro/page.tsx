@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Pause, RotateCcw, ChartArea, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SettingsModal } from "@/components/pomodoro/SettingsModal";
+import ReportModal from "@/components/pomodoro/ReportModal";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Breadcrumb,
@@ -53,6 +54,7 @@ const PomodoroPage = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [shouldAutoContinue, setShouldAutoContinue] = useState(false);
   const [pomodoroCount, setPomodoroCount] = useState(0); // Track completed pomodoros in manual mode
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -445,6 +447,7 @@ const PomodoroPage = () => {
                   variant="ghost"
                   size="sm"
                   className="text-white hover:bg-white/10"
+                  onClick={() => setIsReportOpen(true)}
                 >
                   <ChartArea className="w-4 h-4 mr-2" />
                   Report
@@ -556,6 +559,15 @@ const PomodoroPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {session?.user?.id && (
+        <ReportModal
+          isOpen={isReportOpen}
+          onClose={() => setIsReportOpen(false)}
+          userId={session.user.id}
+        />
+      )}
     </SidebarInset>
   );
 };

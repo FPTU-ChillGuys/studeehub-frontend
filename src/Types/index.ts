@@ -1,3 +1,4 @@
+import { APIResponse } from "@/lib/api/client";
 import { IFlashcard } from "react-quizlet-flashcard";
 
 // User types
@@ -26,6 +27,7 @@ export interface UserProfile {
   phoneNumber: string | null;
   createdAt: string;
   updatedAt: string;
+  isActive: boolean;
 }
 
 export interface UserProfileResponse {
@@ -131,13 +133,11 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
+export interface PaginatedResponse<T> extends APIResponse<T> {
+  totalCount: number;
   page: number;
-  limit: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface FlashcardDeck {

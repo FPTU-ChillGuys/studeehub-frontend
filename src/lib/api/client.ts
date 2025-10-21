@@ -35,10 +35,10 @@ class APIClient {
     return null;
   }
 
-  private async request<T>(
+  private async request<R extends APIResponse<T>, T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<APIResponse<T>> {
+  ): Promise<R> {
     const url = `${this.baseURL}${endpoint}`;
     const accessToken = await this.getToken();
 
@@ -69,7 +69,7 @@ class APIClient {
         });
       }
 
-      const data: APIResponse<T> = await response.json();
+      const data: R = await response.json();
 
       if (!data.success) {
         throw new Error(data.message || "API request failed");
@@ -78,21 +78,21 @@ class APIClient {
       return data;
     } catch (error) {
       // If it's a fetch error (network), provide more details
-      if (
-        error instanceof TypeError &&
-        error.message.includes("Failed to fetch")
-      ) {
+      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
         throw new Error(
           `Network error: Unable to connect to ${url}. This might be due to CORS policy, SSL certificate issues, or the API server not running.`
         );
+      } else {
+        throw error;
       }
-
-      throw error;
     }
   }
 
   // HTTP methods
-  async get<T>(endpoint: string, options?: { params?: Record<string, string | number> }): Promise<APIResponse<T>> {
+  async get<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string, 
+    options?: { params?: Record<string, string | number> }
+  ): Promise<R> {
     let url = endpoint;
     
     // Add query parameters if provided
@@ -109,26 +109,34 @@ class APIClient {
       }
     }
     
-    return this.request<T>(url);
+    return this.request<R, T>(url);
   }
 
-  async post<T>(endpoint: string, data?: unknown): Promise<APIResponse<T>> {
-    return this.request<T>(endpoint, {
+  async post<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string, 
+    data?: unknown
+  ): Promise<R> {
+    return this.request<R, T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: unknown): Promise<APIResponse<T>> {
-    return this.request<T>(endpoint, {
+  async put<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string, 
+    data?: unknown
+  ): Promise<R> {
+    return this.request<R, T>(endpoint, {
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async delete<T>(endpoint: string): Promise<APIResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: "DELETE",
+  async delete<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string
+  ): Promise<R> {
+    return this.request<R, T>(endpoint, {
+      method: "DELETE"
     });
   }
 }

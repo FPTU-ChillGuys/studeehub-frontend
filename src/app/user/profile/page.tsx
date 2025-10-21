@@ -30,6 +30,8 @@ import { RecentActivity } from "@/components/profile/RecentActivity";
 import { Achievements } from "@/components/profile/Achievements";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import dynamic from "next/dynamic";
+const ProfileSettings = dynamic(() => import("./settings"), { ssr: false });
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -416,43 +418,7 @@ export default function ProfilePage() {
 
         {/* Settings Tab */}
         {activeTab === "settings" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-
-            <div className="space-y-6">
-              {settings.map((category) => {
-                const Icon = category.icon;
-                return (
-                  <Card key={category.category} className="shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Icon className="w-5 h-5 text-blue-600" />
-                        <span>{category.category}</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {category.options.map((option) => (
-                        <div
-                          key={option.id}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
-                        >
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900">
-                              {option.label}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {option.description}
-                            </p>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+          <ProfileSettings />
         )}
       </main>
     </SidebarInset>

@@ -132,6 +132,18 @@ class APIClient {
     });
   }
 
+  async patch<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string, 
+    data?: unknown
+  ): Promise<R> {
+    console.log("Data", data);
+    
+    return this.request<R, T>(endpoint, {
+      method: "PATCH",
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   async delete<T, R extends APIResponse<T> = APIResponse<T>>(
     endpoint: string
   ): Promise<R> {

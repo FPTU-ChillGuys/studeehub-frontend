@@ -1,4 +1,4 @@
-import { User, UserMetrics } from "@/features/admin";
+import { UserMetrics, UserUpdateData } from "@/features/admin";
 import { apiClient } from "@/lib/api/client";
 import { UserProfile, PaginatedResponse } from "@/Types";
 
@@ -31,9 +31,9 @@ class UserService {
   /**
    * Get all users with pagination and filtering
    */
-  async getUsers(params: PaginationParams = {}): Promise<PaginatedResponse<User[]>> {
+  async getUsers(params: PaginationParams = {}): Promise<PaginatedResponse<UserProfile[]>> {
     try {
-      const response = await apiClient.get<User[], PaginatedResponse<User[]>>('/users', { params: { ...params } });
+      const response = await apiClient.get<UserProfile[], PaginatedResponse<UserProfile[]>>('/users', { params: { ...params } });
       return response;
     } catch (error) {
       console.error("[UserService] Error fetching users:", error);
@@ -57,11 +57,24 @@ class UserService {
   /**
    * Update user status
    */
-  async updateUserStatus(userId: string, status: 'active' | 'inactive' | 'suspended'): Promise<void> {
+  async updateUserStatus(userId: string, status: boolean): Promise<void> {
     try {
-      await apiClient.put(`/users/${userId}/status`, { status });
+      await apiClient.patch(`/users/${userId}/update-status`, { status });
     } catch (error) {
       console.error(`[UserService] Error updating user status for ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user profile
+   */
+  async updateUserProfile(userId: string, data: UserUpdateData): Promise<string> {
+    try {
+      const response = await apiClient.put<string>(`/users/${userId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`[UserService] Error updating user profile for ${userId}:`, error);
       throw error;
     }
   }

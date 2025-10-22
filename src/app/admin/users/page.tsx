@@ -18,14 +18,13 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, PaginationParams, UserListFilters } from '@/features/admin';
+import { PaginationParams, UserListFilters } from '@/features/admin';
 import userService from '@/service/userService';
-import Image from 'next/image';
-import { SidebarInset } from '@/components/ui/sidebar';
+import { UserProfile } from '@/Types';
 
 export default function UserManagementPage() {
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     pageNumber: 1,
@@ -69,7 +68,7 @@ export default function UserManagementPage() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleStatusChange = async (userId: string, status: 'active' | 'inactive' | 'suspended') => {
+  const handleStatusChange = async (userId: string, status: boolean) => {
     try {
       await userService.updateUserStatus(userId, status);
       toast.success(`User status updated to ${status}`);
@@ -188,8 +187,6 @@ export default function UserManagementPage() {
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Last Login</TableHead>
                   <TableHead>Joined Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -216,22 +213,13 @@ export default function UserManagementPage() {
                       <TableCell className="font-medium">
                         <div className="flex items-center">
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                            {user.avatarUrl ? (
-                              <Image
-                                src={user.avatarUrl}
-                                alt={`${user.firstName} ${user.lastName}`}
-                                className="h-full w-full rounded-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-500">
-                                {user.firstName?.[0]?.toUpperCase()}
-                                {user.lastName?.[0]?.toUpperCase()}
-                              </span>
-                            )}
+                            <span className="text-gray-500">
+                                {user.fullName?.[0]?.toUpperCase()}
+                            </span>
                           </div>
                           <div>
                             <div className="font-medium">
-                              {user.firstName} {user.lastName}
+                              {user.fullName}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {user.id}
@@ -240,15 +228,7 @@ export default function UserManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{getStatusBadge(user.status)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.lastLoginAt ? format(new Date(user.lastLoginAt), 'MMM d, yyyy') : 'Never'}
-                      </TableCell>
+                      <TableCell>{getStatusBadge(user.isActive ? 'active' : 'inactive')}</TableCell>
                       <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -263,14 +243,14 @@ export default function UserManagementPage() {
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            {user.status !== 'active' && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'active')}>
+                            {!user.isActive && (
+                              <DropdownMenuItem onClick={() => handleStatusChange(user.id, true)}>
                                 <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                                 Activate
                               </DropdownMenuItem>
                             )}
-                            {user.status !== 'suspended' && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(user.id, 'suspended')}>
+                            {user.isActive && (
+                              <DropdownMenuItem onClick={() => handleStatusChange(user.id, false)}>
                                 <Ban className="mr-2 h-4 w-4 text-yellow-600" />
                                 Suspend
                               </DropdownMenuItem>

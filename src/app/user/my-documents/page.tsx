@@ -11,13 +11,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Notebook } from "@/Types";
 import CreateNotebookModal from "@/components/modals/CreateNotebookModal";
 import useStateRef from "react-usestateref";
 import { useEffect } from "react";
 import { ConvertAnyToNotebook, NewNotebook } from "@/lib/mapping/notebook";
 import { AuthService } from "@/service/authService";
-import { deleteNotebook, getNotebook, postNotebook } from "@/features/notebook/api/notebook";
+import { deleteNotebook, getNotebook, postNotebook, putNotebook } from "@/features/notebook/api/notebook";
 import {
   NotebookStats,
   NotebookControls,
@@ -26,6 +27,8 @@ import {
   EmptyNotebooks,
   LoadingNotebooks,
 } from "@/components/my-documents";
+import { toast } from "sonner";
+import { useTopLoader } from "nextjs-toploader";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -38,12 +41,16 @@ const NotebooksPage = () => {
   const [editTitle, setEditTitle] = useStateRef("");
   const [openDropdown, setOpenDropdown] = useStateRef<string | null>(null);
   const [isLoading, setIsLoading] = useStateRef(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useStateRef(false);
+  const [notebookToDelete, setNotebookToDelete] = useStateRef<string | null>(null);
 
   //Get userId from localStorage
   const [userId, setUserId, userIdRef] = useStateRef<string | null>(null);
 
   // Sample notebooks data
   const [notebooks, setNotebooks] = useStateRef<Notebook[]>([]);
+
+  const loader = useTopLoader()
 
   //Get userId from localStorage
   useEffect(() => {
@@ -93,44 +100,77 @@ const NotebooksPage = () => {
     const newNotebook: Notebook = NewNotebook();
 
     // Create the notebook in the database
+    loader.start();
     const response = await postNotebook({
       userId: userIdRef.current,
       title,
       description: description || "",
       thumbnail: thumbnail || "📚",
     });
+    loader.setProgress(50);
 
     if (response.success && response.data.notebook) {
       newNotebook.id = response.data.notebook.id; // Update with real ID from backend
+      toast.success("Notebook created successfully");
+    } else {
+      toast.error("Failed to create notebook");
     }
 
+    loader.done();
     setNotebooks((prev) => [newNotebook, ...prev]);
   };
 
-  const handleEditNotebook = (id: string, newTitle: string) => {
+  const handleEditNotebook = async (id: string, newTitle: string) => {
     setNotebooks((prev) =>
       prev.map((notebook) =>
         notebook.id === id
           ? {
               ...notebook,
               title: newTitle,
-              lastModified: new Date().toISOString().split("T")[0],
+              lastModified: new Date().toUTCString(),
             }
           : notebook
       )
     );
+    
+    loader.start();
+    const response = await putNotebook(id, { title: newTitle });
+    loader.setProgress(50);
+    
+    if (!response.success) {
+      // Handle error (e.g., show notification)
+      console.error("Failed to update notebook title");
+      toast.error("Failed to update notebook title");
+    } else {
+      toast.success("Notebook updated successfully");
+    }
+    
+    loader.done();
     setEditingNotebook(null);
     setEditTitle("");
   };
 
   const handleDeleteNotebook = async (id: string) => {
-    if (confirm("Are you sure you want to delete this notebook?")) {
-      // Delete the notebook from the database
-      const response = await deleteNotebook(id);
-      if (response.success) {
-        setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
-      }
+    setNotebookToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteNotebook = async () => {
+    if (!notebookToDelete) return;
+    
+    // Delete the notebook from the database
+    loader.start();
+    const response = await deleteNotebook(notebookToDelete);
+    loader.setProgress(50);
+    if (response.success) {
+      setNotebooks((prev) => prev.filter((notebook) => notebook.id !== notebookToDelete));
+      toast.success("Notebook deleted successfully");
+    } else {
+      toast.error("Failed to delete notebook");
     }
+    loader.done();
+    setDeleteDialogOpen(false);
+    setNotebookToDelete(null);
   };
 
   const startEditingNotebook = (notebook: Notebook) => {
@@ -154,6 +194,7 @@ const NotebooksPage = () => {
     totalDocuments: notebooks.reduce((sum, n) => sum + n.documentsCount, 0),
   };
 
+  
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -288,6 +329,19 @@ const NotebooksPage = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateNotebook}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Are you sure?"
+        description="This action cannot be undone. This will permanently delete your notebook and all its contents."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDeleteNotebook}
+        onCancel={() => setNotebookToDelete(null)}
       />
     </SidebarInset>
   );

@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import UploadModal from "@/components/modals/UploadModal";
 import { Notebook, Document, FlashcardDeck } from "@/Types";
 import NotebookHeader from "@/components/notebook-detail/NotebookHeader";
@@ -26,6 +27,7 @@ import {
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
 import { toast } from "sonner";
+import { useTopLoader } from "nextjs-toploader";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -40,6 +42,12 @@ const NotebookDetailPage = () => {
     []
   );
 
+  // Delete confirmation states
+  const [deleteResourceDialogOpen, setDeleteResourceDialogOpen] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState<string | null>(null);
+  const [deleteDeckDialogOpen, setDeleteDeckDialogOpen] = useState(false);
+  const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+
   // Loading states
   const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
@@ -48,6 +56,8 @@ const NotebookDetailPage = () => {
 
   // Disable flashcard generation if no documents are selected
   const [isDisabled, setIsDisabled] = useState(true);
+
+  const loader = useTopLoader();
 
   useEffect(() => {
     setIsDisabled(selectedDocuments.size === 0);
@@ -191,8 +201,10 @@ const NotebookDetailPage = () => {
       let uploadStatus: "completed" | "error" = "completed";
       const uploadToServer = async () => {
         // Upload files to server
+        loader.start();
         try {
           const response = await uploadNotebookFile(files, notebookId);
+          loader.setProgress(50);
 
           if (!response.success) {
             uploadStatus = "error";
@@ -214,6 +226,8 @@ const NotebookDetailPage = () => {
             description:
               "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
           });
+        } finally {
+          loader.done();
         }
       };
       // Run upload
@@ -283,10 +297,14 @@ const NotebookDetailPage = () => {
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
     setIsDisabled(true);
+    loader.start();
+    
     const response = await postFlashcard({
       notebookId: notebookId,
       resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
     });
+    
+    loader.setProgress(50);
 
     if (response.success === true) {
       // Map response to IFlashcard format
@@ -313,6 +331,7 @@ const NotebookDetailPage = () => {
         cardCount: response?.data.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+      toast.success("Flashcards generated successfully");
     }
     // Add toast notification for failure
     else {
@@ -322,6 +341,8 @@ const NotebookDetailPage = () => {
           "Unable to generate flashcards. Please try again.",
       });
     }
+    
+    loader.done();
     setIsDisabled(false);
   };
 
@@ -371,24 +392,58 @@ const NotebookDetailPage = () => {
   }, [notebookId, setFlashcards]);
 
   const onDeleteDeck = async (deckId: string) => {
-    const response = await fetch(`/api/flashcard/${deckId}`, {
+    setDeckToDelete(deckId);
+    setDeleteDeckDialogOpen(true);
+  };
+
+  const confirmDeleteDeck = async () => {
+    if (!deckToDelete) return;
+
+    loader.start();
+    const response = await fetch(`/api/flashcard/${deckToDelete}`, {
       method: "DELETE",
     }).then((res) => res.json());
+    
+    loader.setProgress(50);
 
     if (response.success === true) {
-      setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
+      setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckToDelete));
+      toast.success("Flashcard deck deleted successfully");
+    } else {
+      toast.error("Failed to delete flashcard deck");
     }
+
+    loader.done();
+    setDeleteDeckDialogOpen(false);
+    setDeckToDelete(null);
   };
 
   const handleDeleteResource = async (resourceId: string) => {
-    const response = await deleteResource(resourceId);
+    setResourceToDelete(resourceId);
+    setDeleteResourceDialogOpen(true);
+  };
+
+  const confirmDeleteResource = async () => {
+    if (!resourceToDelete) return;
+
+    loader.start();
+    const response = await deleteResource(resourceToDelete);
+    loader.setProgress(50);
+    
     if (response.success === true) {
       setNotebook((prev) => ({
         ...prev,
-        documents: prev.documents.filter((doc) => doc.id !== resourceId),
+        documents: prev.documents.filter((doc) => doc.id !== resourceToDelete),
         documentsCount: prev.documentsCount - 1,
       }));
+      toast.success("Document deleted successfully");
+    } else {
+      toast.error("Failed to delete document");
     }
+
+    loader.done();
+    setDeleteResourceDialogOpen(false);
+    setResourceToDelete(null);
   };
 
   // Check if any loading is in progress
@@ -443,6 +498,32 @@ const NotebookDetailPage = () => {
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
           onUpload={handleUploadFiles}
+        />
+
+        {/* Delete Resource Confirmation Dialog */}
+        <ConfirmDialog
+          open={deleteResourceDialogOpen}
+          onOpenChange={setDeleteResourceDialogOpen}
+          title="Delete Document?"
+          description="This action cannot be undone. This will permanently delete this document from your notebook."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={confirmDeleteResource}
+          onCancel={() => setResourceToDelete(null)}
+        />
+
+        {/* Delete Flashcard Deck Confirmation Dialog */}
+        <ConfirmDialog
+          open={deleteDeckDialogOpen}
+          onOpenChange={setDeleteDeckDialogOpen}
+          title="Delete Flashcard Deck?"
+          description="This action cannot be undone. This will permanently delete this flashcard deck and all its cards."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={confirmDeleteDeck}
+          onCancel={() => setDeckToDelete(null)}
         />
       </div>
     </SidebarInset>

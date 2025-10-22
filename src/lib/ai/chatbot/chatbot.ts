@@ -18,44 +18,27 @@ import { getContentFromResourceId } from "@/lib/actions/resources";
 //     Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
 //     if no relevant information is found in the tool calls, respond, "Sorry, I don't know."`;
 
-const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.
-     Only respond to questions using information from tool calls.'
-     Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
-     Or use the tool "getContent" to get all content for summarization or analysis.
-     If user asks for a summary or analysis, use the tool "getAllContentToSummarizeOrAnalyze" to get all content. Remember if user ask for summary or analysis from files, you don't need to know which files, just get all content.
-    if no relevant information is found in the tool calls, 
-    please ask the user to provide more context or information.
-    After receiving more context, re-attempt to find relevant information in the knowledge base using the tool.
-    Respond what relevant information you have found in the tool calls, do not make up any information.
-    The files are: `;
+const SYSTEM_PROMPT = `You are a helpful assistant with access to a knowledge base of documents.
 
-export function StreamingTextGenerationFromMessagesToResult(
-  messages: UIMessage[],
-  resourceIds: string | string[]
-) {
-  const result = streamText({
-    model: geminiFlashLite,
-    system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(messages),
-    stopWhen: stepCountIs(100),
-    tools: {
-      getInformation: tool({
-        description: `Get information from your knowledge base to answer questions.`,
-        inputSchema: z.object({
-          question: z.string().describe("The users question"),
-        }),
-        execute: async ({ question }) => {
-          const response = findRelevantContent({
-            query: question,
-            resourceIds,
-          });
-          return response;
-        },
-      }),
-    },
-  });
-  return result;
-}
+IMPORTANT CONTEXT:
+- The user has already selected specific files for this conversation.
+- The selected files are automatically available to you through the tools.
+- You DO NOT need to ask which files to use - they are already chosen.
+- The selected files are: `;
+
+const SYSTEM_INSTRUCTIONS = `
+
+INSTRUCTIONS:
+1. When the user asks questions, use the "getInformation" tool to search for relevant content from the selected files.
+2. When the user asks for summary, analysis, or needs full content from files, use the "getAllContentToSummarizeOrAnalyze" tool - it will automatically get content from ALL selected files.
+3. DO NOT ask the user which files to use - the files are already selected and shown above.
+4. If the user asks "Can you help me summarize this file?" or "Analyze these documents", immediately use the appropriate tool without asking for clarification.
+5. Only respond using information retrieved from the tools.
+6. If no relevant information is found after using the tools, politely inform the user and suggest they provide more specific questions or select different files.
+7. Be concise and helpful in your responses.
+
+Remember: The files listed above are already selected and ready to use. Start working with them immediately when asked.`;
+
 
 export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
   messages: UIMessage[],
@@ -70,7 +53,7 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
         // Thử tạo stream text
         result = streamText({
           model: geminiFlashLite,
-          system: SYSTEM_PROMPT + fileNames.join(", "),
+          system: SYSTEM_PROMPT + fileNames.join(", ") + SYSTEM_INSTRUCTIONS,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(100),
           tools: {
@@ -84,6 +67,7 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   query: question,
                   resourceIds,
                 });
+                console.log("Relevant content fetched:", response);
                 return response;
               },
             }),
@@ -95,6 +79,7 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   ? resourceIds
                   : [resourceIds];
                 const response = await getContentFromResourceId(resourceIdsArray);
+                console.log("All content fetched for summarization/analysis:", response);
                 return response;
               },
             }),
@@ -128,3 +113,34 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
 
   return stream;
 }
+
+
+// export function StreamingTextGenerationFromMessagesToResult(
+//   messages: UIMessage[],
+//   resourceIds: string | string[]
+// ) {
+//   const result = streamText({
+//     model: geminiFlashLite,
+//     system: SYSTEM_PROMPT,
+//     messages: convertToModelMessages(messages),
+//     stopWhen: stepCountIs(100),
+//     tools: {
+//       getInformation: tool({
+//         description: `Get information from your knowledge base to answer questions.`,
+//         inputSchema: z.object({
+//           question: z.string().describe("The users question"),
+//         }),
+//         execute: async ({ question }) => {
+//           const response = findRelevantContent({
+//             query: question,
+//             resourceIds,
+//           });
+//           return response;
+//         },
+//       }),
+//     },
+//   });
+//   return result;
+// }
+
+

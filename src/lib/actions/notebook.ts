@@ -74,3 +74,19 @@ export const deleteNotebookById = async (notebookId: string) => {
     }
   }
 };
+
+export const editNotebookTitleById = async (notebookId : string, title: string) => {
+  try {
+    const [updatedNotebook] = await db
+      .update(notebooks)
+      .set({ title , updatedDate: new Date() })
+      .where(eq(notebooks.id, notebookId))
+      .returning();
+    return { success: true, notebook: updatedNotebook };
+  } catch (e) { 
+    if (e instanceof Error) {
+      console.error("Error:", e.message);
+      return { success: false };
+    }
+  }
+}

@@ -86,8 +86,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
         </div>
 
         {/* Action Buttons */}
+        {/* Disable when document is not completed */}
         <div className="flex flex-col gap-1">
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleDeleteResource(doc.id)}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleDeleteResource(doc.id)} disabled={doc.status !== "completed"}>
             <CircleX className="w-3 h-3" color="#ff0000" />
           </Button>
         </div>

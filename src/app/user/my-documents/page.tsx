@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Notebook } from "@/Types";
 import CreateNotebookModal from "@/components/modals/CreateNotebookModal";
 import useStateRef from "react-usestateref";
@@ -27,7 +28,6 @@ import {
   LoadingNotebooks,
 } from "@/components/my-documents";
 import { toast } from "sonner";
-import { useTopLoader } from "nextjs-toploader";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -40,6 +40,8 @@ const NotebooksPage = () => {
   const [editTitle, setEditTitle] = useStateRef("");
   const [openDropdown, setOpenDropdown] = useStateRef<string | null>(null);
   const [isLoading, setIsLoading] = useStateRef(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useStateRef(false);
+  const [notebookToDelete, setNotebookToDelete] = useStateRef<string | null>(null);
 
   //Get userId from localStorage
   const [userId, setUserId, userIdRef] = useStateRef<string | null>(null);
@@ -133,13 +135,24 @@ const NotebooksPage = () => {
   };
 
   const handleDeleteNotebook = async (id: string) => {
-    if (confirm("Are you sure you want to delete this notebook?")) {
-      // Delete the notebook from the database
-      const response = await deleteNotebook(id);
-      if (response.success) {
-        setNotebooks((prev) => prev.filter((notebook) => notebook.id !== id));
-      }
+    setNotebookToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteNotebook = async () => {
+    if (!notebookToDelete) return;
+    
+    // Delete the notebook from the database
+    const response = await deleteNotebook(notebookToDelete);
+    if (response.success) {
+      setNotebooks((prev) => prev.filter((notebook) => notebook.id !== notebookToDelete));
+      toast.success("Notebook deleted successfully");
+    } else {
+      toast.error("Failed to delete notebook");
     }
+    
+    setDeleteDialogOpen(false);
+    setNotebookToDelete(null);
   };
 
   const startEditingNotebook = (notebook: Notebook) => {
@@ -297,6 +310,19 @@ const NotebooksPage = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateNotebook}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Are you sure?"
+        description="This action cannot be undone. This will permanently delete your notebook and all its contents."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDeleteNotebook}
+        onCancel={() => setNotebookToDelete(null)}
       />
     </SidebarInset>
   );

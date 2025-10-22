@@ -21,13 +21,13 @@ import { getContentFromResourceId } from "@/lib/actions/resources";
 const SYSTEM_PROMPT = `You are a helpful assistant. Check your knowledge base before answering any questions.
      Only respond to questions using information from tool calls.'
      Try to use the tool "getInformation" to get relevant information from your knowledge base to answer questions.
-     Or use the tool "getContent" to get all content for summarization or analysis.
+     Or use the tool "getAllContentToSummarizeOrAnalyze" to get all content for summarization or analysis.
      If user asks for a summary or analysis, use the tool "getAllContentToSummarizeOrAnalyze" to get all content. Remember if user ask for summary or analysis from files, you don't need to know which files, just get all content.
     if no relevant information is found in the tool calls, 
     please ask the user to provide more context or information.
     After receiving more context, re-attempt to find relevant information in the knowledge base using the tool.
     Respond what relevant information you have found in the tool calls, do not make up any information.
-    The files are: `;
+    The chosen files are: `;
 
 export function StreamingTextGenerationFromMessagesToResult(
   messages: UIMessage[],
@@ -84,6 +84,7 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   query: question,
                   resourceIds,
                 });
+                console.log("Relevant content fetched:", response);
                 return response;
               },
             }),
@@ -95,6 +96,7 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   ? resourceIds
                   : [resourceIds];
                 const response = await getContentFromResourceId(resourceIdsArray);
+                console.log("All content fetched for summarization/analysis:", response);
                 return response;
               },
             }),

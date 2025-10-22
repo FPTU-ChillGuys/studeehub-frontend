@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import UploadModal from "@/components/modals/UploadModal";
 import { Notebook, Document, FlashcardDeck } from "@/Types";
 import NotebookHeader from "@/components/notebook-detail/NotebookHeader";
@@ -39,6 +40,12 @@ const NotebookDetailPage = () => {
   const [flashcards, setFlashcards, flashcardsRef] = useState<FlashcardDeck[]>(
     []
   );
+
+  // Delete confirmation states
+  const [deleteResourceDialogOpen, setDeleteResourceDialogOpen] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState<string | null>(null);
+  const [deleteDeckDialogOpen, setDeleteDeckDialogOpen] = useState(false);
+  const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
 
   // Loading states
   const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
@@ -371,24 +378,50 @@ const NotebookDetailPage = () => {
   }, [notebookId, setFlashcards]);
 
   const onDeleteDeck = async (deckId: string) => {
-    const response = await fetch(`/api/flashcard/${deckId}`, {
+    setDeckToDelete(deckId);
+    setDeleteDeckDialogOpen(true);
+  };
+
+  const confirmDeleteDeck = async () => {
+    if (!deckToDelete) return;
+
+    const response = await fetch(`/api/flashcard/${deckToDelete}`, {
       method: "DELETE",
     }).then((res) => res.json());
 
     if (response.success === true) {
-      setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckId));
+      setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckToDelete));
+      toast.success("Flashcard deck deleted successfully");
+    } else {
+      toast.error("Failed to delete flashcard deck");
     }
+
+    setDeleteDeckDialogOpen(false);
+    setDeckToDelete(null);
   };
 
   const handleDeleteResource = async (resourceId: string) => {
-    const response = await deleteResource(resourceId);
+    setResourceToDelete(resourceId);
+    setDeleteResourceDialogOpen(true);
+  };
+
+  const confirmDeleteResource = async () => {
+    if (!resourceToDelete) return;
+
+    const response = await deleteResource(resourceToDelete);
     if (response.success === true) {
       setNotebook((prev) => ({
         ...prev,
-        documents: prev.documents.filter((doc) => doc.id !== resourceId),
+        documents: prev.documents.filter((doc) => doc.id !== resourceToDelete),
         documentsCount: prev.documentsCount - 1,
       }));
+      toast.success("Document deleted successfully");
+    } else {
+      toast.error("Failed to delete document");
     }
+
+    setDeleteResourceDialogOpen(false);
+    setResourceToDelete(null);
   };
 
   // Check if any loading is in progress
@@ -443,6 +476,32 @@ const NotebookDetailPage = () => {
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
           onUpload={handleUploadFiles}
+        />
+
+        {/* Delete Resource Confirmation Dialog */}
+        <ConfirmDialog
+          open={deleteResourceDialogOpen}
+          onOpenChange={setDeleteResourceDialogOpen}
+          title="Delete Document?"
+          description="This action cannot be undone. This will permanently delete this document from your notebook."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={confirmDeleteResource}
+          onCancel={() => setResourceToDelete(null)}
+        />
+
+        {/* Delete Flashcard Deck Confirmation Dialog */}
+        <ConfirmDialog
+          open={deleteDeckDialogOpen}
+          onOpenChange={setDeleteDeckDialogOpen}
+          title="Delete Flashcard Deck?"
+          description="This action cannot be undone. This will permanently delete this flashcard deck and all its cards."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={confirmDeleteDeck}
+          onCancel={() => setDeckToDelete(null)}
         />
       </div>
     </SidebarInset>

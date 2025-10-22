@@ -2,6 +2,10 @@
 
 import React, { useState } from "react";
 import { X, Upload, Plus, File, Image as ImageIcon, Video } from "lucide-react";
+import {
+  FILE_INPUT_ACCEPT,
+  DOCUMENT_TYPES,
+} from "@/config/fileTypes";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -126,7 +130,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
             <input
               type="file"
               multiple
-              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.avi,.mov"
+              accept={FILE_INPUT_ACCEPT}
               onChange={handleFileSelect}
               className="hidden"
               id="modal-file-upload"
@@ -139,7 +143,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
               Choose Files
             </label>
             <p className="text-xs text-muted-foreground mt-4">
-              Supported formats: PDF, DOC, DOCX
+              Supported formats: {DOCUMENT_TYPES.join(", ")}.
             </p>
           </div>
 

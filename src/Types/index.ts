@@ -1,5 +1,6 @@
 import { APIResponse } from "@/lib/api/client";
 import { IFlashcard } from "react-quizlet-flashcard";
+import type { DocumentType } from "@/config/fileTypes";
 
 // User types
 export interface User {
@@ -65,7 +66,7 @@ export interface UpdateStreakRequest {
 export interface Document {
   id: string;
   name: string;
-  type: "PDF" | "DOCX" | "TXT" | "PPTX" | "IMAGE" | "VIDEO";
+  type: DocumentType;
   size: string;
   uploadDate: string;
   status: "processing" | "completed" | "error";

@@ -27,6 +27,7 @@ import {
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
 import { toast } from "sonner";
+import { useTopLoader } from "nextjs-toploader";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -55,6 +56,8 @@ const NotebookDetailPage = () => {
 
   // Disable flashcard generation if no documents are selected
   const [isDisabled, setIsDisabled] = useState(true);
+
+  const loader = useTopLoader();
 
   useEffect(() => {
     setIsDisabled(selectedDocuments.size === 0);
@@ -198,8 +201,10 @@ const NotebookDetailPage = () => {
       let uploadStatus: "completed" | "error" = "completed";
       const uploadToServer = async () => {
         // Upload files to server
+        loader.start();
         try {
           const response = await uploadNotebookFile(files, notebookId);
+          loader.setProgress(50);
 
           if (!response.success) {
             uploadStatus = "error";
@@ -221,6 +226,8 @@ const NotebookDetailPage = () => {
             description:
               "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
           });
+        } finally {
+          loader.done();
         }
       };
       // Run upload
@@ -290,10 +297,14 @@ const NotebookDetailPage = () => {
   //Generate flashcards from selected documents
   const onGenerateFlashcards = async () => {
     setIsDisabled(true);
+    loader.start();
+    
     const response = await postFlashcard({
       notebookId: notebookId,
       resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
     });
+    
+    loader.setProgress(50);
 
     if (response.success === true) {
       // Map response to IFlashcard format
@@ -320,6 +331,7 @@ const NotebookDetailPage = () => {
         cardCount: response?.data.flashcards?.decks?.length,
       };
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+      toast.success("Flashcards generated successfully");
     }
     // Add toast notification for failure
     else {
@@ -329,6 +341,8 @@ const NotebookDetailPage = () => {
           "Unable to generate flashcards. Please try again.",
       });
     }
+    
+    loader.done();
     setIsDisabled(false);
   };
 
@@ -385,9 +399,12 @@ const NotebookDetailPage = () => {
   const confirmDeleteDeck = async () => {
     if (!deckToDelete) return;
 
+    loader.start();
     const response = await fetch(`/api/flashcard/${deckToDelete}`, {
       method: "DELETE",
     }).then((res) => res.json());
+    
+    loader.setProgress(50);
 
     if (response.success === true) {
       setFlashcards(flashcardsRef.current.filter((deck) => deck.id !== deckToDelete));
@@ -396,6 +413,7 @@ const NotebookDetailPage = () => {
       toast.error("Failed to delete flashcard deck");
     }
 
+    loader.done();
     setDeleteDeckDialogOpen(false);
     setDeckToDelete(null);
   };
@@ -408,7 +426,10 @@ const NotebookDetailPage = () => {
   const confirmDeleteResource = async () => {
     if (!resourceToDelete) return;
 
+    loader.start();
     const response = await deleteResource(resourceToDelete);
+    loader.setProgress(50);
+    
     if (response.success === true) {
       setNotebook((prev) => ({
         ...prev,
@@ -420,6 +441,7 @@ const NotebookDetailPage = () => {
       toast.error("Failed to delete document");
     }
 
+    loader.done();
     setDeleteResourceDialogOpen(false);
     setResourceToDelete(null);
   };

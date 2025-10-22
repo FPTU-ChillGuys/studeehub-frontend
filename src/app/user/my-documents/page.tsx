@@ -28,6 +28,7 @@ import {
   LoadingNotebooks,
 } from "@/components/my-documents";
 import { toast } from "sonner";
+import { useTopLoader } from "nextjs-toploader";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -48,6 +49,8 @@ const NotebooksPage = () => {
 
   // Sample notebooks data
   const [notebooks, setNotebooks] = useStateRef<Notebook[]>([]);
+
+  const loader = useTopLoader()
 
   //Get userId from localStorage
   useEffect(() => {
@@ -97,17 +100,23 @@ const NotebooksPage = () => {
     const newNotebook: Notebook = NewNotebook();
 
     // Create the notebook in the database
+    loader.start();
     const response = await postNotebook({
       userId: userIdRef.current,
       title,
       description: description || "",
       thumbnail: thumbnail || "📚",
     });
+    loader.setProgress(50);
 
     if (response.success && response.data.notebook) {
       newNotebook.id = response.data.notebook.id; // Update with real ID from backend
+      toast.success("Notebook created successfully");
+    } else {
+      toast.error("Failed to create notebook");
     }
 
+    loader.done();
     setNotebooks((prev) => [newNotebook, ...prev]);
   };
 
@@ -124,12 +133,19 @@ const NotebooksPage = () => {
       )
     );
     
+    loader.start();
     const response = await putNotebook(id, { title: newTitle });
+    loader.setProgress(50);
+    
     if (!response.success) {
       // Handle error (e.g., show notification)
       console.error("Failed to update notebook title");
       toast.error("Failed to update notebook title");
+    } else {
+      toast.success("Notebook updated successfully");
     }
+    
+    loader.done();
     setEditingNotebook(null);
     setEditTitle("");
   };
@@ -143,14 +159,16 @@ const NotebooksPage = () => {
     if (!notebookToDelete) return;
     
     // Delete the notebook from the database
+    loader.start();
     const response = await deleteNotebook(notebookToDelete);
+    loader.setProgress(50);
     if (response.success) {
       setNotebooks((prev) => prev.filter((notebook) => notebook.id !== notebookToDelete));
       toast.success("Notebook deleted successfully");
     } else {
       toast.error("Failed to delete notebook");
     }
-    
+    loader.done();
     setDeleteDialogOpen(false);
     setNotebookToDelete(null);
   };
@@ -176,6 +194,7 @@ const NotebooksPage = () => {
     totalDocuments: notebooks.reduce((sum, n) => sum + n.documentsCount, 0),
   };
 
+  
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">

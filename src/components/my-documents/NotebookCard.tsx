@@ -37,7 +37,7 @@ export const NotebookCard = ({
   onDropdownChange,
 }: NotebookCardProps) => {
   return (
-    <Link href={`/user/notebooks/${notebook.id}`}>
+    <Link href={`/user/notebooks/${notebook.id}`}   >
       <div className="bg-card border border-border rounded-lg p-5 hover:shadow-md transition-all duration-200 cursor-pointer group min-h-[240px] flex flex-col">
         <div className="flex items-start justify-between mb-3">
           <div className="text-4xl">{notebook.thumbnail}</div>

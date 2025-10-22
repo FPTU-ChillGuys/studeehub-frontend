@@ -116,7 +116,7 @@ const NotebooksPage = () => {
           ? {
               ...notebook,
               title: newTitle,
-              lastModified: new Date().toUTCString().split("T")[0],
+              lastModified: new Date().toUTCString(),
             }
           : notebook
       )

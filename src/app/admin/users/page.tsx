@@ -21,6 +21,7 @@ import {
 import { User, PaginationParams, UserListFilters } from '@/features/admin';
 import userService from '@/service/userService';
 import Image from 'next/image';
+import { SidebarInset } from '@/components/ui/sidebar';
 
 export default function UserManagementPage() {
   const router = useRouter();
@@ -117,7 +118,7 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">User Management</h1>

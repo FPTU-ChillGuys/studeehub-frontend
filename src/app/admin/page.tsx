@@ -77,7 +77,7 @@ export default function AdminPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-6 space-y-6">
         <div className="text-red-500">{error}</div>
       </div>
     );

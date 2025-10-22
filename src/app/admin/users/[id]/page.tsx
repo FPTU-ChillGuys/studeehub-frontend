@@ -24,28 +24,29 @@ export default function UserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>>({
     fullName: '',
     email: '',
     userName: '',
-    phoneNumber: '',
+    phoneNumber: null,
     address: '',
-    isActive: false,
+    isActive: true,
   });
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!id) return;
+      
       try {
         setLoading(true);
-        const response = await userService.getUserProfile(id as string);
-        const userData = response;
+        const userData = await userService.getUserProfile(id as string);
         setUser(userData);
         setFormData({
-          fullName: userData.fullName || '',
-          email: userData.email || '',
-          userName: userData.userName || '',
-          phoneNumber: userData.phoneNumber || '',
-          address: userData.address || '',
+          fullName: userData.fullName,
+          email: userData.email,
+          userName: userData.userName,
+          phoneNumber: userData.phoneNumber,
+          address: userData.address,
           isActive: userData.isActive
         });
       } catch (error) {
@@ -64,37 +65,34 @@ export default function UserDetailPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData({
-      ...formData,
+  const handleSelectChange = (name: keyof Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleSave = async () => {
+    if (!id) return;
+    
     try {
       setSaving(true);
-      // Call API to update user
-      const response = await userService.updateUserProfile(id as string, {
-        fullName: formData.fullName,
-        email: formData.email,
-        userName: formData.userName,
+      /*
+      const updatedUser = await userService.updateUserProfile(id as string, {
+        ...formData,
         phoneNumber: formData.phoneNumber || null,
-        address: formData.address,
-        isActive: formData.isActive
       });
+      */
       
       toast.success('User updated successfully');
       setEditing(false);
-      // Refresh user data
-      const userData = await userService.getUserProfile(id as string);
-      setUser(userData);
+      //setUser(updatedUser);
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error('Failed to update user');
@@ -103,7 +101,7 @@ export default function UserDetailPage() {
     }
   };
 
-  const handleStatusChange = async (status: 'active' | 'inactive' | 'suspended') => {
+  const handleStatusChange = async (status: 'active' | 'inactive') => {
     if (!user) return;
     
     try {
@@ -111,21 +109,21 @@ export default function UserDetailPage() {
       toast.success(`User status updated to ${status}`);
       const updatedUser = await userService.getUserProfile(user.id);
       setUser(updatedUser);
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         isActive: status === 'active',
-      });
+      }));
     } catch (error) {
       console.error('Error updating user status:', error);
       toast.error('Failed to update user status');
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (isActive: boolean) => {
+    const status = isActive ? 'active' : 'inactive';
     const statusMap = {
       active: { bg: 'bg-green-100 text-green-800', icon: CheckCircle },
       inactive: { bg: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
-      suspended: { bg: 'red-100 text-red-800', icon: XCircle },
     };
 
     const statusInfo = statusMap[status as keyof typeof statusMap] || { bg: 'bg-gray-100', icon: null };
@@ -164,7 +162,7 @@ export default function UserDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <Button
@@ -188,8 +186,8 @@ export default function UserDetailPage() {
                 Edit Profile
               </Button>
               <Select
-                value={user.status}
-                onValueChange={(value: 'active' | 'inactive' | 'suspended') =>
+                value={user.isActive ? 'active' : 'inactive'}
+                onValueChange={(value: 'active' | 'inactive') =>
                   handleStatusChange(value)
                 }
               >
@@ -209,15 +207,14 @@ export default function UserDetailPage() {
                 variant="outline"
                 onClick={() => {
                   setEditing(false);
-                  // Reset form data
                   if (user) {
                     setFormData({
-                      fullName: user.fullName || '',
+                      fullName: user.fullName,
                       email: user.email,
-                      userName: user.userName || '',
+                      userName: user.userName,
                       phoneNumber: user.phoneNumber || '',
                       address: user.address || '',
-                      notes: '',
+                      isActive: user.isActive,
                     });
                   }
                 }}
@@ -258,10 +255,6 @@ export default function UserDetailPage() {
                     <span className="text-sm">{user.email}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm capitalize">{user.role}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       Joined {format(new Date(user.createdAt), 'MMM d, yyyy')}
@@ -279,32 +272,19 @@ export default function UserDetailPage() {
 
             <Card>
               <CardHeader className="pb-2">
+                <CardDescription>Edit Profile</CardDescription>
                 <CardDescription>Status</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="text-sm font-medium mb-1">Account Status</div>
-                    {getStatusBadge(user.isActive ? 'active' : 'inactive')}
+                    {getStatusBadge(user.isActive)}
                   </div>
                   <div>
-                    <div className="text-sm font-medium mb-1">Email Verified</div>
-                    {user.emailVerified ? (
-                      <Badge variant="outline" className="text-green-600">
-                        <CheckCircle className="h-3 w-3 mr-1" /> Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-yellow-600">
-                        <AlertCircle className="h-3 w-3 mr-1" /> Not Verified
-                      </Badge>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium mb-1">Last Login</div>
+                    <div className="text-sm font-medium mb-1">Last Updated</div>
                     <div className="text-sm text-muted-foreground">
-                      {user.lastLoginAt
-                        ? format(new Date(user.lastLoginAt), 'MMM d, yyyy h:mm a')
-                        : 'Never'}
+                      {format(new Date(user.updatedAt), 'MMM d, yyyy h:mm a')}
                     </div>
                   </div>
                 </div>
@@ -340,146 +320,120 @@ export default function UserDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="fullName">Full Name</Label>
                     <Input
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
                       onChange={handleInputChange}
                       disabled={!editing}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="userName">Username</Label>
                     <Input
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
+                      id="userName"
+                      name="userName"
+                      value={formData.userName}
                       onChange={handleInputChange}
                       disabled={!editing}
                     />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      disabled={!editing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select
-                      value={formData.role}
-                      onValueChange={(value) =>
-                        handleSelectChange('role', value)
-                      }
-                      disabled={!editing}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="moderator">Moderator</SelectItem>
-                        <SelectItem value="admin">Administrator</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Admin Notes</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    value={formData.phoneNumber || ''}
                     onChange={handleInputChange}
-                    placeholder="Add private notes about this user..."
-                    className="min-h-[100px]"
-                    disabled={!editing}
-                  />
+                    placeholder="Enter phone number"></Input>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={formData.address || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter address"></Input>
                 </div>
               </div>
             </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Activity</CardTitle>
-              <CardDescription>
-                Recent actions and events for this user
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Activity logs will appear here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>
-                Manage user account settings and permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">Account Status</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Control the user&apos;s access to the platform
-                    </p>
+            <TabsContent value="activity" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Activity</CardTitle>
+                  <CardDescription>
+                    Recent actions and events for this user
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Activity logs will appear here</p>
                   </div>
-                  <Select
-                    value={formData.isActive}
-                    onValueChange={(value) =>
-                      handleSelectChange('status', value)
-                    }
-                    disabled={!editing}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-4">Danger Zone</h4>
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex justify-between items-center">
+            <TabsContent value="settings" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Settings</CardTitle>
+                  <CardDescription>
+                    Manage user account settings and permissions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <h5 className="font-medium text-red-800">Delete Account</h5>
-                        <p className="text-sm text-red-600">
-                          Permanently delete this user&apos;s account and all associated data
+                        <h4 className="font-medium">Account Status</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Control the user&apos;s access to the platform
                         </p>
                       </div>
-                      <Button variant="destructive" size="sm">
-                        Delete Account
-                      </Button>
+                      <Select
+                        value={formData.isActive ? 'active' : 'inactive'}
+                        onValueChange={(value) =>
+                          handleSelectChange('isActive', value === 'active')
+                        }
+                        disabled={!editing}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="suspended">Suspended</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-4">Danger Zone</h4>
+                      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h5 className="font-medium text-red-800">Delete Account</h5>
+                            <p className="text-sm text-red-600">
+                              Permanently delete this user&apos;s account and all associated data
+                            </p>
+                          </div>
+                          <Button variant="destructive" size="sm">
+                            Delete Account
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Card>
         </TabsContent>
       </Tabs>

@@ -33,7 +33,7 @@ class UserService {
    */
   async getUsers(params: PaginationParams = {}): Promise<PaginatedResponse<User[]>> {
     try {
-      const response = await apiClient.get<User[], PaginatedResponse<User[]>>('/users', { params });
+      const response = await apiClient.get<User[], PaginatedResponse<User[]>>('/users', { params: { ...params } });
       return response;
     } catch (error) {
       console.error("[UserService] Error fetching users:", error);

@@ -91,7 +91,7 @@ class APIClient {
   // HTTP methods
   async get<T, R extends APIResponse<T> = APIResponse<T>>(
     endpoint: string, 
-    options?: { params?: Record<string, string | number> }
+    options?: { params?: Record<string, string | number | boolean> }
   ): Promise<R> {
     let url = endpoint;
     

@@ -142,8 +142,6 @@ const NotebooksPage = () => {
     }
   };
 
-  const loader = useTopLoader();
-
   const startEditingNotebook = (notebook: Notebook) => {
     setEditingNotebook(notebook.id);
     setEditTitle(notebook.title);

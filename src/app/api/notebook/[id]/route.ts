@@ -1,4 +1,4 @@
-import { deleteNotebookById, getNotebookById } from "@/lib/actions/notebook";
+import { deleteNotebookById, editNotebookTitleById, getNotebookById } from "@/lib/actions/notebook";
 
 export async function GET(
   req: Request,
@@ -28,6 +28,26 @@ export async function DELETE(
     JSON.stringify({
       message: "Notebook deleted successfully",
     }),
+    { status: 200 }
+  );
+}
+
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id: notebookId } = await params;
+  const { title }: { title: string; description?: string; thumbnail?: string } = await req.json();
+  // Update notebook in the database
+  const updatedNotebook = await editNotebookTitleById(notebookId, title);
+  if (!updatedNotebook) {
+    return new Response(
+      JSON.stringify({ message: "Failed to update notebook" }),
+      { status: 500 }
+    );
+  }
+  return new Response(
+    JSON.stringify({ notebook: updatedNotebook }),
     { status: 200 }
   );
 }

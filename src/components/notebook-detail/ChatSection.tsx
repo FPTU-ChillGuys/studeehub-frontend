@@ -47,17 +47,42 @@ const ChatSection: React.FC<ChatSectionProps> = ({
 
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
-        {status === "streaming" ||
-        (status === "submitted" && (
+        {messages.map((message) => {
+          // Kiểm tra nếu là message cuối cùng từ assistant và đang streaming với nội dung trống
+          const isLastMessage = messages[messages.length - 1]?.id === message.id;
+          const messageText = message?.parts?.find((part) => part.type === "text")?.text || "";
+          const isEmptyAssistantMessage = 
+            message.role === "assistant" && 
+            messageText.trim() === "" &&
+            status === "streaming" &&
+            isLastMessage;
+
+          if (isEmptyAssistantMessage) {
+            return (
+              <div
+                key={message.id}
+                className={`max-w-[30%] rounded-lg p-3 bg-card border border-border text-foreground`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                  <p className="text-sm whitespace-pre-wrap">Đang phản hồi...</p>
+                </div>
+              </div>
+            );
+          }
+
+          return <ChatMessage key={message.id} message={message} />;
+        })}
+        {(status !== "streaming" && status === "submitted") && (
             <div
               className={`max-w-[30%] rounded-lg p-3 bg-card border border-border text-foreground`}
             >
-              <p className="text-sm whitespace-pre-wrap"> Đang chờ...</p>
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                <p className="text-sm whitespace-pre-wrap">Đang chờ...</p>
+              </div>
             </div>
-        ))}
+        )}
         {/* Invisible element at the end for scrolling */}
         <div ref={messagesEndRef} />
       </div>

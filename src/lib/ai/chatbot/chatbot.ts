@@ -72,7 +72,6 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   query: question,
                   resourceIds,
                 });
-                console.log("Relevant content fetched:", response);
                 return response;
               },
             }),

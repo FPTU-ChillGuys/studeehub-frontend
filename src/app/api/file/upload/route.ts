@@ -1,26 +1,31 @@
 import { createResource } from "@/lib/actions/resources";
+import { ExcelBufferToText } from "@/lib/excel";
 import { PdfBufferToText } from "@/lib/pdf";
+import { TxtBufferToText } from "@/lib/txt";
 import { WordBufferToText } from "@/lib/word";
 import { NextResponse } from "next/server";
+import {
+  EXTENSION_TO_TYPE,
+  INVALID_FILE_TYPE_MESSAGE,
+  type SupportedExtension,
+  type DocumentType,
+  isValidExtension,
+} from "@/config/fileTypes";
 
 // Constants
-const SUPPORTED_FILE_EXTENSIONS = ["pdf", "docx", "doc"] as const;
 const ERROR_MESSAGES = {
   NO_FILES: "No files uploaded",
-  INVALID_FILE_TYPE: "Only PDF, DOCX, and DOC files are supported",
+  INVALID_FILE_TYPE: INVALID_FILE_TYPE_MESSAGE,
   NO_NOTEBOOK_ID: "No notebookId provided",
   RESOURCE_CREATION_FAILED:
     "Failed to create resource. Please try again or try upload smaller files under 1000 words.",
   UPLOAD_FAILED: "File upload failed",
 } as const;
 
-type FileExtension = (typeof SUPPORTED_FILE_EXTENSIONS)[number];
-type FileType = "PDF" | "DOCX" | "DOC";
-
 interface ProcessedFile {
   text: string;
   fileName: string;
-  type: FileType;
+  type: DocumentType;
 }
 
 // Helper functions
@@ -29,18 +34,16 @@ const getFileExtension = (fileName: string): string => {
   return extension;
 };
 
-const getFileType = (extension: string): FileType | null => {
-  const typeMap: Record<string, FileType> = {
-    pdf: "PDF",
-    docx: "DOCX",
-    doc: "DOC",
-  };
-  return typeMap[extension] || null;
+const getFileType = (extension: string): DocumentType | null => {
+  if (!isValidExtension(extension)) {
+    return null;
+  }
+  return EXTENSION_TO_TYPE[extension as SupportedExtension];
 };
 
 const isValidFileExtension = (fileName: string): boolean => {
   const extension = getFileExtension(fileName);
-  return SUPPORTED_FILE_EXTENSIONS.includes(extension as FileExtension);
+  return isValidExtension(extension);
 };
 
 const extractTextFromBuffer = async (
@@ -49,6 +52,10 @@ const extractTextFromBuffer = async (
 ): Promise<string> => {
   if (extension === "pdf") {
     return await PdfBufferToText(buffer);
+  } else if (extension === "xlsx" || extension === "csv") {
+    return await ExcelBufferToText(buffer);
+  } else if (extension === "txt") {
+    return await TxtBufferToText(buffer);
   }
   // Both DOC and DOCX use the same extractor
   return await WordBufferToText(buffer);

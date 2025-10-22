@@ -30,8 +30,7 @@ export default function UserDetailPage() {
     userName: '',
     phoneNumber: '',
     address: '',
-    role: 'user' as const,
-    status: 'active' as const,
+    isActive: false,
   });
 
   useEffect(() => {
@@ -47,8 +46,7 @@ export default function UserDetailPage() {
           userName: userData.userName || '',
           phoneNumber: userData.phoneNumber || '',
           address: userData.address || '',
-          role: userData.role || 'user',
-          status: userData.isActive ? 'active' : 'inactive'
+          isActive: userData.isActive
         });
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -89,6 +87,7 @@ export default function UserDetailPage() {
         userName: formData.userName,
         phoneNumber: formData.phoneNumber || null,
         address: formData.address,
+        isActive: formData.isActive
       });
       
       toast.success('User updated successfully');
@@ -114,7 +113,7 @@ export default function UserDetailPage() {
       setUser(updatedUser);
       setFormData({
         ...formData,
-        status,
+        isActive: status === 'active',
       });
     } catch (error) {
       console.error('Error updating user status:', error);
@@ -446,7 +445,7 @@ export default function UserDetailPage() {
                     </p>
                   </div>
                   <Select
-                    value={formData.status}
+                    value={formData.isActive}
                     onValueChange={(value) =>
                       handleSelectChange('status', value)
                     }

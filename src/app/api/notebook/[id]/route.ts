@@ -37,7 +37,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const { id: notebookId } = await params;
-  const { title }: { title: string; description?: string; thumbnail?: string } = await req.json();
+  const { title }: { title: string; } = await req.json();
+  console.log("PUT request received for notebookId:", notebookId, "with title:", title);
   // Update notebook in the database
   const updatedNotebook = await editNotebookTitleById(notebookId, title);
   if (!updatedNotebook) {

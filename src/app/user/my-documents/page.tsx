@@ -17,7 +17,7 @@ import useStateRef from "react-usestateref";
 import { useEffect } from "react";
 import { ConvertAnyToNotebook, NewNotebook } from "@/lib/mapping/notebook";
 import { AuthService } from "@/service/authService";
-import { deleteNotebook, getNotebook, postNotebook } from "@/features/notebook/api/notebook";
+import { deleteNotebook, getNotebook, postNotebook, putNotebook } from "@/features/notebook/api/notebook";
 import {
   NotebookStats,
   NotebookControls,
@@ -26,6 +26,7 @@ import {
   EmptyNotebooks,
   LoadingNotebooks,
 } from "@/components/my-documents";
+import { toast } from "sonner";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -107,7 +108,7 @@ const NotebooksPage = () => {
     setNotebooks((prev) => [newNotebook, ...prev]);
   };
 
-  const handleEditNotebook = (id: string, newTitle: string) => {
+  const handleEditNotebook = async (id: string, newTitle: string) => {
     setNotebooks((prev) =>
       prev.map((notebook) =>
         notebook.id === id
@@ -119,6 +120,12 @@ const NotebooksPage = () => {
           : notebook
       )
     );
+    const response = await putNotebook(id, { title: newTitle });
+    if (!response.success) {
+      // Handle error (e.g., show notification)
+      console.error("Failed to update notebook title");
+      toast.error("Failed to update notebook title");
+    }
     setEditingNotebook(null);
     setEditTitle("");
   };

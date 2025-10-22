@@ -83,12 +83,9 @@ export default function UserDetailPage() {
     
     try {
       setSaving(true);
-      /*
-      const updatedUser = await userService.updateUserProfile(id as string, {
+      await userService.updateUserProfile(id as string, {
         ...formData,
-        phoneNumber: formData.phoneNumber || null,
       });
-      */
       
       toast.success('User updated successfully');
       setEditing(false);
@@ -101,7 +98,7 @@ export default function UserDetailPage() {
     }
   };
 
-  const handleStatusChange = async (status: 'active' | 'inactive') => {
+  const handleStatusChange = async (status: boolean) => {
     if (!user) return;
     
     try {
@@ -111,7 +108,7 @@ export default function UserDetailPage() {
       setUser(updatedUser);
       setFormData(prev => ({
         ...prev,
-        isActive: status === 'active',
+        isActive: status,
       }));
     } catch (error) {
       console.error('Error updating user status:', error);
@@ -188,7 +185,7 @@ export default function UserDetailPage() {
               <Select
                 value={user.isActive ? 'active' : 'inactive'}
                 onValueChange={(value: 'active' | 'inactive') =>
-                  handleStatusChange(value)
+                  handleStatusChange(value === 'active')
                 }
               >
                 <SelectTrigger className="w-[120px]">

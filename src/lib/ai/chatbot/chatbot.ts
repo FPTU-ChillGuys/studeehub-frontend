@@ -8,7 +8,7 @@ import {
 } from "ai";
 import { findRelevantContent } from "./embedding";
 import { z } from "zod";
-import { geminiFlashLite } from "./model/google";
+import { gpt5nano } from "./model/openai";
 import { messageUIToDB } from "@/lib/mapping/message";
 import { createMessage } from "@/lib/actions/message";
 import { getContentFromResourceId } from "@/lib/actions/resources";
@@ -52,10 +52,15 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
       try {
         // Thử tạo stream text
         result = streamText({
-          model: geminiFlashLite,
+          model: gpt5nano,
           system: SYSTEM_PROMPT + fileNames.join(", ") + SYSTEM_INSTRUCTIONS,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(100),
+          // providerOptions : {
+          //   openai: {
+          //     serviceTier : 'flex'
+          //   }
+          // },
           tools: {
             getInformation: tool({
               description: `Get information from your knowledge base to answer questions.`,
@@ -67,7 +72,6 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   query: question,
                   resourceIds,
                 });
-                console.log("Relevant content fetched:", response);
                 return response;
               },
             }),
@@ -79,7 +83,6 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
                   ? resourceIds
                   : [resourceIds];
                 const response = await getContentFromResourceId(resourceIdsArray);
-                console.log("All content fetched for summarization/analysis:", response);
                 return response;
               },
             }),

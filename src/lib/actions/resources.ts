@@ -14,8 +14,19 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
     // Append the file name to the content
     const inputWithFileName =  content + `\n\nSource: ${fileName}`;
 
-    // Generate embeddings for the content
-    const embeddingResult = await generateEmbeddings(content);
+    //Tach input khoan 5000 từ 1 array
+    const inputChunks = inputWithFileName.match(/(.|[\r\n]){1,5000}/g) || [];
+
+    console.log("Length of input chunks:", inputChunks.length);
+
+    // Generate embeddings for the contents
+    const embeddingResult: Array<{ embedding: number[]; content: string }> = [];
+    for (const contentChunk of inputChunks) {
+      const embedding = await generateEmbeddings(contentChunk);
+      for (const emb of embedding) {
+        embeddingResult.push(emb);
+      }
+    }
 
     // Insert resource into the database
     const [resource] = await db

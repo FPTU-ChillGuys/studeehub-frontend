@@ -27,6 +27,7 @@ import {
   LoadingNotebooks,
 } from "@/components/my-documents";
 import { toast } from "sonner";
+import { useTopLoader } from "nextjs-toploader";
 
 const NotebooksPage = () => {
   const [searchTerm, setSearchTerm] = useStateRef("");
@@ -115,11 +116,12 @@ const NotebooksPage = () => {
           ? {
               ...notebook,
               title: newTitle,
-              lastModified: new Date().toISOString().split("T")[0],
+              lastModified: new Date().toUTCString().split("T")[0],
             }
           : notebook
       )
     );
+    
     const response = await putNotebook(id, { title: newTitle });
     if (!response.success) {
       // Handle error (e.g., show notification)
@@ -139,6 +141,8 @@ const NotebooksPage = () => {
       }
     }
   };
+
+  const loader = useTopLoader();
 
   const startEditingNotebook = (notebook: Notebook) => {
     setEditingNotebook(notebook.id);

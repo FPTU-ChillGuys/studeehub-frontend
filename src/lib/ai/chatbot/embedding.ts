@@ -2,7 +2,8 @@ import { embed, embedMany } from "ai";
 import { cosineDistance, desc, gt, sql, and, eq } from "drizzle-orm";
 import { embeddings } from "@/lib/db/schema/embedding";
 import { db } from "@/lib/db";
-import { geminiEmbedding } from "@/lib/ai/chatbot/model/google";
+import { gptEmbedding } from "./model/openai";
+import { geminiEmbedding } from "./model/google";
 
 const generateChunks = (input: string): string[] => {
   return input
@@ -17,11 +18,11 @@ export const generateEmbeddings = async (
 ): Promise<Array<{ embedding: number[]; content: string }>> => {
   const chunks = generateChunks(value);
   const { embeddings } = await embedMany({
-    model: geminiEmbedding,
+    model: gptEmbedding,
     values: chunks,
     providerOptions: {
-      google: {
-        outputDimensionality: 1536,
+      openai: {
+        serviceTier: "flex",
       },
     },
   });
@@ -32,11 +33,11 @@ export const generateEmbeddings = async (
 export const generateEmbedding = async (value: string): Promise<number[]> => {
   const input = value.replaceAll("\\n", " ");
   const { embedding } = await embed({
-    model: geminiEmbedding,
+    model: gptEmbedding,
     value: input,
     providerOptions: {
-      google: {
-        outputDimensionality: 1536,
+      openai: {
+        serviceTier: "flex",
       },
     },
   });
@@ -76,4 +77,3 @@ export const findRelevantContent = async (userQuery: {
 
   return similarGuides;
 };
-

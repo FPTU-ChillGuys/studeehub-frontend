@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import useStateRef from "react-usestateref";
 import CustomiseFlashcardModal, { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
+import FlashcardStats from "./FlashcardStats";
 
 interface FlashcardsListProps {
   flashcards: FlashcardDeck[];
@@ -149,6 +150,9 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
                     <p className="text-sm text-muted-foreground">
                       {deck.cardCount} cards
                     </p>
+                    
+                    {/* Show stats if available */}
+                    <FlashcardStats deckId={deck.id} />
                   </div>
                   
                   <DropdownMenu 

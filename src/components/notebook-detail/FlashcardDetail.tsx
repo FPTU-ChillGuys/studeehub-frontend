@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, Zap } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
+import PracticeMode from "./PracticeMode";
 
 interface FlashcardDetailProps {
   deck: FlashcardDeck;
@@ -14,6 +15,8 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
   deck,
   onBackToList,
 }) => {
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
+  
   // Hook được khởi tạo mới mỗi khi component mount
   const flipArrayHook = useFlashcardArray({
     deckLength: deck.cards?.length || 0,
@@ -21,6 +24,16 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
     showControls: true,
     cycle: false,
   });
+
+  // If in practice mode, show practice component
+  if (isPracticeMode) {
+    return (
+      <PracticeMode 
+        deck={deck} 
+        onBackToDetail={() => setIsPracticeMode(false)} 
+      />
+    );
+  }
 
   return (
     <div className="w-[27%] flex flex-col border-l border-border overflow-hidden">
@@ -58,6 +71,16 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
             <div className="text-center text-sm text-muted-foreground">
               Card {flipArrayHook.currentCard + 1} of {deck.cards.length}
             </div>
+
+            {/* Practice Mode Button */}
+            <Button
+              onClick={() => setIsPracticeMode(true)}
+              className="w-full"
+              variant="default"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Practice Mode
+            </Button>
 
             {/* Reset Button */}
             <Button

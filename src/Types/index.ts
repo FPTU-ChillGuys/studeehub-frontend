@@ -141,11 +141,16 @@ export interface PaginatedResponse<T> extends APIResponse<T> {
   totalPages: number;
 }
 
+// Extended flashcard with id for tracking
+export interface FlashcardWithId extends IFlashcard {
+  id: string;
+}
+
 export interface FlashcardDeck {
   id: string;
   title: string;
   cardCount: number;
-  cards: IFlashcard[];
+  cards: FlashcardWithId[];
 }
 
 export interface BaseResponse {

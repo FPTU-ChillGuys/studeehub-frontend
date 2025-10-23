@@ -3,181 +3,672 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-type DayKey = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+import { useSession } from "next-auth/react";
+import scheduleService, { ScheduleItem, CreateScheduleRequest, UpdateScheduleRequest } from "@/service/scheduleService";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface SessionItem {
-  day: DayKey;
+  id?: string;
+  date: string; // ISO date string (YYYY-MM-DD)
   subject: string;
-  time: string;
-  durationHours: number;
+  startTime: string; // e.g., "19:00" (24-hour format)
+  endTime: string; // e.g., "21:00" (24-hour format)
+  description?: string;
+  reminderMinutesBefore?: number;
+  isCheckin?: boolean; // Check-in status
 }
 
 export default function EditSchedulePage() {
-  const [dailyGoal, setDailyGoal] = React.useState<number>(2);
-  const [weeklyGoal, setWeeklyGoal] = React.useState<number>(10);
-  const [preferredTime, setPreferredTime] = React.useState<string>("Evening (6-10 PM)");
-  const [sessionMinutes, setSessionMinutes] = React.useState<number>(45);
-  const [breakMinutes, setBreakMinutes] = React.useState<number>(15);
-  const [reminders, setReminders] = React.useState<boolean>(true);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [filterStatus, setFilterStatus] = useState<'all' | 'saved' | 'unsaved'>('all');
+  const [filterCheckin, setFilterCheckin] = useState<'all' | 'checked' | 'unchecked' | 'overdue'>('all');
 
-  const [activeDays, setActiveDays] = React.useState<Record<DayKey, boolean>>({
-    Mon: true,
-    Tue: true,
-    Wed: true,
-    Thu: true,
-    Fri: true,
-    Sat: true,
-    Sun: true,
-  });
+  // Load existing schedules on component mount
+  useEffect(() => {
+    if (userId) {
+      loadSchedules();
+    }
+  }, [userId]);
 
-  const [sessions, setSessions] = React.useState<SessionItem[]>([
-    { day: "Mon", subject: "Mathematics", time: "7:00 PM - 9:00 PM", durationHours: 2 },
-    { day: "Tue", subject: "Physics", time: "7:00 PM - 8:30 PM", durationHours: 1.5 },
-    { day: "Wed", subject: "Mathematics", time: "7:00 PM - 9:00 PM", durationHours: 2 },
-    { day: "Thu", subject: "Chemistry", time: "7:00 PM - 8:00 PM", durationHours: 1 },
-    { day: "Fri", subject: "Physics", time: "7:00 PM - 8:30 PM", durationHours: 1.5 },
-    { day: "Sat", subject: "Review", time: "2:00 PM - 4:00 PM", durationHours: 2 },
-    { day: "Sun", subject: "Rest Day - Free", time: "", durationHours: 0 },
-  ]);
-
-  const totalCompleted = 3; // temporary mock like screenshot (3/7)
-  const weeklyProgress = Math.round((totalCompleted / sessions.length) * 100);
-
-  const toggleDay = (k: DayKey) => setActiveDays((d) => ({ ...d, [k]: !d[k] }));
-
-  const addSession = () => {
-    setSessions((prev) => [
-      ...prev,
-      { day: "Mon", subject: "New Session", time: "6:00 PM - 7:00 PM", durationHours: 1 },
-    ]);
+  // Helper function to determine session status
+  const getSessionStatus = (session: SessionItem) => {
+    const now = new Date();
+    const sessionDate = new Date(session.date);
+    const sessionEndTime = new Date(`${session.date}T${session.endTime}`);
+    
+    // Check if session is overdue (end time has passed AND isCheckin is false)
+    if (sessionEndTime < now && session.isCheckin === false) {
+      return 'overdue';
+    }
+    
+    // Check if session has been checked in
+    if (session.isCheckin === true) {
+      return 'checked';
+    }
+    
+    return 'unchecked';
   };
 
-  const removeSession = (idx: number) => setSessions((prev) => prev.filter((_, i) => i !== idx));
+  const loadSchedules = async () => {
+    if (!userId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await scheduleService.getUserSchedules(userId);
+      
+      if (response.success && Array.isArray(response.data)) {
+        // Convert API data to SessionItem format
+        const sessionItems: SessionItem[] = response.data.map((schedule: ScheduleItem) => ({
+          id: schedule.id,
+          date: new Date(schedule.startTime).toISOString().split('T')[0],
+          subject: schedule.title,
+          startTime: new Date(schedule.startTime).toTimeString().slice(0, 5),
+          endTime: new Date(schedule.endTime).toTimeString().slice(0, 5),
+          description: schedule.description,
+          reminderMinutesBefore: schedule.reminderMinutesBefore,
+          isCheckin: schedule.isCheckin || false, // Get check-in status from API
+        }));
+        setSessions(sessionItems);
+      } else {
+        setSessions([]);
+      }
+    } catch (err: any) {
+      console.error("Failed to load schedules:", err);
+      // Continue with empty sessions if API fails
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const dayLabel: Record<DayKey, string> = {
-    Mon: "Monday",
-    Tue: "Tuesday",
-    Wed: "Wednesday",
-    Thu: "Thursday",
-    Fri: "Friday",
-    Sat: "Saturday",
-    Sun: "Sunday",
-  } as const;
+  const addSession = () => {
+    const newSession: SessionItem = {
+      date: selectedDate,
+      subject: "",
+      startTime: "19:00",
+      endTime: "21:00",
+      description: "",
+      reminderMinutesBefore: 15,
+    };
+    setSessions((prev) => [...prev, newSession]);
+  };
+
+  const removeSession = (idx: number) => {
+    const session = sessions[idx];
+    if (session.id) {
+      // Delete from API
+      deleteSchedule(session.id);
+    }
+    setSessions((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const deleteSchedule = async (scheduleId: string) => {
+    try {
+      await scheduleService.deleteSchedule(scheduleId);
+    } catch (err) {
+      console.error("Failed to delete schedule:", err);
+    }
+  };
+
+  const updateSession = (idx: number, updates: Partial<SessionItem>) => {
+    setSessions((prev) => prev.map((s, i) => (i === idx ? { ...s, ...updates } : s)));
+  };
+
+  const saveSchedule = async (session: SessionItem, idx: number) => {
+    if (!userId) return;
+    
+    // Validation
+    if (!session.subject.trim()) {
+      setError("Please enter a subject for the session");
+      return;
+    }
+    
+    if (!session.date) {
+      setError("Please select a date for the session");
+      return;
+    }
+    
+    if (!session.startTime || !session.endTime) {
+      setError("Please enter start and end times for the session");
+      return;
+    }
+    
+    // Validate that end time is after start time
+    const startDateTime = new Date(`${session.date}T${session.startTime}`);
+    const endDateTime = new Date(`${session.date}T${session.endTime}`);
+    
+    if (endDateTime <= startDateTime) {
+      setError("End time must be after start time");
+      return;
+    }
+    
+    // Check for overlaps with existing sessions on the same date
+    const hasOverlap = sessions.some((existingSession, existingIdx) => {
+      if (existingIdx === idx || !existingSession.id || existingSession.date !== session.date) return false;
+      
+      const existingStart = new Date(`${existingSession.date}T${existingSession.startTime}`);
+      const existingEnd = new Date(`${existingSession.date}T${existingSession.endTime}`);
+      
+      // Check for time overlap
+      return (startDateTime < existingEnd && endDateTime > existingStart);
+    });
+    
+    if (hasOverlap) {
+      setError("This schedule overlaps with an existing schedule on the same date");
+      return;
+    }
+    
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      const startTimeISO = startDateTime.toISOString();
+      const endTimeISO = endDateTime.toISOString();
+      
+      if (session.id) {
+        // Update existing schedule
+        const updateData: UpdateScheduleRequest = {
+          title: session.subject,
+          startTime: startTimeISO,
+          endTime: endTimeISO,
+          description: session.description,
+          reminderMinutesBefore: session.reminderMinutesBefore,
+        };
+        
+        await scheduleService.updateSchedule(session.id, updateData);
+        setSuccess("Schedule updated successfully!");
+        // Reload schedules to get the latest data
+        await loadSchedules();
+      } else {
+        // Create new schedule
+        const createData: CreateScheduleRequest = {
+          userId: userId,
+          title: session.subject,
+          startTime: startTimeISO,
+          endTime: endTimeISO,
+          description: session.description,
+          reminderMinutesBefore: session.reminderMinutesBefore,
+        };
+        
+        const response = await scheduleService.createSchedule(createData);
+        
+        if (response.success) {
+          // Update the session with the actual ID from response
+          const newScheduleId = response.data && typeof response.data === 'object' && 'id' in response.data 
+            ? (response.data as any).id 
+            : `schedule-${Date.now()}`; // fallback ID
+          updateSession(idx, { id: newScheduleId });
+          setSuccess("Schedule created successfully!");
+          // Reload schedules to get the latest data
+          await loadSchedules();
+        } else {
+          setError(response.message || "Failed to create schedule");
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to save schedule");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Get current week dates for calendar view
+  const currentDay = currentDate.getDay();
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setDate(currentDate.getDate() - currentDay + 1); // Start from Monday
+
+  const weekDays: Array<{
+    date: Date;
+    dateString: string;
+    dayName: string;
+    dayNumber: number;
+    month: string;
+  }> = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    weekDays.push({
+      date,
+      dateString: date.toISOString().split('T')[0],
+      dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      dayNumber: date.getDate(),
+      month: date.toLocaleDateString('en-US', { month: 'short' })
+    });
+  }
+
+  // Group sessions by date
+  const sessionsByDate = new Map();
+  sessions.forEach(session => {
+    if (!sessionsByDate.has(session.date)) {
+      sessionsByDate.set(session.date, []);
+    }
+    sessionsByDate.get(session.date).push(session);
+  });
 
   return (
-    <div className="min-h-screen bg-muted/20 py-8">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10">
-        <div className="flex items-center justify-between mb-4">
-          <Link href="/learning-path" className="text-sm text-blue-600 hover:underline">← Back to Learning Path</Link>
-          <Button className="bg-green-600 hover:bg-green-700">Save Schedule</Button>
+    <div className="min-h-screen bg-[#f7f8fa] py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-[#4f46e5] flex items-center gap-2">
+              Edit Schedule ⚙️
+            </h1>
+            <p className="text-sm text-gray-500">Create and manage your study schedule</p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/learning-path">
+              📅 Back to Schedule
+            </Link>
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Study Settings */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-violet-100 text-violet-700">⚙️</span>
-                <h2 className="font-semibold">Study Settings</h2>
+        {/* Error/Success Messages */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700">
+            {success}
+          </div>
+        )}
+
+        {/* Calendar View */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                📅 Weekly Calendar View
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="date-select">Add to date:</Label>
+                <Input
+                  id="date-select"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-auto"
+                />
+                <Button onClick={addSession} size="sm">
+                  ➕ Add Session
+                </Button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground">Daily Study Goal (hours)</label>
-                  <input className="mt-1 w-full rounded-md border px-3 py-2" type="number" min={0} value={dailyGoal} onChange={(e) => setDailyGoal(Number(e.target.value))} />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Weekly Study Goal (hours)</label>
-                  <input className="mt-1 w-full rounded-md border px-3 py-2" type="number" min={0} value={weeklyGoal} onChange={(e) => setWeeklyGoal(Number(e.target.value))} />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Preferred Study Time</label>
-                  <select className="mt-1 w-full rounded-md border px-3 py-2" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)}>
-                    <option>Morning (6-10 AM)</option>
-                    <option>Afternoon (12-4 PM)</option>
-                    <option>Evening (6-10 PM)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Session Duration (minutes)</label>
-                  <input className="mt-1 w-full rounded-md border px-3 py-2" type="number" min={15} step={5} value={sessionMinutes} onChange={(e) => setSessionMinutes(Number(e.target.value))} />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Break Duration (minutes)</label>
-                  <input className="mt-1 w-full rounded-md border px-3 py-2" type="number" min={5} step={5} value={breakMinutes} onChange={(e) => setBreakMinutes(Number(e.target.value))} />
-                </div>
+            </div>
+            
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between mt-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(currentDate.getMonth() - 1);
+                    setCurrentDate(newDate);
+                  }}
+                >
+                  ← Previous Month
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDate(new Date())}
+                >
+                  This Month
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(currentDate.getMonth() + 1);
+                    setCurrentDate(newDate);
+                  }}
+                >
+                  Next Month →
+                </Button>
               </div>
-              <div className="mt-4 flex items-center gap-2 rounded-md border px-3 py-2">
-                <input id="remind" type="checkbox" checked={reminders} onChange={(e) => setReminders(e.target.checked)} />
-                <label htmlFor="remind" className="text-sm">Enable study reminders</label>
+              <div className="text-lg font-semibold text-gray-800">
+                {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Filter Section */}
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="filter-status">Save Status:</Label>
+                    <select
+                      id="filter-status"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value as 'all' | 'saved' | 'unsaved')}
+                      className="px-3 py-1 border rounded-md text-sm"
+                    >
+                      <option value="all">All Sessions</option>
+                      <option value="saved">Saved Sessions</option>
+                      <option value="unsaved">Unsaved Sessions</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="filter-checkin">Check-in Status:</Label>
+                    <select
+                      id="filter-checkin"
+                      value={filterCheckin}
+                      onChange={(e) => setFilterCheckin(e.target.value as 'all' | 'checked' | 'unchecked' | 'overdue')}
+                      className="px-3 py-1 border rounded-md text-sm"
+                    >
+                      <option value="all">All Sessions</option>
+                      <option value="checked">Checked In</option>
+                      <option value="unchecked">Not Checked In</option>
+                      <option value="overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600">
+                  Total: {sessions.length} | Saved: {sessions.filter(s => s.id).length} | Unsaved: {sessions.filter(s => !s.id).length} | 
+                  Overdue: {sessions.filter(s => getSessionStatus(s) === 'overdue').length}
+                </div>
               </div>
             </div>
 
-            {/* Weekly Schedule list */}
-            <div className="bg-white rounded-xl shadow-sm p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-pink-100 text-pink-700">📊</span>
-                  <h2 className="font-semibold">Weekly Schedule</h2>
-                </div>
-                <Button variant="secondary" onClick={addSession}>+ Add Session</Button>
-              </div>
-
-              <div className="space-y-3">
-                {sessions.map((s, idx) => (
-                  <div key={idx} className={`rounded-lg border px-4 py-3 ${idx % 2 === 0 ? "bg-emerald-50/40" : "bg-indigo-50/40"}`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold">{dayLabel[s.day]}</div>
-                        <div className="text-sm text-muted-foreground">{s.subject} · {s.time}</div>
-                        <div className="text-xs text-muted-foreground">{s.durationHours} hours</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">✓</Button>
-                        <Button variant="ghost" size="sm">✏️</Button>
-                        <Button variant="ghost" size="sm" onClick={() => removeSession(idx)}>✕</Button>
-                      </div>
-                    </div>
+            {/* Calendar Grid */}
+            <div className="bg-white border rounded-lg overflow-hidden">
+              {/* Day headers */}
+              <div className="grid grid-cols-7 border-b">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="p-3 bg-gray-50 border-r last:border-r-0 text-center font-medium text-gray-600">
+                    {day}
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Progress summary */}
-            <div className="rounded-xl p-5" style={{ background: "linear-gradient(90deg,#8b5cf6,#f97316)" }}>
-              <div className="flex items-center gap-2 text-white">
-                <span>📈</span>
-                <div className="font-semibold">This Week's Progress</div>
-                <div className="ml-auto text-right">
-                  <div className="text-2xl font-bold">{weeklyProgress}%</div>
-                  <div className="text-xs opacity-90">Weekly Goal</div>
+              {/* Calendar weeks */}
+              {(() => {
+                // Get current month dates
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                
+                // Get first day of month and last day of month
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const firstDayOfWeek = firstDay.getDay();
+                
+                // Create calendar grid (6 weeks x 7 days = 42 days)
+                const calendarDays: Array<{
+                  date: Date;
+                  dayNumber: number;
+                  isCurrentMonth: boolean;
+                  isToday: boolean;
+                }> = [];
+                
+                // Add previous month's trailing days
+                const prevMonth = new Date(year, month - 1, 0);
+                for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                  const date = new Date(year, month - 1, prevMonth.getDate() - i);
+                  calendarDays.push({
+                    date,
+                    dayNumber: date.getDate(),
+                    isCurrentMonth: false,
+                    isToday: false
+                  });
+                }
+                
+                // Add current month's days
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                  const date = new Date(year, month, day);
+                  const today = new Date();
+                  calendarDays.push({
+                    date,
+                    dayNumber: day,
+                    isCurrentMonth: true,
+                    isToday: date.toDateString() === today.toDateString()
+                  });
+                }
+                
+                // Add next month's leading days to fill the grid
+                const remainingDays = 42 - calendarDays.length;
+                for (let day = 1; day <= remainingDays; day++) {
+                  const date = new Date(year, month + 1, day);
+                  calendarDays.push({
+                    date,
+                    dayNumber: day,
+                    isCurrentMonth: false,
+                    isToday: false
+                  });
+                }
+                
+                // Group calendar days into weeks
+                const weeks = [];
+                for (let i = 0; i < calendarDays.length; i += 7) {
+                  weeks.push(calendarDays.slice(i, i + 7));
+                }
+
+                // Group sessions by date
+                const scheduleMap = new Map();
+                sessions.forEach(session => {
+                  const sessionDate = new Date(session.date);
+                  const dateKey = sessionDate.toDateString();
+                  
+                  if (!scheduleMap.has(dateKey)) {
+                    scheduleMap.set(dateKey, []);
+                  }
+                  scheduleMap.get(dateKey).push(session);
+                });
+
+                return weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="grid grid-cols-7 border-b last:border-b-0">
+                    {week.map((day, dayIndex) => {
+                      const dateKey = day.date.toDateString();
+                      const daySessions = scheduleMap.get(dateKey) || [];
+                      
+                      // Filter sessions based on both filters
+                      const filteredSessions = daySessions.filter((session: SessionItem) => {
+                        // Apply save status filter
+                        let passesSaveFilter = true;
+                        if (filterStatus === 'saved') passesSaveFilter = Boolean(session.id);
+                        if (filterStatus === 'unsaved') passesSaveFilter = !session.id;
+                        
+                        // Apply check-in status filter
+                        let passesCheckinFilter = true;
+                        const sessionStatus = getSessionStatus(session);
+                        if (filterCheckin === 'checked') passesCheckinFilter = sessionStatus === 'checked';
+                        if (filterCheckin === 'unchecked') passesCheckinFilter = sessionStatus === 'unchecked';
+                        if (filterCheckin === 'overdue') passesCheckinFilter = sessionStatus === 'overdue';
+                        
+                        return passesSaveFilter && passesCheckinFilter;
+                      });
+                      
+                      return (
+                        <div 
+                          key={dayIndex} 
+                          className={`min-h-[120px] border-r last:border-r-0 p-2 ${
+                            day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                          } ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}`}
+                        >
+                          <div className={`text-sm font-medium mb-1 ${
+                            day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                          } ${day.isToday ? 'text-blue-600' : ''}`}>
+                            {day.dayNumber}
+                          </div>
+                          
+                          {/* Sessions for this day */}
+                          <div className="space-y-1">
+                            {filteredSessions.map((session: SessionItem) => {
+                              const isSaved = Boolean(session.id);
+                              const sessionStatus = getSessionStatus(session);
+                              const isOverdue = sessionStatus === 'overdue';
+                              const isChecked = sessionStatus === 'checked';
+                              const isCheckin = session.isCheckin === true;
+                              
+                              return (
+                                <div 
+                                  key={session.id || `temp-${session.date}-${session.startTime}`}
+                                  className={`rounded p-1 text-xs border ${
+                                    isOverdue 
+                                      ? 'bg-red-100 border-red-300 shadow-sm' 
+                                      : isChecked 
+                                        ? 'bg-green-100 border-green-300 shadow-sm' 
+                                        : 'bg-blue-100 border-blue-300'
+                                  }`}
+                                >
+                                  <div className={`font-medium truncate ${
+                                    isOverdue 
+                                      ? 'text-red-800' 
+                                      : isChecked 
+                                        ? 'text-green-800' 
+                                        : 'text-blue-800'
+                                  }`}>
+                                    {session.subject}
+                                    {isOverdue && ' ⏰'}
+                                  </div>
+                                  <div className={`text-xs ${
+                                    isOverdue 
+                                      ? 'text-red-600' 
+                                      : isChecked 
+                                        ? 'text-green-600' 
+                                        : 'text-blue-600'
+                                  }`}>
+                                    {session.startTime} - {session.endTime}
+                                  </div>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      isOverdue 
+                                        ? 'bg-red-500' 
+                                        : isChecked 
+                                          ? 'bg-green-500' 
+                                          : 'bg-gray-300'
+                                    }`}></div>
+                                    <button
+                                      onClick={() => saveSchedule(session, sessions.indexOf(session))}
+                                      className={`text-xs px-1 py-0.5 rounded ${
+                                        isOverdue 
+                                          ? 'bg-red-500 text-white hover:bg-red-600' 
+                                          : isChecked 
+                                            ? 'bg-green-500 text-white hover:bg-green-600' 
+                                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                                      }`}
+                                    >
+                                      {isOverdue ? "Overdue" : isCheckin ? "Checked In" : isSaved ? "Update" : "Save"}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Session Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              📊 Manage Sessions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {sessions.map((session, idx) => (
+                <div key={idx} className="p-4 border rounded-lg bg-white">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                      <Label>Date</Label>
+                      <Input
+                        type="date"
+                        value={session.date}
+                        onChange={(e) => updateSession(idx, { date: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Subject</Label>
+                      <Input
+                        value={session.subject}
+                        onChange={(e) => updateSession(idx, { subject: e.target.value })}
+                        placeholder="Enter subject"
+                      />
+                    </div>
+                    <div>
+                      <Label>Start Time</Label>
+                      <Input
+                        type="time"
+                        value={session.startTime}
+                        onChange={(e) => updateSession(idx, { startTime: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>End Time</Label>
+                      <Input
+                        type="time"
+                        value={session.endTime}
+                        onChange={(e) => updateSession(idx, { endTime: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Button
+                        onClick={() => saveSchedule(session, idx)}
+                        disabled={saving || !session.subject}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        💾 {session.id ? "Update" : "Save"}
+                      </Button>
+                      <Button
+                        onClick={() => removeSession(idx)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        🗑️
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <Label>Description (optional)</Label>
+                    <Input
+                      value={session.description || ""}
+                      onChange={(e) => updateSession(idx, { description: e.target.value })}
+                      placeholder="Add a description..."
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="mt-1 text-white/90 text-sm">{totalCompleted} of {sessions.length} sessions completed</div>
+              ))}
+              
+              {sessions.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-3">📅</div>
+                  <p>No sessions scheduled yet.</p>
+                  <p className="text-sm">Click "Add Session" to create your first study session.</p>
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* Right: Study Days */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-emerald-100 text-emerald-700">📅</span>
-                <h2 className="font-semibold">Study Days</h2>
-              </div>
-              <div className="space-y-2">
-                {(["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] as DayKey[]).map((d) => (
-                  <label key={d} className="flex items-center gap-2 rounded-md border px-3 py-2">
-                    <input type="checkbox" checked={activeDays[d]} onChange={() => toggleDay(d)} />
-                    <span>{dayLabel[d]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
-
-

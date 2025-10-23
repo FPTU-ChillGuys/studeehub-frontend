@@ -40,7 +40,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(null);
   const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useStateRef(false);
   const [editingDeckId, setEditingDeckId] = useStateRef<string | null>(null);
-  const [editingTitle, setEditingTitle] = useStateRef("");
+  const [editingTitle, setEditingTitle, editingTitleRef] = useStateRef("");
   const [openDropdownId, setOpenDropdownId] = useStateRef<string | null>(null);
 
   // // Focus input when editing starts
@@ -148,7 +148,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
             {flashcards.length > 0 ? (
               flashcards.map((deck) => (
                 <div
-                  key={nanoid()}
+                  key={deck.id}
                   onClick={() => { 
                     if (editingDeckId !== deck.id) {
                       handleDeckClick(deck);
@@ -160,7 +160,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
                     <div className="flex-1 min-w-0 mr-2">
                       {editingDeckId === deck.id ? (
                         <Input
-                          value={editingTitle}
+                          value={editingTitleRef.current}
                           onChange={(e) => setEditingTitle(e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, deck.id)}
                           onBlur={() => handleBlur(deck.id)}

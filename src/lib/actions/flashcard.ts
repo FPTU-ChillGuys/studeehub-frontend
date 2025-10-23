@@ -104,4 +104,17 @@ export const deleteFlashcardById = async (flashcardId: string) => {
     return { success: false };
   } 
 };
+
+export const updateFlashcardTitle = async (flashcardId: string, newTitle: string) => {
+  try {
+    await db.update(flashcard)
+      .set({ title: newTitle })
+      .where(eq(flashcard.id, flashcardId));
+    return { success: true };
+  }
+  catch (e) {
+    console.error("Error updating flashcard title:", e);
+    return { success: false };
+  }
+};
      

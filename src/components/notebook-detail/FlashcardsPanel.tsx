@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, Trash2, Settings2 } from "lucide-react";
+import { ArrowLeft, Trash2, Settings2, Pencil } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import { nanoid } from "nanoid";
 import CustomiseFlashcardModal, { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
+import { Input } from "../ui/input";
 
 interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
@@ -14,6 +15,7 @@ interface FlashcardsPanelProps {
   isDisabled?: boolean;
   onDeleteDeck?: (deckId: string) => void;
   onGenerateCustomFlashcards?: (options: FlashcardOptions) => void;
+  onUpdateDeckTitle?: (deckId: string, newTitle: string) => void;
 }
 
 
@@ -25,10 +27,22 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   isDisabled,
   onDeleteDeck,
   onGenerateCustomFlashcards,
+  onUpdateDeckTitle,
 }) => {
   const [view, setView] = useState<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
   const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useState(false);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingDeckId && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingDeckId]);
   
   
   const handleDeckClick = (deck: FlashcardDeck) => {
@@ -45,6 +59,43 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
     e.stopPropagation();
     if (deckId && onDeleteDeck) onDeleteDeck(deckId);
     setFlashcards(flashcards.filter(deck => deck.id !== deckId));
+  };
+
+  const handleEditDeck = (deck: FlashcardDeck, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingDeckId(deck.id);
+    setEditingTitle(deck.title);
+  };
+
+  const handleSaveTitle = (deckId: string) => {
+    if (editingTitle.trim() === "") {
+      setEditingDeckId(null);
+      return;
+    }
+
+    // Update local state
+    setFlashcards(flashcards.map(deck => 
+      deck.id === deckId ? { ...deck, title: editingTitle } : deck
+    ));
+
+    // Call parent callback for backend update
+    if (onUpdateDeckTitle) {
+      onUpdateDeckTitle(deckId, editingTitle);
+    }
+
+    setEditingDeckId(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, deckId: string) => {
+    if (e.key === "Enter") {
+      handleSaveTitle(deckId);
+    } else if (e.key === "Escape") {
+      setEditingDeckId(null);
+    }
+  };
+
+  const handleBlur = (deckId: string) => {
+    handleSaveTitle(deckId);
   };
 
   const handleGenerateFlashcards = () => {
@@ -79,24 +130,50 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
               flashcards.map((deck) => (
                 <div
                   key={nanoid()}
-                  onClick={() => { handleDeckClick(deck)}}
+                  onClick={() => { 
+                    if (editingDeckId !== deck.id) {
+                      handleDeckClick(deck);
+                    }
+                  }}
                   className="p-4 border border-border rounded-lg hover:bg-accent cursor-pointer transition-colors group"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground mb-1">
-                        {deck.title}
-                      </h3>
+                    <div className="flex-1 min-w-0 mr-2">
+                      {editingDeckId === deck.id ? (
+                        <Input
+                          ref={inputRef}
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, deck.id)}
+                          onBlur={() => handleBlur(deck.id)}
+                          className="font-medium mb-1 h-8"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <h3 className="font-medium text-foreground mb-1 truncate">
+                          {deck.title}
+                        </h3>
+                      )}
                       <p className="text-sm text-muted-foreground">
                         {deck.cardCount} cards
                       </p>
                     </div>
-                    <button
-                      onClick={(e) => handleDeleteDeck(deck.id, e)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-destructive/10 rounded"
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </button>
+                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => handleEditDeck(deck, e)}
+                        className="p-2 hover:bg-primary/10 rounded"
+                        title="Edit title"
+                      >
+                        <Pencil className="w-4 h-4 text-primary" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteDeck(deck.id, e)}
+                        className="p-2 hover:bg-destructive/10 rounded"
+                        title="Delete deck"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))

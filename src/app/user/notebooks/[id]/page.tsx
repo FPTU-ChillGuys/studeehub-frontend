@@ -21,8 +21,10 @@ import { uploadNotebookFile } from "@/features/notebook/api/upload";
 import { getChatbot } from "@/features/chatbot/api/chatbot";
 import { getNotebook } from "@/features/notebook/api/notebook";
 import {
+  deleteFlashcard,
   getFlashcards,
   postFlashcard,
+  putFlashcard,
 } from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
@@ -456,9 +458,7 @@ const NotebookDetailPage = () => {
     if (!deckToDelete) return;
 
     loader.start();
-    const response = await fetch(`/api/flashcard/${deckToDelete}`, {
-      method: "DELETE",
-    }).then((res) => res.json());
+    const response = await deleteFlashcard(deckToDelete);
     
     loader.setProgress(50);
 
@@ -472,6 +472,25 @@ const NotebookDetailPage = () => {
     loader.done();
     setDeleteDeckDialogOpen(false);
     setDeckToDelete(null);
+  };
+
+  const onUpdateDeckTitle = async (deckId: string, newTitle: string) => {
+    // TODO: Implement API call to update deck title
+    console.log("Update deck title:", deckId, newTitle);
+    // Bạn có thể gọi API backend ở đây để lưu title mới
+    const response = await putFlashcard(deckId, newTitle);
+
+    if (response.success) {
+      // Cập nhật tiêu đề trong trạng thái local
+      setFlashcards(
+        flashcardsRef.current.map((deck) =>
+          deck.id === deckId ? { ...deck, title: newTitle } : deck
+        )
+      );
+      toast.success("Flashcard deck title updated successfully");
+    } else {
+      toast.error("Failed to update flashcard deck title");
+    }
   };
 
   const handleDeleteResource = async (resourceId: string) => {
@@ -547,6 +566,7 @@ const NotebookDetailPage = () => {
               onDeleteDeck={onDeleteDeck}
               isDisabled={isDisabled}
               onGenerateCustomFlashcards={onGenerateCustomFlashcards}
+              onUpdateDeckTitle={onUpdateDeckTitle}
             />
           </div>
         )}

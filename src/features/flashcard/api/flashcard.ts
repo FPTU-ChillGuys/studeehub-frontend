@@ -1,4 +1,4 @@
-import { commonDelete, commonGet, commonPost } from "@/features/common/api/common";
+import { commonDelete, commonGet, commonPost, commonPut } from "@/features/common/api/common";
 
 
 export const flashcardBaseURL = "/api/flashcard";
@@ -13,4 +13,8 @@ export const getFlashcards = (params? : string) => {
 
 export const deleteFlashcard = (params? : string) => {
     return commonDelete(`${flashcardBaseURL}/${params}`);
+};
+
+export const putFlashcard = (params? : string, body?: any) => {
+    return commonPut(`${flashcardBaseURL}/${params}`, body);
 };

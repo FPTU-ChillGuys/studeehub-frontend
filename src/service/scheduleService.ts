@@ -14,7 +14,7 @@ export interface ScheduleItem {
 }
 
 export interface ScheduleResponse {
-  data: ScheduleItem[];
+  data: ScheduleItem | ScheduleItem[] | string;
   success: boolean;
   message: string;
   errors: string[] | null;
@@ -22,6 +22,24 @@ export interface ScheduleResponse {
   totalCount?: number;
   page?: number;
   pageSize?: number;
+  totalPages?: number;
+}
+
+export interface CreateScheduleRequest {
+  userId: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  reminderMinutesBefore?: number;
+  description?: string;
+}
+
+export interface UpdateScheduleRequest {
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  reminderMinutesBefore?: number;
+  description?: string;
 }
 
 class ScheduleService {
@@ -52,7 +70,18 @@ class ScheduleService {
           },
         }
       );
-      return response.data;
+      // API returns data directly as array, wrap it in ScheduleResponse format
+      return {
+        success: true,
+        message: "Success",
+        errors: null,
+        errorType: 0,
+        data: response.data as unknown as ScheduleItem[],
+        totalCount: (response.data as any)?.totalCount || 0,
+        page: (response.data as any)?.page || 1,
+        pageSize: (response.data as any)?.pageSize || 10,
+        totalPages: (response.data as any)?.totalPages || 0
+      };
     } catch (error) {
       console.error("[ScheduleService] Error fetching schedules:", error);
       throw error;
@@ -60,17 +89,29 @@ class ScheduleService {
   }
 
   /**
+   * Get a specific schedule by ID
+   * @param scheduleId - Schedule ID
+   */
+  async getScheduleById(scheduleId: string): Promise<ScheduleResponse> {
+    try {
+      const response = await apiClient.get<ScheduleResponse>(
+        `/schedules/${scheduleId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("[ScheduleService] Error fetching schedule:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Create a new schedule
-   * @param userId - User ID
    * @param scheduleData - Schedule data
    */
-  async createSchedule(
-    userId: string,
-    scheduleData: Omit<ScheduleItem, "id" | "createdAt" | "updatedAt">
-  ): Promise<ScheduleResponse> {
+  async createSchedule(scheduleData: CreateScheduleRequest): Promise<ScheduleResponse> {
     try {
       const response = await apiClient.post<ScheduleResponse>(
-        `/users/${userId}/schedules`,
+        `/schedules`,
         scheduleData
       );
       return response.data;
@@ -82,18 +123,16 @@ class ScheduleService {
 
   /**
    * Update an existing schedule
-   * @param userId - User ID
    * @param scheduleId - Schedule ID
    * @param scheduleData - Updated schedule data
    */
   async updateSchedule(
-    userId: string,
     scheduleId: string,
-    scheduleData: Partial<ScheduleItem>
+    scheduleData: UpdateScheduleRequest
   ): Promise<ScheduleResponse> {
     try {
       const response = await apiClient.put<ScheduleResponse>(
-        `/users/${userId}/schedules/${scheduleId}`,
+        `/schedules/${scheduleId}`,
         scheduleData
       );
       return response.data;
@@ -105,13 +144,12 @@ class ScheduleService {
 
   /**
    * Delete a schedule
-   * @param userId - User ID
    * @param scheduleId - Schedule ID
    */
-  async deleteSchedule(userId: string, scheduleId: string): Promise<ScheduleResponse> {
+  async deleteSchedule(scheduleId: string): Promise<ScheduleResponse> {
     try {
       const response = await apiClient.delete<ScheduleResponse>(
-        `/users/${userId}/schedules/${scheduleId}`
+        `/schedules/${scheduleId}`
       );
       return response.data;
     } catch (error) {
@@ -122,13 +160,12 @@ class ScheduleService {
 
   /**
    * Check in to a schedule
-   * @param userId - User ID
    * @param scheduleId - Schedule ID
    */
-  async checkInSchedule(userId: string, scheduleId: string): Promise<ScheduleResponse> {
+  async checkInSchedule(scheduleId: string): Promise<ScheduleResponse> {
     try {
-      const response = await apiClient.post<ScheduleResponse>(
-        `/users/${userId}/schedules/${scheduleId}/checkin`,
+      const response = await apiClient.patch<ScheduleResponse>(
+        `/schedules/${scheduleId}/checkin`,
         {}
       );
       return response.data;

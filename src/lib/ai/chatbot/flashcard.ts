@@ -5,7 +5,7 @@ import { z } from "zod";
 const prompt = (
   content: string
 ) => 
-`You are an expert educator creating high-quality flashcards for studying. Based on the following content, generate 3-5 flashcards that will help students learn and retain the key concepts.
+`You are an expert educator creating high-quality flashcards for studying. Based on the following content, generate 5-15 flashcards that will help students learn and retain the key concepts.
 
 CONTENT:
 ${content}

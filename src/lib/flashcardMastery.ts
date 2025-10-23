@@ -67,7 +67,16 @@ export const loadMasteryData = (): FlashcardMasteryData => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return { decks: {} };
-    return JSON.parse(data);
+    
+    const parsed = JSON.parse(data);
+    
+    // Validate structure
+    if (!parsed.decks || typeof parsed.decks !== 'object') {
+      console.warn('Invalid mastery data structure, resetting...');
+      return { decks: {} };
+    }
+    
+    return parsed;
   } catch (error) {
     console.error('Failed to load mastery data:', error);
     return { decks: {} };
@@ -80,6 +89,16 @@ export const saveMasteryData = (data: FlashcardMasteryData): void => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
     console.error('Failed to save mastery data:', error);
+  }
+};
+
+// Clear all mastery data (for debugging/reset)
+export const clearMasteryData = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('Mastery data cleared');
+  } catch (error) {
+    console.error('Failed to clear mastery data:', error);
   }
 };
 
@@ -121,13 +140,21 @@ export const getDeckMastery = (deckId: string, cardIds: string[]): DeckMastery =
     return deckMastery;
   }
   
+  const currentDeck = data.decks[deckId];
+  
+  // Fix corrupted data - if cards is undefined or not an object, reinitialize
+  if (!currentDeck.cards || typeof currentDeck.cards !== 'object') {
+    console.warn('Corrupted deck data detected, reinitializing...');
+    currentDeck.cards = {};
+  }
+  
   // Ensure all cards exist (in case new cards were added)
-  const existingCardIds = Object.keys(data.decks[deckId].cards);
+  const existingCardIds = Object.keys(currentDeck.cards);
   const missingCardIds = cardIds.filter(id => !existingCardIds.includes(id));
   
   if (missingCardIds.length > 0) {
     missingCardIds.forEach(cardId => {
-      data.decks[deckId].cards[cardId] = {
+      currentDeck.cards[cardId] = {
         cardId,
         correct: 0,
         incorrect: 0,
@@ -139,7 +166,7 @@ export const getDeckMastery = (deckId: string, cardIds: string[]): DeckMastery =
     saveMasteryData(data);
   }
   
-  return data.decks[deckId];
+  return currentDeck;
 };
 
 // Record answer (correct or incorrect)
@@ -149,10 +176,35 @@ export const recordAnswer = (
   isCorrect: boolean
 ): CardMastery => {
   const data = loadMasteryData();
+  
+  // Safe check for deck existence
+  if (!data.decks || !data.decks[deckId]) {
+    console.error(`Deck ${deckId} not found`);
+    // Return default card mastery
+    return {
+      cardId,
+      correct: isCorrect ? 1 : 0,
+      incorrect: isCorrect ? 0 : 1,
+      lastReviewed: new Date().toISOString(),
+      masteryLevel: 'learning',
+      streak: isCorrect ? 1 : 0,
+    };
+  }
+  
   const deckMastery = data.decks[deckId];
   
-  if (!deckMastery || !deckMastery.cards[cardId]) {
-    throw new Error(`Card ${cardId} not found in deck ${deckId}`);
+  if (!deckMastery.cards || !deckMastery.cards[cardId]) {
+    console.error(`Card ${cardId} not found in deck ${deckId}`);
+    // Initialize card if not exists
+    deckMastery.cards = deckMastery.cards || {};
+    deckMastery.cards[cardId] = {
+      cardId,
+      correct: 0,
+      incorrect: 0,
+      lastReviewed: new Date().toISOString(),
+      masteryLevel: 'not-started',
+      streak: 0,
+    };
   }
   
   const cardMastery = deckMastery.cards[cardId];
@@ -185,9 +237,13 @@ export const recordAnswer = (
 // Get cards that need review (not mastered)
 export const getCardsNeedingReview = (deckId: string): string[] => {
   const data = loadMasteryData();
-  const deckMastery = data.decks[deckId];
   
-  if (!deckMastery) return [];
+  // Safe access with null checks
+  if (!data.decks || !data.decks[deckId] || !data.decks[deckId].cards) {
+    return [];
+  }
+  
+  const deckMastery = data.decks[deckId];
   
   return Object.values(deckMastery.cards)
     .filter(card => card.masteryLevel !== 'mastered')
@@ -212,9 +268,9 @@ export const getCardsNeedingReview = (deckId: string): string[] => {
 // Get deck statistics
 export const getDeckStatistics = (deckId: string) => {
   const data = loadMasteryData();
-  const deckMastery = data.decks[deckId];
   
-  if (!deckMastery) {
+  // Safe access with null check
+  if (!data.decks || !data.decks[deckId]) {
     return {
       totalCards: 0,
       notStarted: 0,
@@ -226,7 +282,8 @@ export const getDeckStatistics = (deckId: string) => {
     };
   }
   
-  const cards = Object.values(deckMastery.cards);
+  const deckMastery = data.decks[deckId];
+  const cards = Object.values(deckMastery.cards || {});
   const totalCards = cards.length;
   
   const stats = cards.reduce(

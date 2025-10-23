@@ -346,6 +346,62 @@ const NotebookDetailPage = () => {
     setIsDisabled(false);
   };
 
+  //Generate custom flashcards with options
+  const onGenerateCustomFlashcards = async (options: any) => {
+    // TODO: Implement custom flashcard generation with options
+    console.log("Custom flashcard options:", options);
+    // Bạn có thể xử lý logic ở đây
+    setIsDisabled(true);
+    loader.start();
+    
+    const response = await postFlashcard({
+      notebookId: notebookId,
+      resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+      options: options,
+    });
+    
+    loader.setProgress(50);
+
+    if (response.success === true) {
+      // Map response to IFlashcard format
+      const generatedFlashcard: FlashcardDeck = {
+        id: nanoid(),
+        title: response.data.flashcards?.title,
+        cards: response?.data.flashcards?.decks?.map((fc: any) => ({
+          front: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.front}
+              </div>
+            ),
+          },
+          back: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.back}
+              </div>
+            ),
+          },
+          id: fc.id,
+        })),
+        cardCount: response?.data.flashcards?.decks?.length,
+      };
+      setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+      toast.success("Flashcards generated successfully");
+    }
+    // Add toast notification for failure
+    else {
+      toast.error("Flashcard generation failed!", {
+        description:
+          response.data?.message ||
+          "Unable to generate flashcards. Please try again.",
+      });
+    }
+    
+    loader.done();
+    setIsDisabled(false);
+  };
+
   //Get flashcards for this notebook
   useEffect(() => {
     const fetchFlashcards = async () => {
@@ -490,6 +546,7 @@ const NotebookDetailPage = () => {
               flashcards={flashcardsRef.current}
               onDeleteDeck={onDeleteDeck}
               isDisabled={isDisabled}
+              onGenerateCustomFlashcards={onGenerateCustomFlashcards}
             />
           </div>
         )}

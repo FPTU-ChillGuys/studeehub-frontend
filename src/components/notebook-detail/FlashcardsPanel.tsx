@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Settings2 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import { nanoid } from "nanoid";
+import CustomiseFlashcardModal, { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
 
 interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
@@ -12,6 +13,7 @@ interface FlashcardsPanelProps {
   setFlashcards: React.Dispatch<React.SetStateAction<FlashcardDeck[]>>;
   isDisabled?: boolean;
   onDeleteDeck?: (deckId: string) => void;
+  onGenerateCustomFlashcards?: (options: FlashcardOptions) => void;
 }
 
 
@@ -22,9 +24,11 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   setFlashcards,
   isDisabled,
   onDeleteDeck,
+  onGenerateCustomFlashcards,
 }) => {
   const [view, setView] = useState<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
+  const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useState(false);
   
   
   const handleDeckClick = (deck: FlashcardDeck) => {
@@ -45,6 +49,12 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
 
   const handleGenerateFlashcards = () => {
     onGenerateFlashcards();
+  };
+
+  const handleCustomiseFlashcards = (options: FlashcardOptions) => {
+    if (onGenerateCustomFlashcards) {
+      onGenerateCustomFlashcards(options);
+    }
   };
 
   // List View
@@ -106,7 +116,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
           </div>
 
           {/* Generate Button */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-2">
             <Button 
               onClick={handleGenerateFlashcards} 
               className="w-full"
@@ -114,8 +124,24 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
             >
               Generate Flashcards
             </Button>
+            <Button
+              onClick={() => setIsCustomiseModalOpen(true)}
+              variant="outline"
+              className="w-full"
+              disabled={isDisabled}
+            >
+              <Settings2 className="w-4 h-4 mr-2" />
+              Customise
+            </Button>
           </div>
         </div>
+
+        {/* Customise Flashcard Modal */}
+        <CustomiseFlashcardModal
+          isOpen={isCustomiseModalOpen}
+          onClose={() => setIsCustomiseModalOpen(false)}
+          onGenerate={handleCustomiseFlashcards}
+        />
       </div>
     );
   }

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Undo2, Trophy, BookOpen, GraduationCap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Undo2, Trophy, GraduationCap } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import {
   getDeckMastery,
   recordAnswer,
-  getCardsNeedingReview,
   CardMastery,
 } from "@/lib/flashcardMastery";
 import { Progress } from "../ui/progress";
@@ -39,8 +38,6 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
   );
   const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, studied: 0 });
   const [hasFlipped, setHasFlipped] = useState(false);
-  const [reviewMode, setReviewMode] = useState<'all' | 'review'>('all');
-  const [reviewCards, setReviewCards] = useState<string[]>([]);
   const [answerHistory, setAnswerHistory] = useState<AnswerHistory[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
@@ -70,13 +67,8 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
     localStorage.setItem(storageKey, JSON.stringify(data));
   }, [sessionStats, answerHistory, deck.id]);
 
-  // Determine which cards to show
-  const cardsToShow = reviewMode === 'review' && reviewCards.length > 0
-    ? deck.cards.filter(card => reviewCards.includes(card.id))
-    : deck.cards;
-
   const flipArrayHook = useFlashcardArray({
-    deckLength: cardsToShow.length,
+    deckLength: deck.cards.length,
     showCount: false,
     showControls: false,
     cycle: false,
@@ -104,7 +96,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
       return;
     }
 
-    const currentCard = cardsToShow[flipArrayHook.currentCard];
+    const currentCard = deck.cards[flipArrayHook.currentCard];
     if (!currentCard) return;
 
     // Save current state to history before making changes
@@ -132,7 +124,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
     refreshMastery();
 
     // Check if this is the last card
-    const isLastCard = flipArrayHook.currentCard >= cardsToShow.length - 1;
+    const isLastCard = flipArrayHook.currentCard >= deck.cards.length - 1;
     
     if (isLastCard) {
       // Show completion screen
@@ -198,27 +190,13 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
     setIsComplete(false);
   };
 
-  const toggleReviewMode = () => {
-    const needsReview = getCardsNeedingReview(deck.id);
-    setReviewCards(needsReview);
-    
-    if (reviewMode === 'all') {
-      setReviewMode('review');
-      // Reset to first card when switching modes
-      handleReset();
-    } else {
-      setReviewMode('all');
-      handleReset();
-    }
-  };
-
   const handleExitComplete = () => {
     handleReset();
     onBackToDetail();
   };
 
-  const currentCard = cardsToShow[flipArrayHook.currentCard];
-  const progress = ((flipArrayHook.currentCard + 1) / cardsToShow.length) * 100;
+  const currentCard = deck.cards[flipArrayHook.currentCard];
+  const progress = ((flipArrayHook.currentCard + 1) / deck.cards.length) * 100;
 
   // Completion Screen
   if (isComplete) {
@@ -317,12 +295,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
           Exit Practice
         </button>
         
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold text-foreground">Practice Mode</h2>
-          <Badge variant="outline" className="text-blue-600 bg-blue-50 border-blue-200">
-            {reviewMode === 'review' ? 'Review' : 'Practice'}
-          </Badge>
-        </div>
+        <h2 className="text-lg font-semibold text-foreground mb-2">Practice Mode</h2>
         
         <p className="text-sm text-muted-foreground mb-3">
           {deck.title}
@@ -331,7 +304,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
         {/* Progress Bar */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Card {flipArrayHook.currentCard + 1} of {cardsToShow.length}</span>
+            <span>Card {flipArrayHook.currentCard + 1} of {deck.cards.length}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -396,7 +369,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
           <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-auto">
             <FlashcardArray
               className="max-w-80 max-h-3/4"
-              deck={cardsToShow}
+              deck={deck.cards}
               flipArrayHook={flipArrayHook}
             />
           </div>
@@ -442,28 +415,6 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Undo Last Answer</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Mode Toggle */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={toggleReviewMode}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      {reviewMode === 'review' && (
-                        <span className="ml-1 text-xs">({getCardsNeedingReview(deck.id).length})</span>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{reviewMode === 'all' 
-                      ? `Review Mode (${getCardsNeedingReview(deck.id).length} cards)` 
-                      : 'Study All Cards'}</p>
                   </TooltipContent>
                 </Tooltip>
 

@@ -478,7 +478,7 @@ const NotebookDetailPage = () => {
     // TODO: Implement API call to update deck title
     console.log("Update deck title:", deckId, newTitle);
     // Bạn có thể gọi API backend ở đây để lưu title mới
-    const response = await putFlashcard(deckId, newTitle);
+    const response = await putFlashcard(deckId, { title: newTitle });
 
     if (response.success) {
       // Cập nhật tiêu đề trong trạng thái local

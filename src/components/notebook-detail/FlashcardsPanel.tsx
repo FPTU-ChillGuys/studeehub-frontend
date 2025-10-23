@@ -2,11 +2,18 @@ import React, { useState, useRef, useEffect } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, Trash2, Settings2, Pencil } from "lucide-react";
+import { ArrowLeft, Settings2, MoreVertical, Edit, Trash2 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import { nanoid } from "nanoid";
 import CustomiseFlashcardModal, { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
 import { Input } from "../ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import useStateRef from "react-usestateref";
 
 interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
@@ -29,20 +36,20 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onGenerateCustomFlashcards,
   onUpdateDeckTitle,
 }) => {
-  const [view, setView] = useState<"list" | "detail">("list");
-  const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
-  const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useState(false);
-  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [view, setView] = useStateRef<"list" | "detail">("list");
+  const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(null);
+  const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useStateRef(false);
+  const [editingDeckId, setEditingDeckId] = useStateRef<string | null>(null);
+  const [editingTitle, setEditingTitle] = useStateRef("");
+  const [openDropdownId, setOpenDropdownId] = useStateRef<string | null>(null);
 
-  // Focus input when editing starts
-  useEffect(() => {
-    if (editingDeckId && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [editingDeckId]);
+  // // Focus input when editing starts
+  // useEffect(() => {
+  //   if (editingDeckId && inputRef.current) {
+  //     inputRef.current.focus();
+  //     inputRef.current.select();
+  //   }
+  // }, [editingDeckId]);
   
   
   const handleDeckClick = (deck: FlashcardDeck) => {
@@ -55,16 +62,24 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
     setSelectedDeck(null);
   };
 
-  const handleDeleteDeck = (deckId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteDeck = (deckId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (deckId && onDeleteDeck) onDeleteDeck(deckId);
     setFlashcards(flashcards.filter(deck => deck.id !== deckId));
+    setOpenDropdownId(null);
   };
 
-  const handleEditDeck = (deck: FlashcardDeck, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleEditDeck = (deck: FlashcardDeck, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setEditingDeckId(deck.id);
     setEditingTitle(deck.title);
+    setOpenDropdownId(null);
   };
 
   const handleSaveTitle = (deckId: string) => {
@@ -86,11 +101,15 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
     setEditingDeckId(null);
   };
 
+  const handleCancelEdit = () => {
+    setEditingDeckId(null);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent, deckId: string) => {
     if (e.key === "Enter") {
       handleSaveTitle(deckId);
     } else if (e.key === "Escape") {
-      setEditingDeckId(null);
+      handleCancelEdit();
     }
   };
 
@@ -141,13 +160,16 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
                     <div className="flex-1 min-w-0 mr-2">
                       {editingDeckId === deck.id ? (
                         <Input
-                          ref={inputRef}
                           value={editingTitle}
                           onChange={(e) => setEditingTitle(e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, deck.id)}
                           onBlur={() => handleBlur(deck.id)}
+                          autoFocus
                           className="font-medium mb-1 h-8"
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
                         />
                       ) : (
                         <h3 className="font-medium text-foreground mb-1 truncate">
@@ -158,22 +180,40 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
                         {deck.cardCount} cards
                       </p>
                     </div>
-                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => handleEditDeck(deck, e)}
-                        className="p-2 hover:bg-primary/10 rounded"
-                        title="Edit title"
-                      >
-                        <Pencil className="w-4 h-4 text-primary" />
-                      </button>
-                      <button
-                        onClick={(e) => handleDeleteDeck(deck.id, e)}
-                        className="p-2 hover:bg-destructive/10 rounded"
-                        title="Delete deck"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </button>
-                    </div>
+                    
+                    <DropdownMenu 
+                      open={openDropdownId === deck.id} 
+                      onOpenChange={(open) => setOpenDropdownId(open ? deck.id : null)}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          onClick={(e) => handleEditDeck(deck, e)}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit title
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => handleDeleteDeck(deck.id, e)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))

@@ -48,7 +48,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   useEffect(() => {
     getCurrentUser().then((user) => {
-      console.log(user);
       setUser(user);
     });
   }, []);

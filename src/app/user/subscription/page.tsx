@@ -8,11 +8,7 @@ import {
   Guarantee,
 } from "@/components/subscription/StaticSubscriptionContent";
 import {
-  subscriptionPlans,
   faqData,
-  BookIcon,
-  StarIcon,
-  CrownIcon,
 } from "@/components/subscription/SubscriptionCards";
 import {
   Breadcrumb,
@@ -22,8 +18,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { useSubscriptionPlans } from "@/components/subscription/SubscriptionCards";
 
 export default function SubscriptionPage() {
+  const { plans } = useSubscriptionPlans();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
@@ -92,64 +90,78 @@ export default function SubscriptionPage() {
 
           <Suspense fallback={<div>Loading pricing cards...</div>}>
             <div className="grid md:grid-cols-3 gap-6 mt-8">
+              {Object.entries(plans).map(([planId, plan]) => (
+                <PricingCard
+                  key={planId}
+                  planId={planId}
+                  selected={selectedPlan === planId}
+                  onSelect={() => setSelectedPlan(planId)}
+                  icon={plan.icon}
+                  label={plan.label}
+                  description={plan.description}
+                  priceLabel={plan.priceLabel}
+                  buttonLabel={plan.buttonLabel}
+                  features={plan.features}
+                />
+              ))}
               {/* Freemium */}
-              <PricingCard
-                planId={subscriptionPlans.freemium.id}
-                selected={selectedPlan === subscriptionPlans.freemium.id}
-                onSelect={() => setSelectedPlan(subscriptionPlans.freemium.id)}
+              {/* <PricingCard
+                planId={plans.freemium.id}
+                selected={selectedPlan === plans.freemium.id}
+                onSelect={() => setSelectedPlan(plans.freemium.id)}
                 icon={<BookIcon />}
-                label={subscriptionPlans.freemium.label}
-                description={subscriptionPlans.freemium.description}
-                priceLabel={subscriptionPlans.freemium.priceLabel}
-                buttonLabel={subscriptionPlans.freemium.buttonLabel}
-                features={subscriptionPlans.freemium.features}
-              />
+                label={plans.freemium.label}
+                description={plans.freemium.description}
+                priceLabel={plans.freemium.priceLabel}
+                buttonLabel={plans.freemium.buttonLabel}
+                features={plans.freemium.features}
+              /> */}
 
               {/* Student Pro */}
-              <PricingCard
-                planId={subscriptionPlans.studentPro.id}
-                selected={selectedPlan === subscriptionPlans.studentPro.id}
+              {/* <PricingCard
+                planId={plans.studentPro.id}
+                selected={selectedPlan === plans.studentPro.id}
                 onSelect={() =>
-                  setSelectedPlan(subscriptionPlans.studentPro.id)
+                  setSelectedPlan(plans.studentPro.id)
                 }
-                highlighted={subscriptionPlans.studentPro.highlighted}
+                highlighted={plans.studentPro.highlighted}
                 icon={<StarIcon />}
-                label={subscriptionPlans.studentPro.label}
-                description={subscriptionPlans.studentPro.description}
-                oldPrice={subscriptionPlans.studentPro.oldPrice}
+                label={plans.studentPro.label}
+                description={plans.studentPro.description}
+                oldPrice={plans.studentPro.oldPrice}
                 price={
                   billingCycle === "monthly"
-                    ? subscriptionPlans.studentPro.monthlyPrice
-                    : subscriptionPlans.studentPro.yearlyPrice
+                    ? plans.studentPro.monthlyPrice
+                    : plans.studentPro.yearlyPrice
                 }
                 priceSuffix={billingCycle === "monthly" ? "/tháng" : "/năm"}
-                discount={subscriptionPlans.studentPro.discount}
-                badge={subscriptionPlans.studentPro.badge}
-                buttonLabel={subscriptionPlans.studentPro.buttonLabel}
-                features={subscriptionPlans.studentPro.features}
+                discount={plans.studentPro.discount}
+                badge={plans.studentPro.badge}
+                buttonLabel={plans.studentPro.buttonLabel}
+                features={plans.studentPro.features}
               />
 
               {/* Premium Plus */}
-              <PricingCard
-                planId={subscriptionPlans.premiumPlus.id}
-                selected={selectedPlan === subscriptionPlans.premiumPlus.id}
+              {/* <PricingCard
+                planId={plans.premiumPlus.id}
+                selected={selectedPlan === plans.premiumPlus.id}
                 onSelect={() =>
-                  setSelectedPlan(subscriptionPlans.premiumPlus.id)
+                  setSelectedPlan(plans.premiumPlus.id)
                 }
                 icon={<CrownIcon />}
-                label={subscriptionPlans.premiumPlus.label}
-                description={subscriptionPlans.premiumPlus.description}
-                oldPrice={subscriptionPlans.premiumPlus.oldPrice}
+                label={plans.premiumPlus.label}
+                description={plans.premiumPlus.description}
+                oldPrice={plans.premiumPlus.oldPrice}
                 price={
                   billingCycle === "monthly"
-                    ? subscriptionPlans.premiumPlus.monthlyPrice
-                    : subscriptionPlans.premiumPlus.yearlyPrice
+                    ? plans.premiumPlus.monthlyPrice
+                    : plans.premiumPlus.yearlyPrice
                 }
                 priceSuffix={billingCycle === "monthly" ? "/tháng" : "/năm"}
-                discount={subscriptionPlans.premiumPlus.discount}
-                buttonLabel={subscriptionPlans.premiumPlus.buttonLabel}
-                features={subscriptionPlans.premiumPlus.features}
-              />
+                discount={plans.premiumPlus.discount}
+                buttonLabel={plans.premiumPlus.buttonLabel}
+                features={plans.premiumPlus.features}
+              /> */}
             </div>
           </Suspense>
 

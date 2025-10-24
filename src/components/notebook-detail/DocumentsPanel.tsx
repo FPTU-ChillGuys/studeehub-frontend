@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 import DocumentCard from "./DocumentCard";
 import DocumentSearch from "./DocumentSearch";
+import SourceView from "./SourceView";
 import Link from "next/link";
 
 interface DocumentsPanelProps {
@@ -18,6 +19,11 @@ interface DocumentsPanelProps {
   getFileIcon: (type: string) => React.ReactNode;
   completedDocsCount: number;
   handleDeleteResource: (docId: string) => void;
+  handleViewSource: (doc: Document) => void;
+  viewingDocument: Document | null;
+  documentContent: string;
+  isLoadingContent: boolean;
+  handleBackFromSource: () => void;
 }
 
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
@@ -32,7 +38,24 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   getFileIcon,
   completedDocsCount,
   handleDeleteResource,
+  handleViewSource,
+  viewingDocument,
+  documentContent,
+  isLoadingContent,
+  handleBackFromSource,
 }) => {
+  // If viewing a document, show source view
+  if (viewingDocument) {
+    return (
+      <SourceView
+        document={viewingDocument}
+        content={documentContent}
+        isLoading={isLoadingContent}
+        onBack={handleBackFromSource}
+      />
+    );
+  }
+
   return (
     <div className="w-[23%] flex flex-col border-r border-border">
       {/* Documents Header */}
@@ -107,6 +130,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
               onToggleSelect={onToggleDocument}
               getFileIcon={getFileIcon}
               handleDeleteResource={handleDeleteResource}
+              handleViewSource={handleViewSource}
             />
           ))}
         </div>

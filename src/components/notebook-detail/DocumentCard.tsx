@@ -1,7 +1,13 @@
 import React from "react";
-import { Calendar, Eye, Download, MoreVertical, Delete, DeleteIcon, CircleX } from "lucide-react";
+import { Calendar, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DocumentCardProps {
   doc: Document;
@@ -9,6 +15,7 @@ interface DocumentCardProps {
   onToggleSelect: (docId: string, selected: boolean) => void;
   getFileIcon: (type: string) => React.ReactNode;
   handleDeleteResource: (docId: string) => void;
+  handleViewSource: (doc: Document) => void;
 }
 
 const DocumentCard: React.FC<DocumentCardProps> = ({
@@ -17,6 +24,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   onToggleSelect,
   getFileIcon,
   handleDeleteResource,
+  handleViewSource,
 }) => {
 
   return (
@@ -85,12 +93,33 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        {/* Disable when document is not completed */}
-        <div className="flex flex-col gap-1">
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleDeleteResource(doc.id)} disabled={doc.status !== "completed"}>
-            <CircleX className="w-3 h-3" color="#ff0000" />
-          </Button>
+        {/* Dropdown Menu */}
+        <div className="flex items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 w-8 p-0" 
+                disabled={doc.status !== "completed"}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleViewSource(doc)}>
+                <Eye className="w-4 h-4 mr-2" />
+                View Source
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => handleDeleteResource(doc.id)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

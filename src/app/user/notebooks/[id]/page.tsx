@@ -27,7 +27,7 @@ import {
   putFlashcard,
 } from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
-import { deleteResource } from "@/features/resource/api/resource";
+import { deleteResource, getResource } from "@/features/resource/api/resource";
 import { toast } from "sonner";
 import { useTopLoader } from "nextjs-toploader";
 
@@ -49,6 +49,11 @@ const NotebookDetailPage = () => {
   const [resourceToDelete, setResourceToDelete] = useState<string | null>(null);
   const [deleteDeckDialogOpen, setDeleteDeckDialogOpen] = useState(false);
   const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+
+  // Source view state
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
+  const [documentContent, setDocumentContent] = useState<string>("");
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
 
   // Loading states
   const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
@@ -522,6 +527,34 @@ const NotebookDetailPage = () => {
     setResourceToDelete(null);
   };
 
+  const handleViewSource = async (doc: Document) => {
+    setViewingDocument(doc);
+    setIsLoadingContent(true);
+    setDocumentContent("");
+
+    try {
+      const response = await getResource(doc.id);
+      console.log("Resource content response:", response);
+      if (response.success && response.data?.content.content) {
+        setDocumentContent(response.data.content);
+      } else {
+        toast.error("Failed to load document content");
+        setDocumentContent("Failed to load content");
+      }
+    } catch (error) {
+      console.error("Error loading document:", error);
+      toast.error("Error loading document");
+      setDocumentContent("Error loading content");
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
+  const handleBackFromSource = () => {
+    setViewingDocument(null);
+    setDocumentContent("");
+  };
+
   // Check if any loading is in progress
   const isLoading =
     isLoadingNotebook ||
@@ -550,6 +583,11 @@ const NotebookDetailPage = () => {
               getFileIcon={getFileIcon}
               completedDocsCount={completedDocsCount}
               handleDeleteResource={handleDeleteResource}
+              handleViewSource={handleViewSource}
+              viewingDocument={viewingDocument}
+              documentContent={documentContent}
+              isLoadingContent={isLoadingContent}
+              handleBackFromSource={handleBackFromSource}
             />
 
             <ChatSection

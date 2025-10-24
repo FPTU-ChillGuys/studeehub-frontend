@@ -36,7 +36,10 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
     return (
       <PracticeMode 
         deck={deck} 
-        onBackToDetail={() => setIsPracticeMode(false)} 
+        onBackToDetail={() => setIsPracticeMode(false)}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        isOtherPanelExpanded={isOtherPanelExpanded}
       />
     );
   }

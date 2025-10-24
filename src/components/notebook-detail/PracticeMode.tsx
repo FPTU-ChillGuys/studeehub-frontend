@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Undo2, Trophy, GraduationCap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Undo2, Trophy, GraduationCap, Maximize2, Minimize2 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import {
   getDeckMastery,
@@ -22,6 +22,9 @@ import useStateRef from "react-usestateref";
 interface PracticeModeProps {
   deck: FlashcardDeck;
   onBackToDetail: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 interface AnswerHistory {
@@ -33,7 +36,13 @@ interface AnswerHistory {
 
 const STORAGE_KEY_PREFIX = 'practice_session_';
 
-const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => {
+const PracticeMode: React.FC<PracticeModeProps> = ({ 
+  deck, 
+  onBackToDetail,
+  isExpanded = false,
+  onToggleExpand,
+  isOtherPanelExpanded = false,
+}) => {
     const [deckMastery, setDeckMastery] = useStateRef(() => 
       getDeckMastery(deck.id, deck.cards.map(c => c.id))
   );
@@ -309,16 +318,39 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
 
   // Practice Screen
   return (
-    <div className="w-[27%] flex flex-col border-l border-border overflow-hidden">
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'w-[27%]'
+    } ${
+      isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    } flex flex-col border-l border-border overflow-hidden h-full ml-auto transition-all duration-300`}>
       {/* Header */}
       <div className="p-4 border-b border-border bg-card">
-        <button
-          onClick={onBackToDetail}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Exit Practice
-        </button>
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={onBackToDetail}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Exit Practice
+          </button>
+          {onToggleExpand && (
+            <Button
+              onClick={onToggleExpand}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+        </div>
         
         <h2 className="text-lg font-semibold text-foreground mb-2">Practice Mode</h2>
         

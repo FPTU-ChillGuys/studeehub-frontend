@@ -3,6 +3,8 @@ import { Notebook } from "@/Types";
 import ChatMessage from "./ChatMessage";
 import MessageInput from "./MessageInput";
 import { UIMessage } from "ai";
+import { Button } from "@/components/ui/button";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 interface ChatSectionProps {
   notebook: Notebook;
@@ -11,6 +13,8 @@ interface ChatSectionProps {
   selectedDocuments: Set<string>;
   getFileIcon: (type: string) => React.ReactNode;
   status: string;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const ChatSection: React.FC<ChatSectionProps> = ({
@@ -20,6 +24,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   selectedDocuments,
   getFileIcon,
   status,
+  isExpanded = false,
+  onToggleExpand,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +38,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   }, [messages, status]);
 
   return (
-    <div className="w-[50%] flex flex-col">
+    <div className={`${isExpanded ? 'w-full' : 'w-[50%]'} flex flex-col h-full`}>
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3">
@@ -42,6 +48,21 @@ const ChatSection: React.FC<ChatSectionProps> = ({
               {notebook.title}
             </h2>
           </div>
+          {onToggleExpand && (
+            <Button
+              onClick={onToggleExpand}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
         </div>
       </div>
 

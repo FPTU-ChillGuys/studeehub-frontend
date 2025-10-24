@@ -55,6 +55,9 @@ const NotebookDetailPage = () => {
   const [documentContent, setDocumentContent] = useState<string>("");
   const [isLoadingContent, setIsLoadingContent] = useState(false);
 
+  // Expanded panel state
+  const [expandedPanel, setExpandedPanel] = useState<'documents' | 'chat' | 'flashcards' | null>(null);
+
   // Loading states
   const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
@@ -570,6 +573,10 @@ const NotebookDetailPage = () => {
     setDocumentContent("");
   };
 
+  const toggleExpandPanel = (panel: 'documents' | 'chat' | 'flashcards') => {
+    setExpandedPanel(expandedPanel === panel ? null : panel);
+  };
+
   // Check if any loading is in progress
   const isLoading =
     isLoadingNotebook ||
@@ -586,42 +593,58 @@ const NotebookDetailPage = () => {
           <LoadingNotebookDetail />
         ) : (
           <div className="flex flex-1 h-[calc(100vh-4rem)]">
-            <DocumentsPanel
-              documents={filteredDocuments}
-              selectedDocuments={selectedDocuments}
-              onToggleDocument={handleToggleDocument}
-              onSelectAll={handleSelectAll}
-              onClearSelection={handleClearSelection}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              setIsUploadModalOpen={setIsUploadModalOpen}
-              getFileIcon={getFileIcon}
-              completedDocsCount={completedDocsCount}
-              handleDeleteResource={handleDeleteResource}
-              handleViewSource={handleViewSource}
-              viewingDocument={viewingDocument}
-              documentContent={documentContent}
-              isLoadingContent={isLoadingContent}
-              handleBackFromSource={handleBackFromSource}
-            />
+            {/* Documents Panel - hidden when other panel is expanded */}
+            {(!expandedPanel || expandedPanel === 'documents') && (
+              <DocumentsPanel
+                documents={filteredDocuments}
+                selectedDocuments={selectedDocuments}
+                onToggleDocument={handleToggleDocument}
+                onSelectAll={handleSelectAll}
+                onClearSelection={handleClearSelection}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                setIsUploadModalOpen={setIsUploadModalOpen}
+                getFileIcon={getFileIcon}
+                completedDocsCount={completedDocsCount}
+                handleDeleteResource={handleDeleteResource}
+                handleViewSource={handleViewSource}
+                viewingDocument={viewingDocument}
+                documentContent={documentContent}
+                isLoadingContent={isLoadingContent}
+                handleBackFromSource={handleBackFromSource}
+                isExpanded={expandedPanel === 'documents'}
+                onToggleExpand={() => toggleExpandPanel('documents')}
+              />
+            )}
 
-            <ChatSection
-              notebook={notebook}
-              messages={messages}
-              handleSendMessage={handleSendMessage}
-              selectedDocuments={selectedDocuments}
-              getFileIcon={getFileIcon}
-              status={status}
-            />
-            <FlashcardsPanel
-              onGenerateFlashcards={onGenerateFlashcards}
-              setFlashcards={setFlashcards}
-              flashcards={flashcardsRef.current}
-              onDeleteDeck={onDeleteDeck}
-              isDisabled={isDisabled}
-              onGenerateCustomFlashcards={onGenerateCustomFlashcards}
-              onUpdateDeckTitle={onUpdateDeckTitle}
-            />
+            {/* Chat Panel - hidden when other panel is expanded */}
+            {(!expandedPanel || expandedPanel === 'chat') && (
+              <ChatSection
+                notebook={notebook}
+                messages={messages}
+                handleSendMessage={handleSendMessage}
+                selectedDocuments={selectedDocuments}
+                getFileIcon={getFileIcon}
+                status={status}
+                isExpanded={expandedPanel === 'chat'}
+                onToggleExpand={() => toggleExpandPanel('chat')}
+              />
+            )}
+
+            {/* Flashcards Panel - hidden when other panel is expanded */}
+            {(!expandedPanel || expandedPanel === 'flashcards') && (
+              <FlashcardsPanel
+                onGenerateFlashcards={onGenerateFlashcards}
+                setFlashcards={setFlashcards}
+                flashcards={flashcardsRef.current}
+                onDeleteDeck={onDeleteDeck}
+                isDisabled={isDisabled}
+                onGenerateCustomFlashcards={onGenerateCustomFlashcards}
+                onUpdateDeckTitle={onUpdateDeckTitle}
+                isExpanded={expandedPanel === 'flashcards'}
+                onToggleExpand={() => toggleExpandPanel('flashcards')}
+              />
+            )}
           </div>
         )}
 

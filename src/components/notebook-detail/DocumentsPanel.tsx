@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, FileText, ArrowLeft } from "lucide-react";
+import { Upload, FileText, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 import DocumentCard from "./DocumentCard";
@@ -24,6 +24,8 @@ interface DocumentsPanelProps {
   documentContent: string;
   isLoadingContent: boolean;
   handleBackFromSource: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
@@ -43,6 +45,8 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   documentContent,
   isLoadingContent,
   handleBackFromSource,
+  isExpanded = false,
+  onToggleExpand,
 }) => {
   // If viewing a document, show source view
   if (viewingDocument) {
@@ -57,7 +61,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   }
 
   return (
-    <div className="w-[23%] flex flex-col border-r border-border">
+    <div className={`${isExpanded ? 'w-full' : 'w-[23%]'} flex flex-col border-r border-border h-full`}>
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 mb-3">
@@ -69,6 +73,21 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-foreground">Documents</h2>
           </div>
+          {onToggleExpand && (
+            <Button
+              onClick={onToggleExpand}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
           <Button
             onClick={() => setIsUploadModalOpen(true)}
             className="flex items-center gap-2"

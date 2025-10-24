@@ -1,6 +1,13 @@
 import React from "react";
 import { Button } from "../ui/button";
-import { Settings2, MoreVertical, Edit, Trash2 } from "lucide-react";
+import {
+  Settings2,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import { Input } from "../ui/input";
 import {
@@ -10,7 +17,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import useStateRef from "react-usestateref";
-import CustomiseFlashcardModal, { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
+import CustomiseFlashcardModal, {
+  FlashcardOptions,
+} from "../modals/CustomiseFlashcardModal";
 
 interface FlashcardsListProps {
   flashcards: FlashcardDeck[];
@@ -21,6 +30,8 @@ interface FlashcardsListProps {
   onDeleteDeck?: (deckId: string) => void;
   onGenerateCustomFlashcards?: (options: FlashcardOptions) => void;
   onUpdateDeckTitle?: (deckId: string, newTitle: string) => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const FlashcardsList: React.FC<FlashcardsListProps> = ({
@@ -32,6 +43,8 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   onDeleteDeck,
   onGenerateCustomFlashcards,
   onUpdateDeckTitle,
+  isExpanded = false,
+  onToggleExpand,
 }) => {
   const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useStateRef(false);
   const [editingDeckId, setEditingDeckId] = useStateRef<string | null>(null);
@@ -44,7 +57,7 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
       e.stopPropagation();
     }
     if (deckId && onDeleteDeck) onDeleteDeck(deckId);
-    setFlashcards(flashcards.filter(deck => deck.id !== deckId));
+    setFlashcards(flashcards.filter((deck) => deck.id !== deckId));
     setOpenDropdownId(null);
   };
 
@@ -65,9 +78,11 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
     }
 
     // Update local state
-    setFlashcards(flashcards.map(deck => 
-      deck.id === deckId ? { ...deck, title: editingTitle } : deck
-    ));
+    setFlashcards(
+      flashcards.map((deck) =>
+        deck.id === deckId ? { ...deck, title: editingTitle } : deck
+      )
+    );
 
     // Call parent callback for backend update
     if (onUpdateDeckTitle) {
@@ -100,12 +115,31 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   };
 
   return (
-    <div className="w-[27%] flex flex-col border-l border-border overflow-hidden">
+    <div
+      className={`${
+        isExpanded ? "w-full" : "w-[27%]"
+      } flex flex-col border-l border-border overflow-hidden h-full`}
+    >
       {/* Header */}
       <div className="p-4 border-b border-border bg-card">
-        <h2 className="text-lg font-semibold text-foreground mb-1">
-          Flashcards
-        </h2>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-lg font-semibold text-foreground">Flashcards</h2>
+          {onToggleExpand && (
+            <Button
+              onClick={onToggleExpand}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">
           Manage your flashcard decks
         </p>
@@ -119,7 +153,7 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
             flashcards.map((deck) => (
               <div
                 key={deck.id}
-                onClick={() => { 
+                onClick={() => {
                   if (editingDeckId !== deck.id) {
                     onDeckClick(deck);
                   }
@@ -150,10 +184,12 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
                       {deck.cardCount} cards
                     </p>
                   </div>
-                  
-                  <DropdownMenu 
-                    open={openDropdownId === deck.id} 
-                    onOpenChange={(open) => setOpenDropdownId(open ? deck.id : null)}
+
+                  <DropdownMenu
+                    open={openDropdownId === deck.id}
+                    onOpenChange={(open) =>
+                      setOpenDropdownId(open ? deck.id : null)
+                    }
                   >
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -204,8 +240,8 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
 
         {/* Generate Button */}
         <div className="p-4 border-t border-border space-y-2">
-          <Button 
-            onClick={onGenerateFlashcards} 
+          <Button
+            onClick={onGenerateFlashcards}
             className="w-full"
             disabled={isDisabled}
           >

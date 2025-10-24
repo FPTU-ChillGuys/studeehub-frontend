@@ -13,6 +13,8 @@ interface FlashcardsPanelProps {
   onDeleteDeck?: (deckId: string) => void;
   onGenerateCustomFlashcards?: (options: FlashcardOptions) => void;
   onUpdateDeckTitle?: (deckId: string, newTitle: string) => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
@@ -23,9 +25,13 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onDeleteDeck,
   onGenerateCustomFlashcards,
   onUpdateDeckTitle,
+  isExpanded = false,
+  onToggleExpand,
 }) => {
   const [view, setView] = useStateRef<"list" | "detail">("list");
-  const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(null);
+  const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(
+    null
+  );
 
   const handleDeckClick = (deck: FlashcardDeck) => {
     setSelectedDeck(deck);
@@ -49,6 +55,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
         onDeleteDeck={onDeleteDeck}
         onGenerateCustomFlashcards={onGenerateCustomFlashcards}
         onUpdateDeckTitle={onUpdateDeckTitle}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
       />
     );
   }
@@ -59,6 +67,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
       key={selectedDeck.id} // Force remount khi chọn deck khác
       deck={selectedDeck}
       onBackToList={handleBackToList}
+      isExpanded={isExpanded}
+      onToggleExpand={onToggleExpand}
     />
   ) : null;
 };

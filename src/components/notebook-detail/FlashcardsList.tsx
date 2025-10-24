@@ -187,14 +187,14 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
     <div
       className={`${
         isExpanded ? "w-full" : "w-[27%]"
-      } flex flex-col border-l border-border overflow-hidden h-full transition-all duration-300`}
+      } flex flex-col border-l border-border overflow-hidden h-full transition-all duration-300 ml-auto`}
     >
       {/* Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-foreground">Flashcards</h2>
           <div className="flex items-center gap-1">
-            {onToggleCollapse && (
+            {onToggleCollapse && !isExpanded && (
               <Button
                 onClick={onToggleCollapse}
                 variant="ghost"

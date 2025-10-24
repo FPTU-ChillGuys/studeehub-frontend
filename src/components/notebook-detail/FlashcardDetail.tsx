@@ -40,7 +40,7 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
   }
 
   return (
-    <div className={`${isExpanded ? 'w-full' : 'w-[27%]'} flex flex-col border-l border-border overflow-hidden h-full`}>
+    <div className={`${isExpanded ? 'w-full' : 'w-[27%]'} flex flex-col border-l border-border overflow-hidden h-full ml-auto`}>
       {/* Header with Back Button */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between mb-2">

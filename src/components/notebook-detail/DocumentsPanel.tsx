@@ -135,7 +135,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-foreground">Documents</h2>
           </div>
-          {onToggleCollapse && (
+          {onToggleCollapse && !isExpanded && (
             <Button
               onClick={onToggleCollapse}
               variant="ghost"

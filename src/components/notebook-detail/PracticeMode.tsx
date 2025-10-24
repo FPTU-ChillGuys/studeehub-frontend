@@ -188,6 +188,15 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
     if (isComplete) {
       setIsComplete(false);
     }
+
+    // Save session to localStorage
+    const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
+    const data = {
+      sessionStats: sessionStatsRef.current,
+      answerHistory: answerHistoryRef.current,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(storageKey, JSON.stringify(data));
   };
 
   const handleReset = () => {

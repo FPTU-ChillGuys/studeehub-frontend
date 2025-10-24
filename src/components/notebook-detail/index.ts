@@ -5,5 +5,6 @@ export { default as MessageInput } from "./MessageInput";
 export { default as DocumentsPanel } from "./DocumentsPanel";
 export { default as DocumentCard } from "./DocumentCard";
 export { default as DocumentSearch } from "./DocumentSearch";
+export { default as SourceView } from "./SourceView";
 export { getFileIcon } from "./utils";
 export { LoadingNotebookDetail } from "./LoadingNotebookDetail";

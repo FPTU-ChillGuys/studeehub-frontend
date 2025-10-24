@@ -1,14 +1,21 @@
 import { generateObject } from "ai";
 import { geminiFlashLite } from "./model/google";
 import { z } from "zod";
+import { FlashcardOptions } from "@/components/modals/CustomiseFlashcardModal";
 
 const prompt = (
-  content: string
+  content: string,
+  options?: FlashcardOptions
 ) => 
-`You are an expert educator creating high-quality flashcards for studying. Based on the following content, generate 5-15 flashcards that will help students learn and retain the key concepts.
+`You are an expert educator creating high-quality flashcards for studying. Based on the following content, generate any flashcards that will help students learn and retain the key concepts.
 
 CONTENT:
 ${content}
+
+OPTIONS:
+${options ? `- Number of Cards Preference: ${options.numberOfCards}
+- Difficulty Level: ${options.difficulty}
+- Topic Focus: ${options.topic}` : "- No specific options provided"}
 
 INSTRUCTIONS:
 1. Create flashcards that test understanding, not just memorization
@@ -28,7 +35,7 @@ EXAMPLES OF GOOD FLASHCARDS:
 
 Generate flashcards that capture the most important learning points from the content above.`;
 
-export async function GenerateFlashcardsFromContent(content: string) {
+export async function GenerateFlashcardsFromContent(content: string, options? : FlashcardOptions) {
   const { object: flashcardObject } = await generateObject({
     model: geminiFlashLite,
     schema: z.object({
@@ -50,7 +57,7 @@ export async function GenerateFlashcardsFromContent(content: string) {
         )
         .describe("Array of flashcards generated from the content"),
     }),
-    prompt: prompt(content),
+    prompt: prompt(content, options),
   });
 
   return flashcardObject;

@@ -21,8 +21,10 @@ import { uploadNotebookFile } from "@/features/notebook/api/upload";
 import { getChatbot } from "@/features/chatbot/api/chatbot";
 import { getNotebook } from "@/features/notebook/api/notebook";
 import {
+  deleteFlashcard,
   getFlashcards,
   postFlashcard,
+  putFlashcard,
 } from "@/features/flashcard/api/flashcard";
 import { getFile } from "@/features/file/api/file";
 import { deleteResource } from "@/features/resource/api/resource";
@@ -309,9 +311,10 @@ const NotebookDetailPage = () => {
     if (response.success === true) {
       // Map response to IFlashcard format
       const generatedFlashcard: FlashcardDeck = {
-        id: nanoid(),
+        id: response.data.flashcards?.id || nanoid(),
         title: response.data.flashcards?.title,
-        cards: response?.data.flashcards?.decks?.map((fc: any) => ({
+        cards: response?.data.flashcards?.decks?.map((fc: any, index : number) => ({
+          id: index,
           front: {
             html: (
               <div className="flex items-center justify-center h-full w-full p-6">
@@ -326,7 +329,62 @@ const NotebookDetailPage = () => {
               </div>
             ),
           },
-          id: fc.id,
+        })),
+        cardCount: response?.data.flashcards?.decks?.length,
+      };
+      setFlashcards([...flashcardsRef.current, generatedFlashcard]);
+      toast.success("Flashcards generated successfully");
+    }
+    // Add toast notification for failure
+    else {
+      toast.error("Flashcard generation failed!", {
+        description:
+          response.data?.message ||
+          "Unable to generate flashcards. Please try again.",
+      });
+    }
+    
+    loader.done();
+    setIsDisabled(false);
+  };
+
+  //Generate custom flashcards with options
+  const onGenerateCustomFlashcards = async (options: any) => {
+    // TODO: Implement custom flashcard generation with options
+    console.log("Custom flashcard options:", options);
+    // Bạn có thể xử lý logic ở đây
+    setIsDisabled(true);
+    loader.start();
+    
+    const response = await postFlashcard({
+      notebookId: notebookId,
+      resourceIds: Array.from(selectedDocumentsRef.current) ?? [],
+      options: options,
+    });
+    
+    loader.setProgress(50);
+
+    if (response.success === true) {
+      // Map response to IFlashcard format
+      const generatedFlashcard: FlashcardDeck = {
+        id:  response.data.flashcards?.id || nanoid(),
+        title: response.data.flashcards?.title,
+        cards: response?.data.flashcards?.decks?.map((fc: any, index : number) => ({
+          front: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.front}
+              </div>
+            ),
+          },
+          back: {
+            html: (
+              <div className="flex items-center justify-center h-full w-full p-6">
+                {fc.back}
+              </div>
+            ),
+          },
+          id: index,
         })),
         cardCount: response?.data.flashcards?.decks?.length,
       };
@@ -360,7 +418,8 @@ const NotebookDetailPage = () => {
                   id: fc.id,
                   title: fc.title,
                   cardCount: fc.cardCount,
-                  cards: fc.cards.map((card: any) => ({
+                  cards: fc.cards.map((card: any, index: number) => ({
+                    id: index,
                     front: {
                       html: (
                         <div className="flex items-center justify-center h-full w-full p-6">
@@ -400,9 +459,7 @@ const NotebookDetailPage = () => {
     if (!deckToDelete) return;
 
     loader.start();
-    const response = await fetch(`/api/flashcard/${deckToDelete}`, {
-      method: "DELETE",
-    }).then((res) => res.json());
+    const response = await deleteFlashcard(deckToDelete);
     
     loader.setProgress(50);
 
@@ -416,6 +473,25 @@ const NotebookDetailPage = () => {
     loader.done();
     setDeleteDeckDialogOpen(false);
     setDeckToDelete(null);
+  };
+
+  const onUpdateDeckTitle = async (deckId: string, newTitle: string) => {
+    // TODO: Implement API call to update deck title
+    console.log("Update deck title:", deckId, newTitle);
+    // Bạn có thể gọi API backend ở đây để lưu title mới
+    const response = await putFlashcard(deckId, { title: newTitle });
+
+    if (response.success) {
+      // Cập nhật tiêu đề trong trạng thái local
+      setFlashcards(
+        flashcardsRef.current.map((deck) =>
+          deck.id === deckId ? { ...deck, title: newTitle } : deck
+        )
+      );
+      toast.success("Flashcard deck title updated successfully");
+    } else {
+      toast.error("Failed to update flashcard deck title");
+    }
   };
 
   const handleDeleteResource = async (resourceId: string) => {
@@ -490,6 +566,8 @@ const NotebookDetailPage = () => {
               flashcards={flashcardsRef.current}
               onDeleteDeck={onDeleteDeck}
               isDisabled={isDisabled}
+              onGenerateCustomFlashcards={onGenerateCustomFlashcards}
+              onUpdateDeckTitle={onUpdateDeckTitle}
             />
           </div>
         )}

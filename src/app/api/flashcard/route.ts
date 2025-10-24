@@ -31,13 +31,13 @@ export async function POST(req: Request) {
     );
 
     //Save flashcards to database
-    await createFlashcards(
+    const createFlashcardsResponse = await createFlashcards(
       notebookId,
       flashcardResponse.title,
       flashcardResponse.decks
     );
 
-    return new Response(JSON.stringify({ flashcards: flashcardResponse }), {
+    return new Response(JSON.stringify({ flashcards: { id: createFlashcardsResponse?.flashcardId , ...flashcardResponse } }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

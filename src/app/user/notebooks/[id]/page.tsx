@@ -311,9 +311,10 @@ const NotebookDetailPage = () => {
     if (response.success === true) {
       // Map response to IFlashcard format
       const generatedFlashcard: FlashcardDeck = {
-        id: nanoid(),
+        id: response.data.flashcards?.id || nanoid(),
         title: response.data.flashcards?.title,
-        cards: response?.data.flashcards?.decks?.map((fc: any) => ({
+        cards: response?.data.flashcards?.decks?.map((fc: any, index : number) => ({
+          id: index,
           front: {
             html: (
               <div className="flex items-center justify-center h-full w-full p-6">
@@ -328,7 +329,6 @@ const NotebookDetailPage = () => {
               </div>
             ),
           },
-          id: fc.id,
         })),
         cardCount: response?.data.flashcards?.decks?.length,
       };
@@ -367,9 +367,9 @@ const NotebookDetailPage = () => {
     if (response.success === true) {
       // Map response to IFlashcard format
       const generatedFlashcard: FlashcardDeck = {
-        id: nanoid(),
+        id:  response.data.flashcards?.id || nanoid(),
         title: response.data.flashcards?.title,
-        cards: response?.data.flashcards?.decks?.map((fc: any) => ({
+        cards: response?.data.flashcards?.decks?.map((fc: any, index : number) => ({
           front: {
             html: (
               <div className="flex items-center justify-center h-full w-full p-6">
@@ -384,7 +384,7 @@ const NotebookDetailPage = () => {
               </div>
             ),
           },
-          id: fc.id,
+          id: index,
         })),
         cardCount: response?.data.flashcards?.decks?.length,
       };
@@ -418,7 +418,8 @@ const NotebookDetailPage = () => {
                   id: fc.id,
                   title: fc.title,
                   cardCount: fc.cardCount,
-                  cards: fc.cards.map((card: any) => ({
+                  cards: fc.cards.map((card: any, index: number) => ({
+                    id: index,
                     front: {
                       html: (
                         <div className="flex items-center justify-center h-full w-full p-6">

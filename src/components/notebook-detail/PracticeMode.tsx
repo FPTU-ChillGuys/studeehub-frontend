@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import useStateRef from "react-usestateref";
 
 interface PracticeModeProps {
   deck: FlashcardDeck;
@@ -33,39 +34,44 @@ interface AnswerHistory {
 const STORAGE_KEY_PREFIX = 'practice_session_';
 
 const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => {
-  const [deckMastery, setDeckMastery] = useState(() => 
-    getDeckMastery(deck.id, deck.cards.map(c => c.id))
+    const [deckMastery, setDeckMastery] = useStateRef(() => 
+      getDeckMastery(deck.id, deck.cards.map(c => c.id))
   );
-  const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, studied: 0 });
-  const [hasFlipped, setHasFlipped] = useState(false);
-  const [answerHistory, setAnswerHistory] = useState<AnswerHistory[]>([]);
-  const [isComplete, setIsComplete] = useState(false);
+  const [sessionStats, setSessionStats, sessionStatsRef] = useStateRef({ correct: 0, incorrect: 0, studied: 0 });
+  const [hasFlipped, setHasFlipped] = useStateRef(false);
+  const [answerHistory, setAnswerHistory, answerHistoryRef] = useStateRef<AnswerHistory[]>([]);
+  const [isComplete, setIsComplete] = useStateRef(false);
 
   // Load session from localStorage
   useEffect(() => {
     const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
+    console.log('Loading session from', storageKey);
     const saved = localStorage.getItem(storageKey);
     if (saved) {
+      console.log('Session data found:', saved);
       try {
         const data = JSON.parse(saved);
         setSessionStats(data.sessionStats || { correct: 0, incorrect: 0, studied: 0 });
         setAnswerHistory(data.answerHistory || []);
+        flipArrayHook.setCurrentCard(data.answerHistory ? data.answerHistory.length : 0);
       } catch (e) {
         console.error('Failed to load session:', e);
       }
     }
-  }, [deck.id]);
+  }, [deck.id, setSessionStats, setAnswerHistory]);
 
-  // Save session to localStorage
-  useEffect(() => {
-    const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
-    const data = {
-      sessionStats,
-      answerHistory,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(storageKey, JSON.stringify(data));
-  }, [sessionStats, answerHistory, deck.id]);
+  // // Save session to localStorage
+  // useEffect(() => {
+  //   const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
+  //   console.log('Saving session to', storageKey);
+  //   const data = {
+  //     sessionStats: sessionStatsRef.current,
+  //     answerHistory: answerHistoryRef.current,
+  //     timestamp: Date.now(),
+  //   };
+  //   localStorage.setItem(storageKey, JSON.stringify(data));
+  //   console.log('Session saved successfully', localStorage.getItem(storageKey));
+  // }, [sessionStatsRef, answerHistoryRef, deck.id]);
 
   const flipArrayHook = useFlashcardArray({
     deckLength: deck.cards.length,
@@ -111,6 +117,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
       incorrect: prev.incorrect + (isCorrect ? 0 : 1),
       studied: prev.studied + 1,
     }));
+    console.log('Updated session stats:', sessionStatsRef.current);
 
     // Add to history
     setAnswerHistory(prev => [...prev, {
@@ -119,6 +126,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
       isCorrect,
       previousMastery,
     }]);
+    console.log('Updated answer history:', answerHistoryRef.current);
 
     // Refresh deck mastery
     refreshMastery();
@@ -133,10 +141,17 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
       }, 500);
     } else {
       // Move to next card after a short delay
-      setTimeout(() => {
         flipArrayHook.nextCard();
-      }, 500);
     }
+    
+    // Save session to localStorage
+    const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
+    const data = {
+      sessionStats: sessionStatsRef.current,
+      answerHistory: answerHistoryRef.current,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(storageKey, JSON.stringify(data));
   };
 
   const handleUndo = () => {
@@ -181,9 +196,10 @@ const PracticeMode: React.FC<PracticeModeProps> = ({ deck, onBackToDetail }) => 
     localStorage.removeItem(storageKey);
     
     // Reset to first card
-    while (flipArrayHook.currentCard > 0) {
-      flipArrayHook.setCurrentCard(flipArrayHook.currentCard - 1);
-    }
+    flipArrayHook.setCurrentCard(0);
+    // Rest card state
+    flipArrayHook.flipHook.resetCardState();
+    // Reset stats and history
     setSessionStats({ correct: 0, incorrect: 0, studied: 0 });
     setAnswerHistory([]);
     setHasFlipped(false);

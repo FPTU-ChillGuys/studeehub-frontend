@@ -634,8 +634,6 @@ const NotebookDetailPage = () => {
                 status={status}
                 isExpanded={expandedPanel === 'chat'}
                 onToggleExpand={() => toggleExpandPanel('chat')}
-                isDocumentsCollapsed={collapsedDocuments}
-                isFlashcardsCollapsed={collapsedFlashcards}
               />
             )}
 

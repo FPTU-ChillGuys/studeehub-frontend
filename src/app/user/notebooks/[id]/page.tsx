@@ -550,7 +550,7 @@ const NotebookDetailPage = () => {
     try {
       const response = await getResource(doc.id);
       console.log("Resource content response:", response);
-      if (response.success && response.data?.content.content) {
+      if (response.success && response.data?.content) {
         setDocumentContent(response.data.content);
       } else {
         toast.error("Failed to load document content");

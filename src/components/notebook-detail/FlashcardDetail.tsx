@@ -11,6 +11,7 @@ interface FlashcardDetailProps {
   onBackToList: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
@@ -18,6 +19,7 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
   onBackToList,
   isExpanded = false,
   onToggleExpand,
+  isOtherPanelExpanded = false,
 }) => {
   const [isPracticeMode, setIsPracticeMode] = useState(false);
   
@@ -40,7 +42,13 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
   }
 
   return (
-    <div className={`${isExpanded ? 'w-full' : 'w-[27%]'} flex flex-col border-l border-border overflow-hidden h-full ml-auto`}>
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'w-[27%]'
+    } ${
+      isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    } flex flex-col border-l border-border overflow-hidden h-full ml-auto`}>
       {/* Header with Back Button */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between mb-2">

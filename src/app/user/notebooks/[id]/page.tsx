@@ -596,63 +596,60 @@ const NotebookDetailPage = () => {
         {isLoading ? (
           <LoadingNotebookDetail />
         ) : (
-          <div className="flex flex-1 h-[calc(100vh-4rem)]">
-            {/* Documents Panel - hidden when other panel is expanded */}
-            {(!expandedPanel || expandedPanel === 'documents') && (
-              <DocumentsPanel
-                documents={filteredDocuments}
-                selectedDocuments={selectedDocuments}
-                onToggleDocument={handleToggleDocument}
-                onSelectAll={handleSelectAll}
-                onClearSelection={handleClearSelection}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                setIsUploadModalOpen={setIsUploadModalOpen}
-                getFileIcon={getFileIcon}
-                completedDocsCount={completedDocsCount}
-                handleDeleteResource={handleDeleteResource}
-                handleViewSource={handleViewSource}
-                viewingDocument={viewingDocument}
-                documentContent={documentContent}
-                isLoadingContent={isLoadingContent}
-                handleBackFromSource={handleBackFromSource}
-                isExpanded={expandedPanel === 'documents'}
-                onToggleExpand={() => toggleExpandPanel('documents')}
-                isCollapsed={collapsedDocuments}
-                onToggleCollapse={() => setCollapsedDocuments(!collapsedDocuments)}
-              />
-            )}
+          <div className="flex flex-1 h-[calc(100vh-4rem)] relative">
+            {/* Documents Panel */}
+            <DocumentsPanel
+              documents={filteredDocuments}
+              selectedDocuments={selectedDocuments}
+              onToggleDocument={handleToggleDocument}
+              onSelectAll={handleSelectAll}
+              onClearSelection={handleClearSelection}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              setIsUploadModalOpen={setIsUploadModalOpen}
+              getFileIcon={getFileIcon}
+              completedDocsCount={completedDocsCount}
+              handleDeleteResource={handleDeleteResource}
+              handleViewSource={handleViewSource}
+              viewingDocument={viewingDocument}
+              documentContent={documentContent}
+              isLoadingContent={isLoadingContent}
+              handleBackFromSource={handleBackFromSource}
+              isExpanded={expandedPanel === 'documents'}
+              onToggleExpand={() => toggleExpandPanel('documents')}
+              isCollapsed={collapsedDocuments}
+              onToggleCollapse={() => setCollapsedDocuments(!collapsedDocuments)}
+              isOtherPanelExpanded={expandedPanel !== null && expandedPanel !== 'documents'}
+            />
 
-            {/* Chat Panel - hidden when other panel is expanded */}
-            {(!expandedPanel || expandedPanel === 'chat') && (
-              <ChatSection
-                notebook={notebook}
-                messages={messages}
-                handleSendMessage={handleSendMessage}
-                selectedDocuments={selectedDocuments}
-                getFileIcon={getFileIcon}
-                status={status}
-                isExpanded={expandedPanel === 'chat'}
-                onToggleExpand={() => toggleExpandPanel('chat')}
-              />
-            )}
+            {/* Chat Panel */}
+            <ChatSection
+              notebook={notebook}
+              messages={messages}
+              handleSendMessage={handleSendMessage}
+              selectedDocuments={selectedDocuments}
+              getFileIcon={getFileIcon}
+              status={status}
+              isExpanded={expandedPanel === 'chat'}
+              onToggleExpand={() => toggleExpandPanel('chat')}
+              isOtherPanelExpanded={expandedPanel !== null && expandedPanel !== 'chat'}
+            />
 
-            {/* Flashcards Panel - hidden when other panel is expanded */}
-            {(!expandedPanel || expandedPanel === 'flashcards') && (
-              <FlashcardsPanel
-                onGenerateFlashcards={onGenerateFlashcards}
-                setFlashcards={setFlashcards}
-                flashcards={flashcardsRef.current}
-                onDeleteDeck={onDeleteDeck}
-                isDisabled={isDisabled}
-                onGenerateCustomFlashcards={onGenerateCustomFlashcards}
-                onUpdateDeckTitle={onUpdateDeckTitle}
-                isExpanded={expandedPanel === 'flashcards'}
-                onToggleExpand={() => toggleExpandPanel('flashcards')}
-                isCollapsed={collapsedFlashcards}
-                onToggleCollapse={() => setCollapsedFlashcards(!collapsedFlashcards)}
-              />
-            )}
+            {/* Flashcards Panel */}
+            <FlashcardsPanel
+              onGenerateFlashcards={onGenerateFlashcards}
+              setFlashcards={setFlashcards}
+              flashcards={flashcardsRef.current}
+              onDeleteDeck={onDeleteDeck}
+              isDisabled={isDisabled}
+              onGenerateCustomFlashcards={onGenerateCustomFlashcards}
+              onUpdateDeckTitle={onUpdateDeckTitle}
+              isExpanded={expandedPanel === 'flashcards'}
+              onToggleExpand={() => toggleExpandPanel('flashcards')}
+              isCollapsed={collapsedFlashcards}
+              onToggleCollapse={() => setCollapsedFlashcards(!collapsedFlashcards)}
+              isOtherPanelExpanded={expandedPanel !== null && expandedPanel !== 'flashcards'}
+            />
           </div>
         )}
 

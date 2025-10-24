@@ -34,6 +34,7 @@ interface DocumentsPanelProps {
   onToggleExpand?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
@@ -57,6 +58,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   onToggleExpand,
   isCollapsed = false,
   onToggleCollapse,
+  isOtherPanelExpanded = false,
 }) => {
   // If viewing a document, show source view
   if (viewingDocument) {
@@ -123,7 +125,13 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   }
 
   return (
-    <div className={`${isExpanded ? 'w-full' : 'w-[23%]'} flex flex-col border-r border-border h-full transition-all duration-300`}>
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'w-[23%]'
+    } ${
+      isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    } flex flex-col border-r border-border h-full transition-all duration-300`}>
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 mb-3">

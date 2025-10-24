@@ -43,6 +43,7 @@ interface FlashcardsListProps {
   onToggleExpand?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const FlashcardsList: React.FC<FlashcardsListProps> = ({
@@ -58,6 +59,7 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   onToggleExpand,
   isCollapsed = false,
   onToggleCollapse,
+  isOtherPanelExpanded = false,
 }) => {
   const [isCustomiseModalOpen, setIsCustomiseModalOpen] = useStateRef(false);
   const [editingDeckId, setEditingDeckId] = useStateRef<string | null>(null);
@@ -186,7 +188,11 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   return (
     <div
       className={`${
-        isExpanded ? "w-full" : "w-[27%]"
+        isExpanded 
+          ? "absolute inset-0 w-full z-50 bg-background" 
+          : "w-[27%]"
+      } ${
+        isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
       } flex flex-col border-l border-border overflow-hidden h-full transition-all duration-300 ml-auto`}
     >
       {/* Header */}

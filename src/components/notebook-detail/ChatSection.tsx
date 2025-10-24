@@ -15,6 +15,7 @@ interface ChatSectionProps {
   status: string;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const ChatSection: React.FC<ChatSectionProps> = ({
@@ -26,6 +27,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   status,
   isExpanded = false,
   onToggleExpand,
+  isOtherPanelExpanded = false,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   }, [messages, status]);
 
   return (
-    <div className={`${isExpanded ? 'w-full' : 'flex-1'} flex flex-col h-full transition-all duration-300`}>
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'flex-1'
+    } ${
+      isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    } flex flex-col h-full transition-all duration-300`}>
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3">

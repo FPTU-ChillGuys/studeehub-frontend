@@ -17,6 +17,7 @@ interface FlashcardsPanelProps {
   onToggleExpand?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
@@ -31,6 +32,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onToggleExpand,
   isCollapsed = false,
   onToggleCollapse,
+  isOtherPanelExpanded = false,
 }) => {
   const [view, setView] = useStateRef<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(
@@ -67,6 +69,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
         onToggleExpand={onToggleExpand}
         isCollapsed={isCollapsed}
         onToggleCollapse={onToggleCollapse}
+        isOtherPanelExpanded={isOtherPanelExpanded}
       />
     );
   }
@@ -79,6 +82,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
       onBackToList={handleBackToList}
       isExpanded={isExpanded}
       onToggleExpand={onToggleExpand}
+      isOtherPanelExpanded={isOtherPanelExpanded}
     />
   ) : null;
 };

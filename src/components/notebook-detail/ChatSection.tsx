@@ -15,6 +15,8 @@ interface ChatSectionProps {
   status: string;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  isDocumentsCollapsed?: boolean;
+  isFlashcardsCollapsed?: boolean;
 }
 
 const ChatSection: React.FC<ChatSectionProps> = ({
@@ -26,6 +28,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   status,
   isExpanded = false,
   onToggleExpand,
+  isDocumentsCollapsed = false,
+  isFlashcardsCollapsed = false,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -37,8 +41,31 @@ const ChatSection: React.FC<ChatSectionProps> = ({
     }
   }, [messages, status]);
 
+  // Calculate dynamic width based on collapsed panels
+  const getWidth = () => {
+    if (isExpanded) return 'w-full';
+    
+    // Both panels collapsed: chat takes more space
+    if (isDocumentsCollapsed && isFlashcardsCollapsed) {
+      return 'w-[calc(100%-128px)]'; // 100% - (64px * 2)
+    }
+    
+    // Only documents collapsed: chat expands to the left
+    if (isDocumentsCollapsed && !isFlashcardsCollapsed) {
+      return 'w-[calc(73%-64px)]'; // Original 23% + 50% - 64px
+    }
+    
+    // Only flashcards collapsed: chat expands to the right
+    if (!isDocumentsCollapsed && isFlashcardsCollapsed) {
+      return 'w-[calc(77%-64px)]'; // Original 27% + 50% - 64px
+    }
+    
+    // Both panels expanded: normal width
+    return 'w-[50%]';
+  };
+
   return (
-    <div className={`${isExpanded ? 'w-full' : 'w-[50%]'} flex flex-col h-full`}>
+    <div className={`${getWidth()} flex flex-col h-full transition-all duration-300`}>
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3">

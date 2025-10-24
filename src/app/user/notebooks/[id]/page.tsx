@@ -58,6 +58,10 @@ const NotebookDetailPage = () => {
   // Expanded panel state
   const [expandedPanel, setExpandedPanel] = useState<'documents' | 'chat' | 'flashcards' | null>(null);
 
+  // Collapsed panel state
+  const [collapsedDocuments, setCollapsedDocuments] = useState(false);
+  const [collapsedFlashcards, setCollapsedFlashcards] = useState(false);
+
   // Loading states
   const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
@@ -614,6 +618,8 @@ const NotebookDetailPage = () => {
                 handleBackFromSource={handleBackFromSource}
                 isExpanded={expandedPanel === 'documents'}
                 onToggleExpand={() => toggleExpandPanel('documents')}
+                isCollapsed={collapsedDocuments}
+                onToggleCollapse={() => setCollapsedDocuments(!collapsedDocuments)}
               />
             )}
 
@@ -628,6 +634,8 @@ const NotebookDetailPage = () => {
                 status={status}
                 isExpanded={expandedPanel === 'chat'}
                 onToggleExpand={() => toggleExpandPanel('chat')}
+                isDocumentsCollapsed={collapsedDocuments}
+                isFlashcardsCollapsed={collapsedFlashcards}
               />
             )}
 
@@ -643,6 +651,8 @@ const NotebookDetailPage = () => {
                 onUpdateDeckTitle={onUpdateDeckTitle}
                 isExpanded={expandedPanel === 'flashcards'}
                 onToggleExpand={() => toggleExpandPanel('flashcards')}
+                isCollapsed={collapsedFlashcards}
+                onToggleCollapse={() => setCollapsedFlashcards(!collapsedFlashcards)}
               />
             )}
           </div>

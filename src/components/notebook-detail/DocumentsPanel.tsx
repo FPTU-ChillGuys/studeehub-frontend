@@ -1,11 +1,17 @@
 import React from "react";
-import { Upload, FileText, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
+import { Upload, FileText, ArrowLeft, Maximize2, Minimize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 import DocumentCard from "./DocumentCard";
 import DocumentSearch from "./DocumentSearch";
 import SourceView from "./SourceView";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface DocumentsPanelProps {
   documents: Document[];
@@ -26,6 +32,8 @@ interface DocumentsPanelProps {
   handleBackFromSource: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
@@ -47,6 +55,8 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   handleBackFromSource,
   isExpanded = false,
   onToggleExpand,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
   // If viewing a document, show source view
   if (viewingDocument) {
@@ -60,8 +70,60 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
     );
   }
 
+  // Collapsed view - show only icons
+  if (isCollapsed) {
+    return (
+      <div className="w-16 flex flex-col border-r border-border h-full bg-card transition-all duration-300">
+        {/* Collapse/Expand Button */}
+        <div className="p-2 border-b border-border">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onToggleCollapse}
+                  variant="ghost"
+                  size="sm"
+                  className="h-10 w-10 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Expand Documents</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Document Icons */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          {documents.map((doc) => (
+            <TooltipProvider key={doc.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-10 w-10 p-0"
+                    >
+                      <FileText className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{doc.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${isExpanded ? 'w-full' : 'w-[23%]'} flex flex-col border-r border-border h-full`}>
+    <div className={`${isExpanded ? 'w-full' : 'w-[23%]'} flex flex-col border-r border-border h-full transition-all duration-300`}>
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 mb-3">
@@ -73,6 +135,17 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-foreground">Documents</h2>
           </div>
+          {onToggleCollapse && (
+            <Button
+              onClick={onToggleCollapse}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Collapse"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+          )}
           {onToggleExpand && (
             <Button
               onClick={onToggleExpand}

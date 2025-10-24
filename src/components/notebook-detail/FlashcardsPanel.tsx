@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { FlashcardDeck } from "@/Types";
 import { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
 import useStateRef from "react-usestateref";
@@ -15,6 +15,8 @@ interface FlashcardsPanelProps {
   onUpdateDeckTitle?: (deckId: string, newTitle: string) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
@@ -27,6 +29,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onUpdateDeckTitle,
   isExpanded = false,
   onToggleExpand,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
   const [view, setView] = useStateRef<"list" | "detail">("list");
   const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(
@@ -34,6 +38,10 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   );
 
   const handleDeckClick = (deck: FlashcardDeck) => {
+    // If collapsed, expand first then show detail
+    if (isCollapsed && onToggleCollapse) {
+      onToggleCollapse();
+    }
     setSelectedDeck(deck);
     setView("detail");
   };
@@ -57,6 +65,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
         onUpdateDeckTitle={onUpdateDeckTitle}
         isExpanded={isExpanded}
         onToggleExpand={onToggleExpand}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={onToggleCollapse}
       />
     );
   }

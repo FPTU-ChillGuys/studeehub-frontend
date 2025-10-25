@@ -228,6 +228,7 @@ const NotebookDetailPage = () => {
 
           if (!response.success) {
             uploadStatus = "error";
+            console.log("Upload error message:", response);
             toast.error("Upload failed!", {
               description:
                 response.data?.message ||

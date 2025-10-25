@@ -13,12 +13,12 @@ import {
 } from "@/config/fileTypes";
 
 // Constants
-const ERROR_MESSAGES = {
+export const ERROR_MESSAGES = {
   NO_FILES: "No files uploaded",
   INVALID_FILE_TYPE: INVALID_FILE_TYPE_MESSAGE,
   NO_NOTEBOOK_ID: "No notebookId provided",
   RESOURCE_CREATION_FAILED:
-    "Failed to create resource. Please try again or try upload smaller files under 1000 words.",
+    "Failed to create resource. Please try again or try upload smaller files under 100000 words.",
   UPLOAD_FAILED: "File upload failed",
 } as const;
 

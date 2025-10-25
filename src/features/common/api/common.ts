@@ -31,6 +31,7 @@ export async function commonFetch(
       success: false,
       message: `HTTP error! status: ${response.status}`,
       errors: null,
+      data: await response.json(),
     } as BaseResponse;
   }
 

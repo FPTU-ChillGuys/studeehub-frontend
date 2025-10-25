@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { UIMessage } from "ai";
 import { CitationList } from "./CitationList";
 import { MarkdownContent } from "./MarkdownContent";
@@ -28,14 +28,25 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
   // Parse JSON response if it's from assistant - memoized để tránh re-parse mỗi lần render
   const messageText = message?.parts?.find((part) => part.type === "text")?.text || "";
   
+  // Debounced message text - delay 200ms để giảm re-render khi streaming
+  const [debouncedText, setDebouncedText] = useState(messageText);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedText(messageText);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [messageText]);
+  
   const parsedContent = useMemo<ParsedContent | null>(() => {
     // Only parse for assistant messages
-    if (message.role !== "assistant" || !messageText.trim()) {
+    if (message.role !== "assistant" || !debouncedText.trim()) {
       return null;
     }
     
     try {
-      const parsed = JSON.parse(messageText);
+      const parsed = JSON.parse(debouncedText);
       console.log("Parsed content:", parsed); 
       // Check for new format with results array
       if (parsed.results && Array.isArray(parsed.results)) {
@@ -46,24 +57,25 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
       // Not JSON, use as plain text
       return null;
     }
-  }, [message.role, messageText]);
+  }, [message.role, debouncedText]);
 
   // Extract text content từ incomplete JSON khi đang stream
   const displayText = useMemo(() => {
     if (parsedContent) return null; // Nếu đã parse được JSON hoàn chỉnh
-    if (message.role !== "assistant") return messageText;
+    if (message.role !== "assistant") return debouncedText;
 
     // Kiểm tra xem có phải đang stream JSON không
-    const trimmed = messageText.trim();
+    const trimmed = debouncedText.trim();
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      try {
-        // Thử extract content từ incomplete JSON
-        // Pattern 1: Tìm content field có thể chưa đóng quote
-        let extractedText = '';
-        
-        // Tìm "content":" và lấy text phía sau
-        const contentStart = trimmed.indexOf('"content"');
-        if (contentStart !== -1) {
+      // Tìm "content":" và lấy text phía sau
+      const contentStart = trimmed.indexOf('"content"');
+      
+      // Chỉ extract nếu đã có "content" field
+      if (contentStart !== -1) {
+        try {
+          // Pattern 1: Tìm content field có thể chưa đóng quote
+          let extractedText = '';
+          
           const afterContent = trimmed.substring(contentStart);
           const colonIndex = afterContent.indexOf(':');
           if (colonIndex !== -1) {
@@ -95,18 +107,20 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
               .replace(/\\\\/g, '\\')
               .replace(/\\t/g, '\t');
           }
+          
+          if (extractedText) {
+            return extractedText;
+          }
+        } catch {
+          // Nếu extract failed, return debouncedText
         }
-        
-        if (extractedText) {
-          return extractedText;
-        }
-      } catch {
-        // Nếu extract failed, return raw text
       }
+      // Nếu là JSON nhưng chưa có "content" field → return empty để không hiển thị {
+      return '';
     }
     
-    return messageText;
-  }, [parsedContent, message.role, messageText]);
+    return debouncedText;
+  }, [parsedContent, message.role, debouncedText]);
 
   return (
     <div
@@ -148,7 +162,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
             </div>
           ) : (
             // Render plain markdown without citations (hoặc extract text từ incomplete JSON)
-            <MarkdownContent content={displayText || messageText} />
+            <MarkdownContent content={displayText || debouncedText} />
           )}
         </div>
       </div>

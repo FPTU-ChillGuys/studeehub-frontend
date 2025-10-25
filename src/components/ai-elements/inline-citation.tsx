@@ -13,6 +13,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
+import { is } from "drizzle-orm";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   type ComponentProps,
@@ -61,16 +62,27 @@ export const InlineCitationCardTrigger = ({
   sources,
   className,
   ...props
-}: InlineCitationCardTriggerProps) => (
-  <HoverCardTrigger asChild>
-    <Badge
-      className={cn("ml-1 rounded-full", className)}
-      variant="secondary"
-      {...props}
+}: InlineCitationCardTriggerProps) => {
+
+  const isValidSource = (source: string) => {
+    try {
+      new URL(source);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  return (
+    <HoverCardTrigger asChild>
+      <Badge
+        className={cn("ml-1 rounded-full", className)}
+        variant="secondary"
+        {...props}
     >
       {sources.length ? (
         <>
-          {new URL(sources[0]).hostname}{" "}
+          {isValidSource(sources[0]) ? new URL(sources[0]).hostname : sources[0] ? sources[0] : ""}{" "}
           {sources.length > 1 && `+${sources.length - 1}`}
         </>
       ) : (
@@ -78,7 +90,8 @@ export const InlineCitationCardTrigger = ({
       )}
     </Badge>
   </HoverCardTrigger>
-);
+  );
+};
 
 export type InlineCitationCardBodyProps = ComponentProps<"div">;
 

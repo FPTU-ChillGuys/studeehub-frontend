@@ -10,3 +10,6 @@ export { default as CollapsedPanelBar } from "./CollapsedPanelBar";
 export type { CollapsedItem } from "./CollapsedPanelBar";
 export { getFileIcon } from "./utils";
 export { LoadingNotebookDetail } from "./LoadingNotebookDetail";
+export { CitationList } from "./CitationList";
+export { MarkdownContent } from "./MarkdownContent";
+

@@ -1,17 +1,12 @@
 import React from "react";
-import { Upload, FileText, ArrowLeft, Maximize2, Minimize2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, FileText, ArrowLeft, Maximize2, Minimize2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 import DocumentCard from "./DocumentCard";
 import DocumentSearch from "./DocumentSearch";
 import SourceView from "./SourceView";
 import Link from "next/link";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import CollapsedPanelBar, { CollapsedItem } from "./CollapsedPanelBar";
 
 interface DocumentsPanelProps {
   documents: Document[];
@@ -73,53 +68,21 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   }
 
   // Collapsed view - show only icons
+  const collapsedItems: CollapsedItem[] = documents.map((doc) => ({
+    id: doc.id,
+    icon: FileText,
+    label: doc.name,
+  }));
+
   if (isCollapsed) {
     return (
       <div className="w-16 flex flex-col border-r border-border h-full bg-card transition-all duration-300">
-        {/* Collapse/Expand Button */}
-        <div className="p-2 border-b border-border">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onToggleCollapse}
-                  variant="ghost"
-                  size="sm"
-                  className="h-10 w-10 p-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Expand Documents</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-
-        {/* Document Icons */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {documents.map((doc) => (
-            <TooltipProvider key={doc.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 w-10 p-0"
-                    >
-                      <FileText className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>{doc.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
+        <CollapsedPanelBar
+          items={collapsedItems}
+          side="left"
+          onExpand={onToggleCollapse!}
+          expandLabel="Expand Documents"
+        />
       </div>
     );
   }

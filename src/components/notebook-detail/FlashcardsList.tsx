@@ -7,9 +7,8 @@ import {
   Trash2,
   Maximize2,
   Minimize2,
-  ChevronLeft,
-  ChevronRight,
   Square,
+  ChevronRight,
 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import { Input } from "../ui/input";
@@ -19,12 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import CollapsedPanelBar, { CollapsedItem } from "./CollapsedPanelBar";
 import useStateRef from "react-usestateref";
 import CustomiseFlashcardModal, {
   FlashcardOptions,
@@ -130,57 +124,23 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   };
 
   // Collapsed view - show only flashcard icons
+  const collapsedItems: CollapsedItem[] = flashcards.map((deck) => ({
+    id: deck.id,
+    icon: Square,
+    label: deck.title,
+    subtitle: `${deck.cardCount} cards`,
+    onClick: () => onDeckClick(deck),
+  }));
+
   if (isCollapsed) {
     return (
-      <div className="w-16 flex flex-col border-l border-border h-full bg-card transition-all duration-300">
-        {/* Collapse/Expand Button */}
-        <div className="p-2 border-b border-border">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onToggleCollapse}
-                  variant="ghost"
-                  size="sm"
-                  className="h-10 w-10 p-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                <p>Expand Flashcards</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-
-        {/* Flashcard Deck Icons */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {flashcards.map((deck) => (
-            <TooltipProvider key={deck.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 w-10 p-0 hover:bg-primary/10"
-                      onClick={() => onDeckClick(deck)}
-                    >
-                      <Square className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p className="max-w-xs truncate">{deck.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {deck.cardCount} cards
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
+      <div className="w-16 flex flex-col border-l border-border h-full bg-card ml-auto transition-all duration-300">
+        <CollapsedPanelBar
+          items={collapsedItems}
+          side="right"
+          onExpand={onToggleCollapse!}
+          expandLabel="Expand Flashcards"
+        />
       </div>
     );
   }

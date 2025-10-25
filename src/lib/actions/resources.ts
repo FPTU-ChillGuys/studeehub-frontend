@@ -17,6 +17,10 @@ export const createResource = async (notebookId: string, input: InsertResourcePa
     //Tach input khoan 5000 từ 1 array
     const inputChunks = inputWithFileName.match(/(.|[\r\n]){1,5000}/g) || [];
 
+    if (inputChunks.length >= 20) {
+      return { success: false, message: "Warning: Input content is too large. Please reduce the content size under 100,000 words." };
+    }
+
     console.log("Length of input chunks:", inputChunks.length);
 
     // Generate embeddings for the contents

@@ -64,8 +64,8 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
     if (parsedContent) return null; // Nếu đã parse được JSON hoàn chỉnh
     if (message.role !== "assistant") return debouncedText;
 
-    // Kiểm tra xem có phải đang stream JSON không
-    const trimmed = debouncedText.trim();
+    // ⚡ Check ngay với messageText (không debounce) để detect JSON sớm
+    const trimmed = messageText.trim();
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       // Tìm "content":" và lấy text phía sau
       const contentStart = trimmed.indexOf('"content"');
@@ -112,15 +112,15 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
             return extractedText;
           }
         } catch {
-          // Nếu extract failed, return debouncedText
+          // Nếu extract failed
         }
       }
-      // Nếu là JSON nhưng chưa có "content" field → return empty để không hiển thị {
+      // ⚡ Nếu là JSON nhưng chưa có "content" field → return empty ngay lập tức
       return '';
     }
     
     return debouncedText;
-  }, [parsedContent, message.role, debouncedText]);
+  }, [parsedContent, message.role, messageText, debouncedText]);
 
   return (
     <div
@@ -160,10 +160,13 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
                 </div>
               ))}
             </div>
-          ) : (
-            // Render plain markdown without citations (hoặc extract text từ incomplete JSON)
-            <MarkdownContent content={displayText || debouncedText} />
-          )}
+          ) : displayText !== null && displayText !== '' ? (
+            // Chỉ render khi displayText có content thực sự
+            <MarkdownContent content={displayText} />
+          ) : displayText === null && debouncedText ? (
+            // Fallback: displayText = null (không phải JSON) → dùng debouncedText
+            <MarkdownContent content={debouncedText} />
+          ) : null}
         </div>
       </div>
     </div>

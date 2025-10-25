@@ -97,7 +97,7 @@ const NotebooksPage = () => {
     description?: string,
     thumbnail?: string
   ) => {
-    const newNotebook: Notebook = NewNotebook();
+    let newNotebook: Notebook = NewNotebook();
 
     // Create the notebook in the database
     loader.start();
@@ -110,14 +110,17 @@ const NotebooksPage = () => {
     loader.setProgress(50);
 
     if (response.success && response.data.notebook) {
-      newNotebook.id = response.data.notebook.id; // Update with real ID from backend
+      newNotebook = response.data.notebook as Notebook;
+      newNotebook.createdDate = new Date().toUTCString();
+      newNotebook.lastModified = new Date().toUTCString();
+      newNotebook.documentsCount = 0;
       toast.success("Notebook created successfully");
     } else {
       toast.error("Failed to create notebook");
     }
 
     loader.done();
-    setNotebooks((prev) => [newNotebook, ...prev]);
+    setNotebooks((prev) => [response.data.notebook, ...prev]);
   };
 
   const handleEditNotebook = async (id: string, newTitle: string) => {

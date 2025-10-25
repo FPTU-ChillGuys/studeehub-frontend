@@ -100,6 +100,14 @@ export async function POST(req: Request) {
         const buffer = Buffer.from(arrayBuffer);
         const text = await extractTextFromBuffer(buffer, extension);
         const type = getFileType(extension)!;
+        const size = file.size;
+
+        // Limit file size to 1MB 
+        if (size > 5 * 1024 * 1024) {
+          throw new Error(
+            `File ${file.name} exceeds the maximum size limit of 5MB.`
+          );
+        }
 
         return {
           text,
@@ -122,7 +130,7 @@ export async function POST(req: Request) {
 
       if (!result?.success) {
         return NextResponse.json(
-          { message: ERROR_MESSAGES.RESOURCE_CREATION_FAILED },
+          { message: result?.message || ERROR_MESSAGES.RESOURCE_CREATION_FAILED },
           { status: 500 }
         );
       }

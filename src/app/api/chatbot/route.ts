@@ -1,5 +1,5 @@
 import { createMessage } from "@/lib/actions/message";
-import { StreamingTextGenerationFromMessagesToResultWithErrorHandler } from "@/lib/ai/chatbot/chatbot";
+import { StreamingTextGenerationFromMessagesToResultWithErrorHandler, StreamingTextGenerationFromMessagesToResultWithErrorHandlerAndCitation } from "@/lib/ai/chatbot/chatbot";
 import { messageUIToDB } from "@/lib/mapping/message";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const convertedMessage = messageUIToDB(notebookId, lastMessage);
   await createMessage(notebookId, convertedMessage);
 
-  const result = StreamingTextGenerationFromMessagesToResultWithErrorHandler(messages, resourceIds, notebookId, fileNames);
+  const result = StreamingTextGenerationFromMessagesToResultWithErrorHandlerAndCitation(messages, resourceIds, notebookId, fileNames);
 
   // return createUIMessageStreamResponse({ stream: result });
   return createUIMessageStreamResponse({ stream: result });

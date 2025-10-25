@@ -12,7 +12,7 @@ import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
 import { getFileIcon } from "@/components/notebook-detail/utils";
 import { LoadingNotebookDetail } from "@/components/notebook-detail";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, parsePartialJson } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import "react-quizlet-flashcard/dist/index.css";

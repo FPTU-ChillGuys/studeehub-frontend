@@ -160,4 +160,15 @@ export interface BaseResponse {
   data?: any;
 }
 
+export interface CitationOutput {
+  content: string;
+  citations: {
+    number: string;
+    title: string;
+    url: string;
+    description?: string;
+    quote?: string;
+  }[];
+}
+
 export * from "./subcription-plans";

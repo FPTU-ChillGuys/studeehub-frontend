@@ -1,6 +1,7 @@
 import {
   convertToModelMessages,
   createUIMessageStream,
+  Output,
   stepCountIs,
   streamText,
   tool,
@@ -39,6 +40,19 @@ INSTRUCTIONS:
 
 Remember: The files listed above are already selected and ready to use. Start working with them immediately when asked.`;
 
+const citationSchema = z.object({
+  content: z.string(),
+  citations: z.array(
+    z.object({
+      number: z.string(),
+      title: z.string(),
+      url: z.string(),
+      description: z.string().optional(),
+      quote: z.string().optional(),
+    }),
+  ),
+})
+
 
 export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
   messages: UIMessage[],
@@ -55,12 +69,7 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
           model: gpt5nano,
           system: SYSTEM_PROMPT + fileNames.join(", ") + SYSTEM_INSTRUCTIONS,
           messages: convertToModelMessages(messages),
-          stopWhen: stepCountIs(100),
-          // providerOptions : {
-          //   openai: {
-          //     serviceTier : 'flex'
-          //   }
-          // },
+          stopWhen: stepCountIs(10),
           tools: {
             getInformation: tool({
               description: `Get information from your knowledge base to answer questions.`,
@@ -115,6 +124,80 @@ export function StreamingTextGenerationFromMessagesToResultWithErrorHandler(
   });
 
   return stream;
+}
+
+export function StreamingTextGenerationFromMessagesToResultWithErrorHandlerAndCitation(
+  messages: UIMessage[],
+  resourceIds: string | string[],
+  notebookId: string,
+  fileNames: string[]
+) {
+ const stream = createUIMessageStream({
+    async execute({ writer }) {
+      let result;
+      try {
+        // Thử tạo stream text
+        result = streamText({
+          model: gpt5nano,
+          system: SYSTEM_PROMPT + fileNames.join(", ") + SYSTEM_INSTRUCTIONS,
+          messages: convertToModelMessages(messages),
+          stopWhen: stepCountIs(10),
+          tools: {
+            getInformation: tool({
+              description: `Get information from your knowledge base to answer questions.`,
+              inputSchema: z.object({
+                question: z.string().describe("The users question"),
+              }),
+              execute: async ({ question }) => {
+                const response = findRelevantContent({
+                  query: question,
+                  resourceIds,
+                });
+                return response;
+              },
+            }),
+            getAllContentToSummarizeOrAnalyze: tool({
+              description: `Get all content to summarize or analyze.`,
+              inputSchema: z.object({}),
+              execute: async () => {
+                const resourceIdsArray = Array.isArray(resourceIds)
+                  ? resourceIds
+                  : [resourceIds];
+                const response = await getContentFromResourceId(resourceIdsArray);
+                return response;
+              },
+            }),
+          },
+          experimental_output: Output.object({
+            schema: citationSchema,
+          }),
+        });
+      } catch (error) {
+        // Nếu lỗi xảy ra khi streaming, gửi phần lỗi này lên
+        writer.write({
+          type: "error",
+          errorText: "Hệ thống hiện đang có lỗi, vui lòng thử lại sau.",
+        });
+        return;
+      }
+
+      writer.merge(
+        result.toUIMessageStream({
+          onError: () => {
+            // Nếu lỗi xảy ra trong quá trình stream, override phần lỗi gửi lên
+            return "Hệ thống đang quá tải, vui lòng thử lại sau.";
+          },
+          onFinish: async (data) => {
+            //Save assistant message to database
+            const lastMessage = data.messages[data.messages.length - 1];
+            const convertedMessage = messageUIToDB(notebookId, lastMessage);
+            await createMessage(notebookId, convertedMessage);
+          },
+        })
+      );
+    },
+  });
+
 }
 
 

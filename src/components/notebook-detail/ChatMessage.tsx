@@ -1,16 +1,62 @@
-import React from "react";
-import { ChatMessage as ChatMessageType, Document } from "@/Types";
+import React, { useMemo } from "react";
 import { UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  InlineCitation,
+  InlineCitationCard,
+  InlineCitationCardTrigger,
+  InlineCitationCardBody,
+  InlineCitationCarousel,
+  InlineCitationCarouselContent,
+  InlineCitationCarouselItem,
+  InlineCitationCarouselHeader,
+  InlineCitationCarouselIndex,
+  InlineCitationCarouselPrev,
+  InlineCitationCarouselNext,
+  InlineCitationSource,
+  InlineCitationQuote,
+} from "@/components/ai-elements/inline-citation";
+
+interface Citation {
+  number: string;
+  title: string;
+  url: string;
+  description?: string;
+  quote?: string;
+}
+
+interface ParsedContent {
+  content: string;
+  citations: Citation[];
+}
 
 interface ChatMessageProps {
   message: UIMessage;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
-  // const sources = message.parts.filter(part => part.type === 'source-document');
+const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
+  // Parse JSON response if it's from assistant - memoized để tránh re-parse mỗi lần render
   const messageText = message?.parts?.find((part) => part.type === "text")?.text || "";
+  
+  const parsedContent = useMemo<ParsedContent | null>(() => {
+    // Only parse for assistant messages
+    if (message.role !== "assistant" || !messageText.trim()) {
+      return null;
+    }
+    
+    try {
+      const parsed = JSON.parse(messageText);
+      console.log("Parsed content:", parsed); 
+      if (parsed.content && parsed.citations) {
+        return parsed;
+      }
+      return null;
+    } catch {
+      // Not JSON, use as plain text
+      return null;
+    }
+  }, [message.role, messageText]);
 
   return (
     <div
@@ -31,6 +77,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           overflow: "hidden"
         }}
       >
+        {/* Message Content */}
         <div 
           className="text-sm prose prose-sm dark:prose-invert max-w-none"
           style={{
@@ -39,9 +86,58 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             wordBreak: "break-word"
           }}
         >
-          <ReactMarkdown 
-            remarkPlugins={[remarkGfm]}
-            components={{
+          {parsedContent ? (
+            // Render with inline citations using AI Elements
+            <div className="leading-relaxed">
+              {parsedContent.content.split(/(\[\d+\])/).map((part, index) => {
+                const citationMatch = part.match(/\[(\d+)\]/);
+                if (citationMatch) {
+                  const citationNumber = citationMatch[1];
+                  const citation = parsedContent.citations.find(
+                    (c) => c.number === citationNumber
+                  );
+
+                  if (citation) {
+                    return (
+                      <InlineCitation key={index}>
+                        <InlineCitationCard>
+                          <InlineCitationCardTrigger sources={[citation.url]} />
+                          <InlineCitationCardBody>
+                            <InlineCitationCarousel>
+                              <InlineCitationCarouselHeader>
+                                <InlineCitationCarouselPrev />
+                                <InlineCitationCarouselNext />
+                                <InlineCitationCarouselIndex />
+                              </InlineCitationCarouselHeader>
+                              <InlineCitationCarouselContent>
+                                <InlineCitationCarouselItem>
+                                  <InlineCitationSource
+                                    title={citation.title}
+                                    url={citation.url}
+                                    description={citation.description}
+                                  />
+                                  {citation.quote && (
+                                    <InlineCitationQuote>
+                                      {citation.quote}
+                                    </InlineCitationQuote>
+                                  )}
+                                </InlineCitationCarouselItem>
+                              </InlineCitationCarouselContent>
+                            </InlineCitationCarousel>
+                          </InlineCitationCardBody>
+                        </InlineCitationCard>
+                      </InlineCitation>
+                    );
+                  }
+                }
+                return <span key={index}>{part}</span>;
+              })}
+            </div>
+          ) : (
+            // Render plain markdown without citations
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
               // Customize rendering for specific elements
               p: ({ children }) => (
                 <p className="mb-2 last:mb-0" style={{ wordWrap: "break-word", overflowWrap: "break-word" }}>
@@ -103,10 +199,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           >
             {messageText}
           </ReactMarkdown>
+          )}
         </div>
       </div>
     </div>
   );
-};
+});
 
-export default ChatMessage;
+// Custom comparison để tránh re-render khi message text không đổi
+ChatMessage.displayName = "ChatMessage";
+
+export default React.memo(ChatMessage, (prevProps, nextProps) => {
+  const prevText = prevProps.message?.parts?.find((part) => part.type === "text")?.text || "";
+  const nextText = nextProps.message?.parts?.find((part) => part.type === "text")?.text || "";
+  
+  // Chỉ re-render nếu text thực sự thay đổi
+  // Hoặc nếu message ID khác (message mới)
+  return (
+    prevText === nextText &&
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.role === nextProps.message.role
+  );
+});

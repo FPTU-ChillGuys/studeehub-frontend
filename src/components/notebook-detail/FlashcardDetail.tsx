@@ -2,18 +2,24 @@ import React, { useState } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, RotateCcw, Zap } from "lucide-react";
+import { ArrowLeft, RotateCcw, Zap, Maximize2, Minimize2 } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import PracticeMode from "./PracticeMode";
 
 interface FlashcardDetailProps {
   deck: FlashcardDeck;
   onBackToList: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
   deck,
   onBackToList,
+  isExpanded = false,
+  onToggleExpand,
+  isOtherPanelExpanded = false,
 }) => {
   const [isPracticeMode, setIsPracticeMode] = useState(false);
   
@@ -30,22 +36,48 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
     return (
       <PracticeMode 
         deck={deck} 
-        onBackToDetail={() => setIsPracticeMode(false)} 
+        onBackToDetail={() => setIsPracticeMode(false)}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        isOtherPanelExpanded={isOtherPanelExpanded}
       />
     );
   }
 
   return (
-    <div className="w-[27%] flex flex-col border-l border-border overflow-hidden">
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'w-[27%]'
+    } ${
+      isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    } flex flex-col border-l border-border overflow-hidden h-full ml-auto`}>
       {/* Header with Back Button */}
       <div className="p-4 border-b border-border bg-card">
-        <button
-          onClick={onBackToList}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to list
-        </button>
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={onBackToList}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to list
+          </button>
+          {onToggleExpand && (
+            <Button
+              onClick={onToggleExpand}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+        </div>
         <h2 className="text-lg font-semibold text-foreground mb-1">
           {deck.title}
         </h2>

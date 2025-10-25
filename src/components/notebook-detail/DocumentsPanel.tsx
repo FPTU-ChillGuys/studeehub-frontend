@@ -1,11 +1,12 @@
 import React from "react";
-import { Upload, FileText, ArrowLeft } from "lucide-react";
+import { Upload, FileText, ArrowLeft, Maximize2, Minimize2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "@/Types";
 import DocumentCard from "./DocumentCard";
 import DocumentSearch from "./DocumentSearch";
 import SourceView from "./SourceView";
 import Link from "next/link";
+import CollapsedPanelBar, { CollapsedItem } from "./CollapsedPanelBar";
 
 interface DocumentsPanelProps {
   documents: Document[];
@@ -24,6 +25,11 @@ interface DocumentsPanelProps {
   documentContent: string;
   isLoadingContent: boolean;
   handleBackFromSource: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  isOtherPanelExpanded?: boolean;
 }
 
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
@@ -43,6 +49,11 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
   documentContent,
   isLoadingContent,
   handleBackFromSource,
+  isExpanded = false,
+  onToggleExpand,
+  isCollapsed = false,
+  onToggleCollapse,
+  isOtherPanelExpanded = false,
 }) => {
   // If viewing a document, show source view
   if (viewingDocument) {
@@ -56,8 +67,34 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
     );
   }
 
+  // Collapsed view - show only icons
+  const collapsedItems: CollapsedItem[] = documents.map((doc) => ({
+    id: doc.id,
+    icon: FileText,
+    label: doc.name,
+  }));
+
+  if (isCollapsed) {
+    return (
+      <div className="w-16 flex flex-col border-r border-border h-full bg-card transition-all duration-300">
+        <CollapsedPanelBar
+          items={collapsedItems}
+          side="left"
+          onExpand={onToggleCollapse!}
+          expandLabel="Expand Documents"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-[23%] flex flex-col border-r border-border">
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'w-[23%]'
+    } ${
+      isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    } flex flex-col border-r border-border h-full transition-all duration-300`}>
       {/* Documents Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3 mb-3">
@@ -69,6 +106,32 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-foreground">Documents</h2>
           </div>
+          {onToggleCollapse && !isExpanded && (
+            <Button
+              onClick={onToggleCollapse}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Collapse"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+          )}
+          {onToggleExpand && (
+            <Button
+              onClick={onToggleExpand}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
           <Button
             onClick={() => setIsUploadModalOpen(true)}
             className="flex items-center gap-2"

@@ -55,6 +55,13 @@ const NotebookDetailPage = () => {
   const [documentContent, setDocumentContent] = useState<string>("");
   const [isLoadingContent, setIsLoadingContent] = useState(false);
 
+  // Expanded panel state
+  const [expandedPanel, setExpandedPanel] = useState<'documents' | 'chat' | 'flashcards' | null>(null);
+
+  // Collapsed panel state
+  const [collapsedDocuments, setCollapsedDocuments] = useState(false);
+  const [collapsedFlashcards, setCollapsedFlashcards] = useState(false);
+
   // Loading states
   const [isLoadingNotebook, setIsLoadingNotebook] = useState(true);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
@@ -550,7 +557,7 @@ const NotebookDetailPage = () => {
     try {
       const response = await getResource(doc.id);
       console.log("Resource content response:", response);
-      if (response.success && response.data?.content.content) {
+      if (response.success && response.data?.content) {
         setDocumentContent(response.data.content);
       } else {
         toast.error("Failed to load document content");
@@ -570,6 +577,10 @@ const NotebookDetailPage = () => {
     setDocumentContent("");
   };
 
+  const toggleExpandPanel = (panel: 'documents' | 'chat' | 'flashcards') => {
+    setExpandedPanel(expandedPanel === panel ? null : panel);
+  };
+
   // Check if any loading is in progress
   const isLoading =
     isLoadingNotebook ||
@@ -585,7 +596,8 @@ const NotebookDetailPage = () => {
         {isLoading ? (
           <LoadingNotebookDetail />
         ) : (
-          <div className="flex flex-1 h-[calc(100vh-4rem)]">
+          <div className="flex flex-1 h-[calc(100vh-4rem)] relative">
+            {/* Documents Panel */}
             <DocumentsPanel
               documents={filteredDocuments}
               selectedDocuments={selectedDocuments}
@@ -603,8 +615,14 @@ const NotebookDetailPage = () => {
               documentContent={documentContent}
               isLoadingContent={isLoadingContent}
               handleBackFromSource={handleBackFromSource}
+              isExpanded={expandedPanel === 'documents'}
+              onToggleExpand={() => toggleExpandPanel('documents')}
+              isCollapsed={collapsedDocuments}
+              onToggleCollapse={() => setCollapsedDocuments(!collapsedDocuments)}
+              isOtherPanelExpanded={expandedPanel !== null && expandedPanel !== 'documents'}
             />
 
+            {/* Chat Panel */}
             <ChatSection
               notebook={notebook}
               messages={messages}
@@ -612,7 +630,12 @@ const NotebookDetailPage = () => {
               selectedDocuments={selectedDocuments}
               getFileIcon={getFileIcon}
               status={status}
+              isExpanded={expandedPanel === 'chat'}
+              onToggleExpand={() => toggleExpandPanel('chat')}
+              isOtherPanelExpanded={expandedPanel !== null && expandedPanel !== 'chat'}
             />
+
+            {/* Flashcards Panel */}
             <FlashcardsPanel
               onGenerateFlashcards={onGenerateFlashcards}
               setFlashcards={setFlashcards}
@@ -621,6 +644,11 @@ const NotebookDetailPage = () => {
               isDisabled={isDisabled}
               onGenerateCustomFlashcards={onGenerateCustomFlashcards}
               onUpdateDeckTitle={onUpdateDeckTitle}
+              isExpanded={expandedPanel === 'flashcards'}
+              onToggleExpand={() => toggleExpandPanel('flashcards')}
+              isCollapsed={collapsedFlashcards}
+              onToggleCollapse={() => setCollapsedFlashcards(!collapsedFlashcards)}
+              isOtherPanelExpanded={expandedPanel !== null && expandedPanel !== 'flashcards'}
             />
           </div>
         )}

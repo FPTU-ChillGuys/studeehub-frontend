@@ -5,6 +5,9 @@ import {
   insertNotebookSchema,
   notebooks,
 } from "../db/schema/notebook";
+import { flashcard } from "../db/schema/flashcard";
+import { resources } from "../db/schema/resource";
+import { messages } from "../db/schema/message";
 
 export const createNotebook = async (
   userId: string,
@@ -66,6 +69,12 @@ export const getNotebookById = async (notebookId: string) => {
 export const deleteNotebookById = async (notebookId: string) => {
   try {
     await db.delete(notebooks).where(eq(notebooks.id, notebookId));
+    //Delete flashcard
+    await db.delete(flashcard).where(eq(flashcard.notebookId, notebookId));
+    //Delete resources
+    await db.delete(resources).where(eq(resources.notebookId, notebookId));
+    //Delete messages and related data if needed (not implemented here)
+    await db.delete(messages).where(eq(messages.notebookId, notebookId));
     return { success: true };
   } catch (e) {
     if (e instanceof Error) {

@@ -35,7 +35,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current.scrollIntoView({ behavior: "auto" });
     }
   }, [messages, status]);
 
@@ -94,7 +94,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                  <p className="text-sm whitespace-pre-wrap">Đang phản hồi...</p>
+                  <p className="text-sm whitespace-pre-wrap">Đang chờ phản hồi...</p>
                 </div>
               </div>
             );
@@ -102,6 +102,17 @@ const ChatSection: React.FC<ChatSectionProps> = ({
 
           return <ChatMessage key={message.id} message={message} />;
         })}
+        
+        {/* Hiển thị "Đang phản hồi..." dưới message đang generate */}
+        {status === "streaming" && messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && messages[messages.length - 1]?.parts?.find((part) => part.type === "text")?.text?.trim() && (
+          <div className="flex justify-start">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent"></div>
+              <p className="text-xs italic">Đang phản hồi...</p>
+            </div>
+          </div>
+        )}
+        
         {(status !== "streaming" && status === "submitted") && (
             <div
               className={`max-w-[30%] rounded-lg p-3 bg-card border border-border text-foreground`}

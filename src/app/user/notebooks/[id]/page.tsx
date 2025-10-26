@@ -107,6 +107,7 @@ const NotebookDetailPage = () => {
         };
       },
     }),
+    experimental_throttle : 500,
   });
 
   //Load existing chat messages

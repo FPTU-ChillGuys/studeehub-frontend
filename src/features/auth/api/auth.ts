@@ -1,4 +1,4 @@
-import { User } from "@/Types";
+import { AuthUser } from "@/Types";
 
 import {
   signIn,
@@ -11,7 +11,7 @@ import { AuthService } from "../../../service/authService";
 export const authenticateUser = async (
   email: string,
   password: string
-): Promise<User | null> => {
+): Promise<AuthUser | null> => {
   try {
     const response = await signIn("credentials", {
       email,
@@ -30,10 +30,10 @@ export const authenticateUser = async (
   }
 };
 
-export const getCurrentUser = async (): Promise<User | null> => {
+export const getCurrentUser = async (): Promise<AuthUser | null> => {
   try {
     const session = await getSession();
-    return session?.user as User;
+    return session?.user as AuthUser;
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
@@ -48,7 +48,7 @@ export const logout = (): void => {
   }
 };
 
-export const redirectBasedOnRole = (user: User): void => {
+export const redirectBasedOnRole = (user: AuthUser): void => {
   if (user.role === "admin") {
     window.location.href = "/admin";
   } else {
@@ -57,7 +57,7 @@ export const redirectBasedOnRole = (user: User): void => {
 };
 
 // Check if user has admin access
-export const isAdmin = (user: User | null): boolean => {
+export const isAdmin = (user: AuthUser | null): boolean => {
   return user?.role === "admin";
 };
 

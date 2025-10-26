@@ -1,5 +1,4 @@
 import { apiClient } from "@/lib/api/client";
-import { User } from "@/Types";
 import { 
   RegisterRequest, 
   AuthResponse, 
@@ -8,7 +7,7 @@ import {
   RegisterRequestWithClientUri,
 } from "@/features/auth";
 import { getSession } from "next-auth/react";
-
+import { AuthUser } from "@/Types";
 export class AuthService {
   // Register a new user
   static async register(userData: RegisterRequest): Promise<{ success: boolean; message: string }> {
@@ -38,7 +37,7 @@ export class AuthService {
     };
   }
 
-  static async login(credentials: LoginRequest): Promise<{ user: User; tokens: AuthTokens }> {
+  static async login(credentials: LoginRequest): Promise<{ user: AuthUser; tokens: AuthTokens }> {
     const response = await apiClient.post<AuthResponse>(
       "/auths/login",
       credentials
@@ -52,7 +51,7 @@ export class AuthService {
     };
   }
 
-  private static decodeToken(token: string): User {
+  private static decodeToken(token: string): AuthUser {
     try {
       // Validate token format
       if (!token || typeof token !== "string") {
@@ -69,7 +68,6 @@ export class AuthService {
       return {
         id: payload.id || payload.sub,
         email: payload.email,
-        name: payload.name || payload.email?.split("@")[0] || "User", // Safer fallback
         role: payload.role || "user",
       };
     } catch {
@@ -89,14 +87,13 @@ export class AuthService {
     return response.data;
   }
 
-  static async getCurrentUser(): Promise<User | null> {
+  static async getCurrentUser(): Promise<AuthUser | null> {
     try {
       const session = await getSession();
       if (!session?.user) return null;
 
       return {
         id: session.user.id,
-        name: session.user.name || '',
         email: session.user.email || '',
         role: session.user.role as 'user' | 'admin' || 'user',
       };
@@ -125,10 +122,10 @@ export class AuthService {
       const session = await getSession();
       if (!session?.user) return null;
 
-      if (session.user.accessToken && session.user.refreshToken) {
+      if (session.accessToken && session.refreshToken) {
         return {
-          accessToken: session.user.accessToken as string,
-          refreshToken: session.user.refreshToken as string,
+          accessToken: session.accessToken as string,
+          refreshToken: session.refreshToken as string,
         };
       }
       return null;

@@ -29,8 +29,8 @@ class APIClient {
 
   async getToken(): Promise<string | null> {
     const session = await getSession();
-    if (session?.user?.accessToken) {
-      return session.user.accessToken;
+    if (session?.accessToken) {
+      return session.accessToken;
     }
     return null;
   }

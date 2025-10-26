@@ -7,9 +7,6 @@ import {
   Settings,
   FileText,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/features/auth/api/auth";
-import { User } from "@/Types";
 
 import {
   Sidebar,
@@ -21,6 +18,7 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
+import { useProfile } from "@/hooks/useProfile";
 
 // Admin menu items
 const adminMenuData = {
@@ -57,19 +55,13 @@ const adminMenuData = {
 export function AdminSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    getCurrentUser().then(currentUser => {
-      setUser(currentUser);
-    });
-  }, []);
+  const { user } = useProfile();
 
   const userData = user
     ? {
-        name: user.name,
+        name: user.fullName,
         email: user.email,
-        avatar: user.image || "", // Let AvatarFallback show initials if no image
+        avatar: user.profilePictureUrl || "", // Let AvatarFallback show initials if no image
       }
     : {
         name: "Admin",

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Save, Plus, Trash2 } from "lucide-react";
+import { X, Save, Plus, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import { EditableCard, FlashcardDeck } from "@/Types";
 
 interface EditFlashcardProps {
@@ -10,6 +10,7 @@ interface EditFlashcardProps {
   onSave: (updatedDeck: FlashcardDeck) => void;
   onCancel: () => void;
   isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const EditFlashcard: React.FC<EditFlashcardProps> = ({
@@ -17,6 +18,7 @@ const EditFlashcard: React.FC<EditFlashcardProps> = ({
   onSave,
   onCancel,
   isExpanded = false,
+  onToggleExpand,
 }) => {
   const [title, setTitle] = useState(deck.title);
   const [cards, setCards] = useState<EditableCard[]>(
@@ -98,14 +100,35 @@ const EditFlashcard: React.FC<EditFlashcardProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className={`${
+      isExpanded 
+        ? 'absolute inset-0 w-full z-50 bg-background' 
+        : 'w-[27%]'
+    } flex flex-col border-l border-border overflow-hidden h-full ml-auto`}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Edit Flashcard Deck</h2>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {onToggleExpand && (
+              <Button
+                onClick={onToggleExpand}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title={isExpanded ? "Minimize" : "Maximize"}
+              >
+                {isExpanded ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         
         {/* Title input */}

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
@@ -50,37 +50,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({
   const [hasFlipped, setHasFlipped] = useStateRef(false);
   const [answerHistory, setAnswerHistory, answerHistoryRef] = useStateRef<AnswerHistory[]>([]);
   const [isComplete, setIsComplete] = useStateRef(false);
-
-  // Load session from localStorage
-  useEffect(() => {
-    const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
-    console.log('Loading session from', storageKey);
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      console.log('Session data found:', saved);
-      try {
-        const data = JSON.parse(saved);
-        setSessionStats(data.sessionStats || { correct: 0, incorrect: 0, studied: 0 });
-        setAnswerHistory(data.answerHistory || []);
-        flipArrayHook.setCurrentCard(data.answerHistory ? data.answerHistory.length : 0);
-      } catch (e) {
-        console.error('Failed to load session:', e);
-      }
-    }
-  }, [deck.id, setSessionStats, setAnswerHistory]);
-
-  // // Save session to localStorage
-  // useEffect(() => {
-  //   const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
-  //   console.log('Saving session to', storageKey);
-  //   const data = {
-  //     sessionStats: sessionStatsRef.current,
-  //     answerHistory: answerHistoryRef.current,
-  //     timestamp: Date.now(),
-  //   };
-  //   localStorage.setItem(storageKey, JSON.stringify(data));
-  //   console.log('Session saved successfully', localStorage.getItem(storageKey));
-  // }, [sessionStatsRef, answerHistoryRef, deck.id]);
+  const [isSessionLoaded, setIsSessionLoaded] = useStateRef(false);
 
   const flipArrayHook = useFlashcardArray({
     deckLength: deck.cards.length,
@@ -97,6 +67,57 @@ const PracticeMode: React.FC<PracticeModeProps> = ({
       }
     },
   });
+
+  // Load session from localStorage - CHỈ CHẠY 1 LẦN
+  useEffect(() => {
+    if (isSessionLoaded) return; // Đã load rồi thì không load nữa
+    
+    const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
+    console.log('Loading session from', storageKey);
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      console.log('Session data found:', saved);
+      try {
+        const data = JSON.parse(saved);
+        
+        // Check if deck was updated (card count changed)
+        const savedCardCount = data.answerHistory ? data.answerHistory.length : 0;
+        const currentCardCount = deck.cards.length;
+        
+        // If card count changed or cards are different, reset session
+        if (savedCardCount > currentCardCount || data.deckCardCount !== currentCardCount) {
+          console.log('Deck was updated, resetting session...');
+          localStorage.removeItem(storageKey);
+          setSessionStats({ correct: 0, incorrect: 0, studied: 0 });
+          setAnswerHistory([]);
+          flipArrayHook.setCurrentCard(0);
+        } else {
+          setSessionStats(data.sessionStats || { correct: 0, incorrect: 0, studied: 0 });
+          setAnswerHistory(data.answerHistory || []);
+          flipArrayHook.setCurrentCard(savedCardCount);
+        }
+      } catch (e) {
+        console.error('Failed to load session:', e);
+      }
+    }
+    
+    setIsSessionLoaded(true); // Đánh dấu đã load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deck.id, deck.cards.length, isSessionLoaded]);
+  // Không bao gồm flipArrayHook, setSessionStats, setAnswerHistory để tránh infinite loop
+
+  // // Save session to localStorage
+  // useEffect(() => {
+  //   const storageKey = `${STORAGE_KEY_PREFIX}${deck.id}`;
+  //   console.log('Saving session to', storageKey);
+  //   const data = {
+  //     sessionStats: sessionStatsRef.current,
+  //     answerHistory: answerHistoryRef.current,
+  //     timestamp: Date.now(),
+  //   };
+  //   localStorage.setItem(storageKey, JSON.stringify(data));
+  //   console.log('Session saved successfully', localStorage.getItem(storageKey));
+  // }, [sessionStatsRef, answerHistoryRef, deck.id]);
 
   const refreshMastery = () => {
     const updatedMastery = getDeckMastery(deck.id, deck.cards.map(c => c.id));
@@ -158,6 +179,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({
     const data = {
       sessionStats: sessionStatsRef.current,
       answerHistory: answerHistoryRef.current,
+      deckCardCount: deck.cards.length, // Lưu số card để check khi load lại
       timestamp: Date.now(),
     };
     localStorage.setItem(storageKey, JSON.stringify(data));
@@ -203,6 +225,7 @@ const PracticeMode: React.FC<PracticeModeProps> = ({
     const data = {
       sessionStats: sessionStatsRef.current,
       answerHistory: answerHistoryRef.current,
+      deckCardCount: deck.cards.length, // Lưu số card để check khi load lại
       timestamp: Date.now(),
     };
     localStorage.setItem(storageKey, JSON.stringify(data));

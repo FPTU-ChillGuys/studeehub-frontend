@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FlashcardDeck } from "@/Types";
 import { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
 import useStateRef from "react-usestateref";
 import FlashcardsList from "./FlashcardsList";
 import FlashcardDetail from "./FlashcardDetail";
+import EditFlashcard from "./EditFlashcard";
 
 interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
@@ -13,6 +14,7 @@ interface FlashcardsPanelProps {
   onDeleteDeck?: (deckId: string) => void;
   onGenerateCustomFlashcards?: (options: FlashcardOptions) => void;
   onUpdateDeckTitle?: (deckId: string, newTitle: string) => void;
+  onUpdateDeck?: (deckId: string, updatedDeck: FlashcardDeck) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   isCollapsed?: boolean;
@@ -28,13 +30,14 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onDeleteDeck,
   onGenerateCustomFlashcards,
   onUpdateDeckTitle,
+  onUpdateDeck,
   isExpanded = false,
   onToggleExpand,
   isCollapsed = false,
   onToggleCollapse,
   isOtherPanelExpanded = false,
 }) => {
-  const [view, setView] = useStateRef<"list" | "detail">("list");
+  const [view, setView] = useStateRef<"list" | "detail" | "edit">("list");
   const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(
     null
   );
@@ -45,6 +48,24 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
       onToggleCollapse();
     }
     setSelectedDeck(deck);
+    setView("detail");
+  };
+
+  const handleEditDeck = (deck: FlashcardDeck) => {
+    setSelectedDeck(deck);
+    setView("edit");
+  };
+
+  const handleSaveEdit = (updatedDeck: FlashcardDeck) => {
+    if (onUpdateDeck && selectedDeck) {
+      onUpdateDeck(selectedDeck.id, updatedDeck);
+      // Update selectedDeck với deck mới để Detail/Practice mode nhận được data mới
+      setSelectedDeck(updatedDeck);
+    }
+    setView("detail");
+  };
+
+  const handleCancelEdit = () => {
     setView("detail");
   };
 
@@ -74,17 +95,38 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
     );
   }
 
-  // Detail View - Component mới sẽ unmount/remount khi selectedDeck thay đổi
-  return selectedDeck ? (
-    <FlashcardDetail
-      key={selectedDeck.id} // Force remount khi chọn deck khác
-      deck={selectedDeck}
-      onBackToList={handleBackToList}
-      isExpanded={isExpanded}
-      onToggleExpand={onToggleExpand}
-      isOtherPanelExpanded={isOtherPanelExpanded}
-    />
-  ) : null;
+  // Edit View
+  if (view === "edit" && selectedDeck) {
+    // Get latest deck from flashcards array
+    const currentDeck = flashcards.find(d => d.id === selectedDeck.id) || selectedDeck;
+    return (
+      <EditFlashcard
+        deck={currentDeck}
+        onSave={handleSaveEdit}
+        onCancel={handleCancelEdit}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+      />
+    );
+  }
+
+  // Detail View - Luôn lấy deck mới nhất từ flashcards array
+  if (selectedDeck) {
+    const currentDeck = flashcards.find(d => d.id === selectedDeck.id) || selectedDeck;
+    return (
+      <FlashcardDetail
+        key={selectedDeck.id} // Force remount khi chọn deck khác
+        deck={currentDeck}
+        onBackToList={handleBackToList}
+        onEditDeck={handleEditDeck}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        isOtherPanelExpanded={isOtherPanelExpanded}
+      />
+    );
+  }
+  
+  return null;
 };
 
 export default FlashcardsPanel;

@@ -76,15 +76,16 @@ export const getFlashcardsByNotebookId = async (notebookId: string) => {
       return {
         id: flashcardItem.id,
         title: flashcardItem.title,
-        cards: DeckList.filter((deckItem) => deckItem.flashcardId === flashcardItem.id).map((deckItem) => {
-            return {
-              front: deckItem.front,
-              back: deckItem.back,
-            };
+        cards: DeckList.filter(
+          (deckItem) => deckItem.flashcardId === flashcardItem.id
+        ).map((deckItem) => {
+          return {
+            front: deckItem.front,
+            back: deckItem.back,
+          };
         }),
       };
     });
-
 
     return flashcardsListWithDecks;
   } catch (e) {
@@ -102,19 +103,45 @@ export const deleteFlashcardById = async (flashcardId: string) => {
   } catch (e) {
     console.error("Error deleting flashcard:", e);
     return { success: false };
-  } 
+  }
 };
 
-export const updateFlashcardTitle = async (flashcardId: string, newTitle: string) => {
+export const updateFlashcardTitle = async (
+  flashcardId: string,
+  newTitle: string
+) => {
   try {
-    await db.update(flashcard)
+    await db
+      .update(flashcard)
       .set({ title: newTitle })
       .where(eq(flashcard.id, flashcardId));
     return { success: true };
-  }
-  catch (e) {
+  } catch (e) {
     console.error("Error updating flashcard title:", e);
     return { success: false };
   }
 };
-     
+
+export const updateFlashcardDeck = async (
+  flashcardId: string,
+  cards: { front: string; back: string }[]
+) => {
+  try {
+    // First, delete existing decks for the flashcard
+    await db.delete(decks).where(eq(decks.flashcardId, flashcardId));
+
+    // Then, insert the updated decks
+    await db.insert(decks).values(
+      cards.map((card) => ({
+        flashcardId: flashcardId,
+        front: card.front,
+        back: card.back,
+      }))
+    );
+
+    return { success: true };
+  } catch (e) {
+    console.error("Error updating flashcard deck:", e);
+    return { success: false };
+  }
+};

@@ -1,6 +1,7 @@
 import { APIResponse } from "@/lib/api/client";
 import { IFlashcard } from "react-quizlet-flashcard";
 import type { DocumentType } from "@/config/fileTypes";
+import { UIMessage } from "ai";
 
 // User types
 export interface AuthUser {
@@ -163,6 +164,31 @@ export interface CitationOutput {
   }[];
 }
 
+export interface Citation {
+  number: string;
+  title: string;
+  url: string;
+  description?: string;
+  quote?: string;
+}
 
+export interface ContentBlock {
+  content: string;
+  citations: Citation[];
+}
+
+export interface ParsedContent {
+  results: ContentBlock[];
+}
+
+export interface ChatMessageProps {
+  message: UIMessage;
+}
+
+export interface EditableCard {
+  id: number;
+  front: string;
+  back: string;
+}
 
 export * from "./subcription-plans";

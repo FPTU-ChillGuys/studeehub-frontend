@@ -1,5 +1,6 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { UIMessage } from "ai";
+import debounce from "debounce";
 import { CitationList } from "./CitationList";
 import { MarkdownContent } from "./MarkdownContent";
 
@@ -31,12 +32,15 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
   // Debounced message text - delay 200ms để giảm re-render khi streaming
   const [debouncedText, setDebouncedText] = useState(messageText);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedText(messageText);
-    }, 200);
+  // Sử dụng thư viện debounce với useRef để giữ function reference
+  const debouncedUpdateRef = useRef(
+    debounce((text: string) => {
+      setDebouncedText(text);
+    }, 200)
+  );
 
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    debouncedUpdateRef.current(messageText);
   }, [messageText]);
   
   const parsedContent = useMemo<ParsedContent | null>(() => {

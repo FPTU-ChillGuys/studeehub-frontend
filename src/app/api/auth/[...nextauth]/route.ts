@@ -1,29 +1,20 @@
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { AuthService } from "@/service/authService";
 import CredentialsProvider from "next-auth/providers/credentials";
 import streakService from "@/service/streakService";
+import { AuthUser } from "@/Types";
 
 // Extend the built-in types
 declare module "next-auth" {
   interface Session {
-    user: {
-      id: string;
-      accessToken?: string;
-      refreshToken?: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      role?: string;
-    } & DefaultSession["user"];
+    user: AuthUser;
+    accessToken?: string;
+    refreshToken?: string;
   }
 
   // Extend the built-in User type
   interface User {
-    id?: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
     role?: string;
     accessToken?: string;
     refreshToken?: string;
@@ -131,18 +122,16 @@ const handler = NextAuth({
         token.refreshToken = user.refreshToken || account?.refresh_token;
         token.role = user.role;
         token.id = user.id;
-        token.name = user.name;
         token.email = user.email;
-        token.image = user.image;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user = {
-          ...session.user,
-          ...token,
-        };
+        session.user.id = token.id as string;
+        session.user.role = token.role as "user" | "admin";
+        session.accessToken = token.accessToken as string;
+        session.refreshToken = token.refreshToken as string;
       }
       return session;
     },

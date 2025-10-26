@@ -1,4 +1,4 @@
-import { User } from "@/Types";
+import { AuthUser } from "@/Types";
 
 export interface AuthTokens {
   accessToken: string;
@@ -8,7 +8,7 @@ export interface AuthTokens {
 }
 
 export interface AuthResponse extends AuthTokens {
-  user: User;
+  user: AuthUser;
 }
 
 export interface LoginRequest {
@@ -37,6 +37,4 @@ export interface RegisterResponse {
 export interface GoogleLoginRequest {
   idToken: string;
 }
-
-export type { User };
 

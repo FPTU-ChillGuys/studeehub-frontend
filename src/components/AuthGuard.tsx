@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { User } from "@/Types";
+import { AuthUser } from "@/Types";
 import { isAdmin } from "@/features/auth/api/auth";
 import { getCurrentUser } from "@/features/auth/api/auth";
 
@@ -18,7 +18,7 @@ export function AuthGuard({
   requireAdmin = false,
   fallback,
 }: AuthGuardProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

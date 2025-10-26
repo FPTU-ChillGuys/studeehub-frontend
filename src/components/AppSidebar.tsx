@@ -1,9 +1,6 @@
 "use client";
 
 import { Calendar, Home, BookOpen, Timer } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/features/auth/";
-import { User } from "@/Types";
 
 import {
   Sidebar,
@@ -15,6 +12,8 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
+import { useProfile } from "@/hooks/useProfile";
+import { useSession } from "next-auth/react";
 
 // Menu items.
 const data = {
@@ -44,20 +43,15 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    getCurrentUser().then((user) => {
-      setUser(user);
-    });
-  }, []);
+  const { user } = useProfile();
+  const { data: session } = useSession();
 
   // Default user data if not logged in
   const userData = user
     ? {
-        name: user.name,
+        name: user.fullName,
         email: user.email,
-        avatar: user.image || "", // Let AvatarFallback show initials if no image
+        avatar: user.profilePictureUrl || "", // Let AvatarFallback show initials if no image
       }
     : {
         name: "Guest",
@@ -67,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Filter nav items based on user role
   const navItems =
-    user?.role === "admin"
+    session?.user?.role === "admin"
       ? data.navMain // Admin sees all items including Dashboard
       : data.navMain.filter((item) => item.title !== "Dashboard"); // Regular users don't see Dashboard
 

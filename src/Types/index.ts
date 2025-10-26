@@ -3,19 +3,10 @@ import { IFlashcard } from "react-quizlet-flashcard";
 import type { DocumentType } from "@/config/fileTypes";
 
 // User types
-export interface User {
+export interface AuthUser {
   id: string;
-  name: string;
   email: string;
-  image?: string;
   role: "user" | "admin";
-  avatar?: string;
-  // Additional profile fields from backend
-  address?: string;
-  userName?: string;
-  phoneNumber?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 // Detailed user profile from backend
@@ -25,6 +16,7 @@ export interface UserProfile {
   address: string;
   email: string;
   userName: string;
+  profilePictureUrl: string;
   phoneNumber: string | null;
   createdAt: string;
   updatedAt: string;

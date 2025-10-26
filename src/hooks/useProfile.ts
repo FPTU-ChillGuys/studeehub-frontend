@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, UserProfile } from "@/Types";
+import { UserProfile } from "@/Types";
 import { getCurrentUser } from "@/features/auth/";
 import streakService from "@/service/streakService";
 import userService from "@/service/userService";
@@ -58,7 +58,7 @@ export interface Question {
 }
 
 export interface ProfileData {
-  user: User | null;
+  user: UserProfile | null;
   stats: ProfileStats;
   learningProgress: LearningProgress[];
   recentActivity: RecentActivity[];
@@ -100,24 +100,12 @@ export function useProfile() {
       }
 
       // Fetch detailed user profile from backend
-      let detailedUser: User = sessionUser;
+      let detailedUser: UserProfile | null = null;
       try {
         const userProfileResponse = await userService.getUserProfile(
           sessionUser.id
         );
-        if (userProfileResponse.success && userProfileResponse.data) {
-          // Merge session user with detailed profile data
-          detailedUser = {
-            ...sessionUser,
-            name: userProfileResponse.data.fullName || sessionUser.name,
-            email: userProfileResponse.data.email || sessionUser.email,
-            address: userProfileResponse.data.address,
-            userName: userProfileResponse.data.userName,
-            phoneNumber: userProfileResponse.data.phoneNumber,
-            createdAt: userProfileResponse.data.createdAt,
-            updatedAt: userProfileResponse.data.updatedAt,
-          };
-        }
+        detailedUser = userProfileResponse;
       } catch (profileError) {
         // Continue with session user data if profile fetch fails
         console.error("Failed to fetch detailed user profile:", profileError);

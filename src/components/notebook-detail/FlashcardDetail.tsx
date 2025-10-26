@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
@@ -32,6 +32,7 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
     showControls: true,
     cycle: false,
   });
+
 
   // If in practice mode, show practice component
   if (isPracticeMode) {

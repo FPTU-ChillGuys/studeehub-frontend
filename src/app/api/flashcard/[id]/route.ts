@@ -1,4 +1,5 @@
 import { deleteFlashcardById, getFlashcardsByNotebookId, updateFlashcardDeck, updateFlashcardTitle } from "@/lib/actions/flashcard";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: Request, params: { params: { id: string } }) {
     const { id } = await params.params;
@@ -36,7 +37,7 @@ export async function DELETE(request: Request, params: { params: { id: string } 
 
 
 
-export async function PUT (request: Request, params: { params: { id: string } }) {
+export async function PUT (request: NextRequest, params: { params: { id: string } }) {
     const { id } = await params.params;
     const { updatePayload } = await request.json();
 
@@ -51,14 +52,17 @@ export async function PUT (request: Request, params: { params: { id: string } })
 
     const responseUpdateTitle = await updateFlashcardTitle(id, updatePayload.title);
 
-    console.log("Response from updating flashcard deck:", responseUpdateCard);
-    console.log("Response from updating flashcard title:", responseUpdateTitle);
-
-    if (!responseUpdateCard.success) {
+    if (!responseUpdateCard.success || !responseUpdateTitle.success) {
         console.error("Failed to update flashcard deck");
-        return new Response("Failed to update flashcard deck", { status: 500 });
+        return NextResponse.json(
+            { success: false, message: "Failed to update flashcard deck" },
+            { status: 500 }
+        );
     }
 
     console.log("Flashcard deck updated successfully");
-    return new Response("Flashcard deck updated successfully", { status: 200 });
+    return NextResponse.json(
+        { success: true, message: "Flashcard deck updated successfully" },
+        { status: 200 }
+    );
 }

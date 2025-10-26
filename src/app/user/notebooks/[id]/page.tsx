@@ -537,27 +537,60 @@ const NotebookDetailPage = () => {
       })),
     };
 
-    console.log("API Payload for updating flashcard:", updatePayload);
+    try {
+      // const response = await fetch(`/api/flashcard/${flashcardId}`, {
+      //   method: "PUT",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ updatePayload: updatePayload }),
+      // });
 
-    const response = await putFlashcard(flashcardId, { updatePayload: updatePayload });
-    
-    console.log("Update flashcard response:", response);
+      // const updatedDeckResponse = await response.json();
 
-    loader.setProgress(50);
+      const response = await putFlashcard(flashcardId, { updatePayload });
+      
+      loader.setProgress(50);
 
-    if (response.success) {
-      // Update local state with the updated deck
-      setFlashcards(
-        flashcardsRef.current.map((flashcard) =>
-          flashcard.id === flashcardId ? { ...flashcard, cards: updatedDeck.cards } : flashcard
-        )
-      );
-      toast.success("Flashcard deck updated successfully");
-    } else {
-      toast.error("Failed to update flashcard deck");
+      if (response.success) {
+        // Update local state with the updated deck
+        setFlashcards(
+          flashcardsRef.current.map((flashcard) =>
+            flashcard.id === flashcardId ? { 
+              ...flashcard,
+              title: updatedDeck.title,
+              cardCount: updatePayload.cards.length,
+              cards: updatePayload.cards.map((card: any, index: number) => ({ 
+                id: index.toString(),
+                front: { 
+                  html: (
+                    <div className="flex items-center justify-center h-full w-full p-6">
+                      {card.front}
+                    </div>
+                  )
+                },
+                back: { 
+                  html: (
+                    <div className="flex items-center justify-center h-full w-full p-6">
+                      {card.back}
+                    </div>
+                  )
+                }
+              })) 
+            } : flashcard
+          )
+        );
+        console.log("Flashcard updated:", flashcardsRef.current);
+        toast.success("Flashcard deck updated successfully");
+      } else {
+        toast.error("Failed to update flashcard deck");
+      }
+    } catch (error) {
+      console.error("Error updating flashcard:", error);
+      toast.error("Error updating flashcard deck");
+    } finally {
+      loader.done();
     }
-
-    loader.done();
   };
 
   // Helper function to extract text from React element

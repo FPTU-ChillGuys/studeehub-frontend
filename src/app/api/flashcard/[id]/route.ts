@@ -55,14 +55,14 @@ export async function PUT (request: NextRequest, params: { params: { id: string 
     if (!responseUpdateCard.success || !responseUpdateTitle.success) {
         console.error("Failed to update flashcard deck");
         return NextResponse.json(
-            { success: false, message: "Failed to update flashcard deck" },
+            { message: "Failed to update flashcard deck" },
             { status: 500 }
         );
     }
 
     console.log("Flashcard deck updated successfully");
     return NextResponse.json(
-        { success: true, message: "Flashcard deck updated successfully" },
+        { message: "Flashcard deck updated successfully" },
         { status: 200 }
     );
 }

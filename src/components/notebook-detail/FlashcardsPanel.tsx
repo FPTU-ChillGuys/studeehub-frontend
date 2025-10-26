@@ -4,6 +4,7 @@ import { FlashcardOptions } from "../modals/CustomiseFlashcardModal";
 import useStateRef from "react-usestateref";
 import FlashcardsList from "./FlashcardsList";
 import FlashcardDetail from "./FlashcardDetail";
+import EditFlashcard from "./EditFlashcard";
 
 interface FlashcardsPanelProps {
   onGenerateFlashcards: () => void;
@@ -13,6 +14,7 @@ interface FlashcardsPanelProps {
   onDeleteDeck?: (deckId: string) => void;
   onGenerateCustomFlashcards?: (options: FlashcardOptions) => void;
   onUpdateDeckTitle?: (deckId: string, newTitle: string) => void;
+  onUpdateDeck?: (deckId: string, updatedDeck: FlashcardDeck) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   isCollapsed?: boolean;
@@ -28,13 +30,14 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
   onDeleteDeck,
   onGenerateCustomFlashcards,
   onUpdateDeckTitle,
+  onUpdateDeck,
   isExpanded = false,
   onToggleExpand,
   isCollapsed = false,
   onToggleCollapse,
   isOtherPanelExpanded = false,
 }) => {
-  const [view, setView] = useStateRef<"list" | "detail">("list");
+  const [view, setView] = useStateRef<"list" | "detail" | "edit">("list");
   const [selectedDeck, setSelectedDeck] = useStateRef<FlashcardDeck | null>(
     null
   );
@@ -45,6 +48,22 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
       onToggleCollapse();
     }
     setSelectedDeck(deck);
+    setView("detail");
+  };
+
+  const handleEditDeck = (deck: FlashcardDeck) => {
+    setSelectedDeck(deck);
+    setView("edit");
+  };
+
+  const handleSaveEdit = (updatedDeck: FlashcardDeck) => {
+    if (onUpdateDeck && selectedDeck) {
+      onUpdateDeck(selectedDeck.id, updatedDeck);
+    }
+    setView("detail");
+  };
+
+  const handleCancelEdit = () => {
     setView("detail");
   };
 
@@ -74,12 +93,25 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({
     );
   }
 
+  // Edit View
+  if (view === "edit" && selectedDeck) {
+    return (
+      <EditFlashcard
+        deck={selectedDeck}
+        onSave={handleSaveEdit}
+        onCancel={handleCancelEdit}
+        isExpanded={isExpanded}
+      />
+    );
+  }
+
   // Detail View - Component mới sẽ unmount/remount khi selectedDeck thay đổi
   return selectedDeck ? (
     <FlashcardDetail
       key={selectedDeck.id} // Force remount khi chọn deck khác
       deck={selectedDeck}
       onBackToList={handleBackToList}
+      onEditDeck={handleEditDeck}
       isExpanded={isExpanded}
       onToggleExpand={onToggleExpand}
       isOtherPanelExpanded={isOtherPanelExpanded}

@@ -193,6 +193,10 @@ export interface ChatMessageProps {
   message: UIMessage;
 }
 
-
+export interface EditableCard {
+  id: number;
+  front: string;
+  back: string;
+}
 
 export * from "./subcription-plans";

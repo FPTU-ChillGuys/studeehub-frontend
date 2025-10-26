@@ -504,23 +504,78 @@ const NotebookDetailPage = () => {
     setDeckToDelete(null);
   };
 
-  const onUpdateDeckTitle = async (deckId: string, newTitle: string) => {
+  const onUpdateDeckTitle = async (flashcardId: string, newTitle: string) => {
     // TODO: Implement API call to update deck title
-    console.log("Update deck title:", deckId, newTitle);
+    console.log("Update deck title:", flashcardId, newTitle);
     // Bạn có thể gọi API backend ở đây để lưu title mới
-    const response = await putFlashcard(deckId, { title: newTitle });
+    const response = await putFlashcard("title/" + flashcardId, { title: newTitle });
 
     if (response.success) {
       // Cập nhật tiêu đề trong trạng thái local
       setFlashcards(
-        flashcardsRef.current.map((deck) =>
-          deck.id === deckId ? { ...deck, title: newTitle } : deck
+        flashcardsRef.current.map((flashcard) =>
+          flashcard.id === flashcardId ? { ...flashcard, title: newTitle } : flashcard
         )
       );
       toast.success("Flashcard deck title updated successfully");
     } else {
       toast.error("Failed to update flashcard deck title");
     }
+  };
+
+  const onUpdateDeck = async (flashcardId: string, updatedDeck: FlashcardDeck) => {
+    loader.start();
+    
+    // Convert FlashcardDeck to API format
+    // flashcardId là ID của FlashcardDeck (chính là deck.id)
+    // updatedDeck.cards là array các deck items
+    const updatePayload = {
+      title: updatedDeck.title,
+      cards: updatedDeck.cards.map((card: any) => ({
+        front: extractTextFromReactElement(card.front.html),
+        back: extractTextFromReactElement(card.back.html),
+      })),
+    };
+
+    console.log("API Payload for updating flashcard:", updatePayload);
+
+    const response = await putFlashcard(flashcardId, { updatePayload: updatePayload });
+    
+    console.log("Update flashcard response:", response);
+
+    loader.setProgress(50);
+
+    if (response.success) {
+      // Update local state with the updated deck
+      setFlashcards(
+        flashcardsRef.current.map((flashcard) =>
+          flashcard.id === flashcardId ? { ...flashcard, cards: updatedDeck.cards } : flashcard
+        )
+      );
+      toast.success("Flashcard deck updated successfully");
+    } else {
+      toast.error("Failed to update flashcard deck");
+    }
+
+    loader.done();
+  };
+
+  // Helper function to extract text from React element
+  const extractTextFromReactElement = (element: any): string => {
+    if (typeof element === "string") return element;
+    if (!element) return "";
+    
+    if (element.props && element.props.children) {
+      const children = element.props.children;
+      if (typeof children === "string") return children;
+      if (Array.isArray(children)) {
+        return children.map(child => 
+          typeof child === "string" ? child : extractTextFromReactElement(child)
+        ).join("");
+      }
+    }
+    
+    return "";
   };
 
   const handleDeleteResource = async (resourceId: string) => {
@@ -646,6 +701,7 @@ const NotebookDetailPage = () => {
               isDisabled={isDisabled}
               onGenerateCustomFlashcards={onGenerateCustomFlashcards}
               onUpdateDeckTitle={onUpdateDeckTitle}
+              onUpdateDeck={onUpdateDeck}
               isExpanded={expandedPanel === 'flashcards'}
               onToggleExpand={() => toggleExpandPanel('flashcards')}
               isCollapsed={collapsedFlashcards}

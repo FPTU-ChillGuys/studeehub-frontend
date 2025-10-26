@@ -1,4 +1,4 @@
-import { deleteFlashcardById, getFlashcardsByNotebookId, updateFlashcardTitle } from "@/lib/actions/flashcard";
+import { deleteFlashcardById, getFlashcardsByNotebookId, updateFlashcardDeck, updateFlashcardTitle } from "@/lib/actions/flashcard";
 
 export async function GET(request: Request, params: { params: { id: string } }) {
     const { id } = await params.params;
@@ -34,14 +34,31 @@ export async function DELETE(request: Request, params: { params: { id: string } 
     );
 }
 
-export async function PUT(request: Request, params: { params: { id: string } }) {
+
+
+export async function PUT (request: Request, params: { params: { id: string } }) {
     const { id } = await params.params;
-    const { title } = await request.json();
+    const { updatePayload } = await request.json();
 
-    const response = await updateFlashcardTitle(id, title);
+    console.log("Updating flashcard deck with id:", id);
+    console.log("New flashcard data:", updatePayload);
 
-    return new Response(
-        JSON.stringify({}),
-        { status: response.success ? 200 : 500 }
-    );
+    // Call API to update flashcard deck
+    const responseUpdateCard = await updateFlashcardDeck(id, updatePayload.cards.map((card: any) => ({
+        front: card.front,
+        back: card.back,
+    })));
+
+    const responseUpdateTitle = await updateFlashcardTitle(id, updatePayload.title);
+
+    console.log("Response from updating flashcard deck:", responseUpdateCard);
+    console.log("Response from updating flashcard title:", responseUpdateTitle);
+
+    if (!responseUpdateCard.success) {
+        console.error("Failed to update flashcard deck");
+        return new Response("Failed to update flashcard deck", { status: 500 });
+    }
+
+    console.log("Flashcard deck updated successfully");
+    return new Response("Flashcard deck updated successfully", { status: 200 });
 }

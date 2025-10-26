@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import "react-quizlet-flashcard/dist/index.css";
 import { FlashcardArray, useFlashcardArray } from "react-quizlet-flashcard";
 import { Button } from "../ui/button";
-import { ArrowLeft, RotateCcw, Zap, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowLeft, RotateCcw, Zap, Maximize2, Minimize2, Edit } from "lucide-react";
 import { FlashcardDeck } from "@/Types";
 import PracticeMode from "./PracticeMode";
 
 interface FlashcardDetailProps {
   deck: FlashcardDeck;
   onBackToList: () => void;
+  onEditDeck?: (deck: FlashcardDeck) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   isOtherPanelExpanded?: boolean;
@@ -17,6 +18,7 @@ interface FlashcardDetailProps {
 const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
   deck,
   onBackToList,
+  onEditDeck,
   isExpanded = false,
   onToggleExpand,
   isOtherPanelExpanded = false,
@@ -62,21 +64,34 @@ const FlashcardDetail: React.FC<FlashcardDetailProps> = ({
             <ArrowLeft className="w-4 h-4" />
             Back to list
           </button>
-          {onToggleExpand && (
-            <Button
-              onClick={onToggleExpand}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title={isExpanded ? "Minimize" : "Maximize"}
-            >
-              {isExpanded ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {onEditDeck && (
+              <Button
+                onClick={() => onEditDeck(deck)}
+                variant="outline"
+                size="sm"
+                className="h-8"
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            )}
+            {onToggleExpand && (
+              <Button
+                onClick={onToggleExpand}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title={isExpanded ? "Minimize" : "Maximize"}
+              >
+                {isExpanded ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
         <h2 className="text-lg font-semibold text-foreground mb-1">
           {deck.title}

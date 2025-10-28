@@ -5,6 +5,8 @@ import {
   LoginRequest, 
   AuthTokens, 
   RegisterRequestWithClientUri,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from "@/features/auth";
 import { getSession } from "next-auth/react";
 import { AuthUser } from "@/Types";
@@ -162,6 +164,50 @@ export class AuthService {
       return response.data.accessToken;
     } catch {
       return null;
+    }
+  }
+
+  static async forgotPassword(request: ForgotPasswordRequest): Promise<{ token: string }> {
+    try {
+      const response = await apiClient.post<string>(
+        "/auths/forgot-password",
+        {
+          email: request.email,
+          clientUri: request.clientUri,
+        }
+      );
+      return {
+        token: response.data,
+      };
+    } catch (error) {
+      console.error("Error forgot password:", error);
+      return {
+        token: "",
+      };
+    }
+  }
+
+  static async resetPassword(request: ResetPasswordRequest): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await apiClient.post<string>(
+        "/auths/reset-password",
+        {
+          email: request.email,
+          token: request.token,
+          password: request.password,
+          confirmPassword: request.confirmPassword,
+        }
+      );
+      return {
+        success: true,
+        message: response.data,
+      };
+    } catch (error) {
+      console.error("Error reset password:", error);
+      return {
+        success: false,
+        message: "An unexpected error occurred. Please try again.",
+      };
     }
   }
 }

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { redirectBasedOnRole } from "@/features/auth";
-import { User } from "@/Types";
+import { AuthUser } from "@/Types";
 
 export default function AuthCallbackPage() {
   const { data: session, status } = useSession();
@@ -21,12 +21,10 @@ export default function AuthCallbackPage() {
 
     if (session?.user) {
       // Successfully signed in, create user object and redirect
-      const user: User = {
+      const user: AuthUser = {
         id: session.user.id || "",
         email: session.user.email || "",
-        name: session.user.name || "",
         role: (session.user.role as "user" | "admin") || "user",
-        image: session.user.image || undefined,
       };
 
       redirectBasedOnRole(user);

@@ -38,3 +38,14 @@ export interface GoogleLoginRequest {
   idToken: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+  clientUri: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  password: string;
+  confirmPassword: string;
+}

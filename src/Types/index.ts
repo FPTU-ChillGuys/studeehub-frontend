@@ -150,7 +150,7 @@ export interface BaseResponse {
   success: boolean;
   message: string;
   errors: string[] | null;
-  data?: any;
+  data?: unknown;
 }
 
 export interface CitationOutput {
@@ -192,3 +192,4 @@ export interface EditableCard {
 }
 
 export * from "./subcription-plans";
+export * from "./payments";

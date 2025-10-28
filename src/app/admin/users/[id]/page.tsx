@@ -7,13 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowLeft, Save, User, Lock, Mail, Calendar, Shield, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, User, Mail, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 import { UserProfile } from '@/Types';
 import userService from '@/service/userService';
 
@@ -31,6 +29,7 @@ export default function UserDetailPage() {
     phoneNumber: null,
     address: '',
     isActive: true,
+    profilePictureUrl: '',
   });
 
   useEffect(() => {
@@ -47,7 +46,8 @@ export default function UserDetailPage() {
           userName: userData.userName,
           phoneNumber: userData.phoneNumber,
           address: userData.address,
-          isActive: userData.isActive
+          isActive: userData.isActive,
+          profilePictureUrl: userData.profilePictureUrl,
         });
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -212,6 +212,7 @@ export default function UserDetailPage() {
                       phoneNumber: user.phoneNumber || '',
                       address: user.address || '',
                       isActive: user.isActive,
+                      profilePictureUrl: user.profilePictureUrl || '',
                     });
                   }
                 }}

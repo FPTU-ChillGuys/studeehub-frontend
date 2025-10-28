@@ -19,13 +19,32 @@ import {
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useSubscriptionPlans } from "@/components/subscription/SubscriptionCards";
+import paymentService from "@/service/paymentService";
+import { PaymentRequest } from "@/Types";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function SubscriptionPage() {
+  const session = useSession();
   const { plans } = useSubscriptionPlans();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
-  const [selectedPlan, setSelectedPlan] = useState<string>("");
+
+  const handleSelectPlan = async (planId: string) => {
+    const plan = plans[planId];
+    if (!plan) return;
+    if (!session.data?.user?.id) return;
+    const paymentRequest: PaymentRequest = {
+      description: plan.label + " - " + billingCycle,
+      returnUrl: "http://localhost:3000/user/subscription",
+      cancelUrl: "http://localhost:3000/user/subscription",
+      userId: session.data.user.id,
+      subscriptionPlanId: planId,
+    };
+    const paymentLink = await paymentService.createPayment(paymentRequest);
+    redirect(paymentLink.checkoutUrl);
+  } 
 
   return (
     <SidebarInset>
@@ -94,8 +113,7 @@ export default function SubscriptionPage() {
                 <PricingCard
                   key={planId}
                   planId={planId}
-                  selected={selectedPlan === planId}
-                  onSelect={() => setSelectedPlan(planId)}
+                  onSelect={() => handleSelectPlan(planId)}
                   icon={plan.icon}
                   label={plan.label}
                   description={plan.description}
@@ -177,7 +195,6 @@ export default function SubscriptionPage() {
 
 function PricingCard({
   planId,
-  selected,
   onSelect,
   label,
   description,
@@ -191,10 +208,8 @@ function PricingCard({
   buttonLabel,
   features,
   highlighted,
-  accent,
 }: {
   planId: string;
-  selected: boolean;
   onSelect: () => void;
   label: string;
   description?: string;
@@ -217,9 +232,7 @@ function PricingCard({
   return (
     <div
       className={`relative rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
-        selected
-          ? "border-blue-500 ring-2 ring-blue-200 shadow-xl scale-[1.02]"
-          : "border-gray-200 hover:border-gray-300 hover:shadow-lg"
+        "border-gray-200 hover:border-gray-300 hover:shadow-lg"
       } ${highlighted ? "border-purple-300" : ""}`}
       onClick={onSelect}
     >

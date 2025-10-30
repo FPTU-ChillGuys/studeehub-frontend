@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AuthUser } from "@/Types";
 import { isAdmin } from "@/features/auth/api/auth";
-import { getCurrentUser } from "@/features/auth/api/auth";
+import { useSession } from "next-auth/react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -18,29 +17,24 @@ export function AuthGuard({
   requireAdmin = false,
   fallback,
 }: AuthGuardProps) {
-  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
 
   useEffect(() => {
-    getCurrentUser().then((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+    setLoading(false);
 
-      // Redirect if auth required but not authenticated
-      if (requireAuth && !currentUser) {
-        window.location.href = "/";
-        return;
-      }
+    // Redirect if auth required but not authenticated
+    if (requireAuth && !session) {
+      window.location.href = "/";
+      return;
+    }
 
-      // Redirect if admin required but not admin
-      if (requireAdmin && !isAdmin(currentUser)) {
-        window.location.href = "/user/my-documents";
-        return;
-      }
-    });
-
-    
-  }, [requireAuth, requireAdmin]);
+    // Redirect if admin required but not admin
+    if (requireAdmin && !isAdmin(session?.user)) {
+      window.location.href = "/user/my-documents";
+      return;
+    }
+  }, [requireAuth, requireAdmin, session]);
 
   if (loading) {
     return (
@@ -53,18 +47,18 @@ export function AuthGuard({
   // Show fallback if provided and conditions not met
   if (
     fallback &&
-    ((requireAuth && !user) || (requireAdmin && !isAdmin(user)))
+    ((requireAuth && !session) || (requireAdmin && !isAdmin(session?.user)))
   ) {
     return <>{fallback}</>;
   }
 
   // Don't render if auth required but not met
-  if (requireAuth && !user) {
+  if (requireAuth && !session) {
     return null;
   }
 
   // Don't render if admin required but not met
-  if (requireAdmin && !isAdmin(user)) {
+  if (requireAdmin && !isAdmin(session?.user)) {
     return null;
   }
 

@@ -57,7 +57,7 @@ export const redirectBasedOnRole = (user: AuthUser): void => {
 };
 
 // Check if user has admin access
-export const isAdmin = (user: AuthUser | null): boolean => {
+export const isAdmin = (user: AuthUser | undefined): boolean => {
   return user?.role === "admin";
 };
 

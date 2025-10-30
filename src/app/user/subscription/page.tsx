@@ -36,7 +36,7 @@ export default function SubscriptionPage() {
     if (!plan) return;
     if (!session.data?.user?.id) return;
     const paymentRequest: PaymentRequest = {
-      description: plan.label + " - " + billingCycle,
+      description: plan.priceLabel || "",
       returnUrl: "http://localhost:3000/user/subscription",
       cancelUrl: "http://localhost:3000/user/subscription",
       userId: session.data.user.id,

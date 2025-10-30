@@ -1,19 +1,12 @@
 "use client";
 
-import {
-  Mail,
-  MapPin,
-  Calendar,
-  Edit3,
-  User as UserIcon,
-  Phone,
-} from "lucide-react";
+import { Mail, MapPin, Calendar, Edit3, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/Types";
+// `User` type not exported from @/Types; accept a flexible user shape here
 import Image from "next/image";
 
 interface ProfileHeaderProps {
-  user: User | null;
+  user: any | null;
   loading: boolean;
   onEditProfile?: () => void;
 }
@@ -84,6 +77,16 @@ export function ProfileHeader({
     return "Ho Chi Minh"; // Fallback
   };
 
+  const getInitials = () => {
+    const source = (user?.name || user?.userName || user?.email || "").trim();
+    if (!source) return "U";
+    const parts = source.split(/\s+/).filter(Boolean);
+    return parts
+      .map((w: string) => w.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join("");
+  };
+
   return (
     <div className="relative rounded-2xl overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></div>
@@ -96,7 +99,7 @@ export function ProfileHeader({
               {user.image ? (
                 <Image
                   src={user.image}
-                  alt={user.name}
+                  alt={user.name || user.userName || user.email || "User"}
                   width={96}
                   height={96}
                   className="w-24 h-24 rounded-lg object-cover"
@@ -104,11 +107,7 @@ export function ProfileHeader({
               ) : (
                 <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xl">
-                    {user.name
-                      .split(" ")
-                      .map((word) => word.charAt(0).toUpperCase())
-                      .slice(0, 2)
-                      .join("")}
+                    {getInitials()}
                   </span>
                 </div>
               )}
@@ -117,7 +116,9 @@ export function ProfileHeader({
             {/* User Info */}
             <div className="space-y-3">
               <div>
-                <h1 className="text-3xl font-bold">{user.name}</h1>
+                <h1 className="text-3xl font-bold">
+                  {user.name || user.userName || user.email}
+                </h1>
                 {user.userName && user.userName !== user.email && (
                   <p className="text-white/80 text-lg">@{user.userName}</p>
                 )}

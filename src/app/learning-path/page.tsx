@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import scheduleService, { ScheduleItem } from "@/service/scheduleService";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 // Mock data for development when backend is not available
 const mockSchedules: ScheduleItem[] = [
@@ -149,26 +157,33 @@ export default function LearningPathPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Learning Path</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="ml-auto">
+          <Button asChild className="bg-gradient-to-r from-indigo-400 to-pink-400 text-white flex items-center gap-2 shadow-md">
+            <Link href="/learning-path/edit">📅 Edit Schedule</Link>
+          </Button>
+        </div>
+      </header>
+      <main className="flex-1 p-6 md:p-10 w-full">
+        <section className="mx-auto max-w-7xl">
+          <div className="mb-6">
             <h1 className="text-2xl font-bold text-[#4f46e5] flex items-center gap-2">
               Learning Path <span className="inline-block w-4 h-4 bg-indigo-200 rounded-full" />
             </h1>
             <p className="text-sm text-gray-500">Personalized learning journey tailored to your goals</p>
             {isUsingMockData && (
-              <p className="text-xs text-amber-600 mt-1">
-                📡 Using demo data - backend not available
-              </p>
+              <p className="text-xs text-amber-600 mt-1">📡 Using demo data - backend not available</p>
             )}
           </div>
-              <Button asChild className="bg-gradient-to-r from-indigo-400 to-pink-400 text-white flex items-center gap-2 shadow-md">
-                <Link href="/learning-path/edit">
-                  📅 Edit Schedule
-                </Link>
-              </Button>
-        </div>
-
 
         {/* Study Progress - Moved to top */}
         <div className="mb-6">
@@ -292,7 +307,8 @@ export default function LearningPathPage() {
             </div>
           </div>
         )}
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

@@ -9,6 +9,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 interface SessionItem {
   id?: string;
@@ -260,22 +268,34 @@ export default function EditSchedulePage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-[#4f46e5] flex items-center gap-2">
-              Edit Schedule ⚙️
-            </h1>
-            <p className="text-sm text-gray-500">Create and manage your study schedule</p>
-          </div>
+    <>
+      {/* Header */}
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <Link href="/learning-path" className="text-sm text-muted-foreground hover:text-foreground">Learning Path</Link>
+            </BreadcrumbItem>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Edit Schedule</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="ml-auto">
           <Button asChild variant="outline">
-            <Link href="/learning-path">
-              📅 Back to Schedule
-            </Link>
+            <Link href="/learning-path">📅 Back to Schedule</Link>
           </Button>
         </div>
+      </header>
+
+      <main className="flex-1 p-6 md:p-8 w-full">
+        <section className="mx-auto max-w-7xl">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">Edit Schedule ⚙️</h1>
+            <p className="text-sm text-gray-600">Create and manage your study schedule</p>
+          </div>
 
         {/* Error/Success Messages */}
         {error && (
@@ -344,7 +364,7 @@ export default function EditSchedulePage() {
                   Next Month →
                 </Button>
               </div>
-              <div className="text-lg font-semibold text-gray-800">
+              <div className="text-lg font-semibold text-gray-900">
                 {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
             </div>
@@ -523,30 +543,24 @@ export default function EditSchedulePage() {
                               return (
                                 <div 
                                   key={session.id || `temp-${session.date}-${session.startTime}`}
-                                  className={`rounded p-1 text-xs border ${
-                                    isOverdue 
-                                      ? 'bg-red-100 border-red-300 shadow-sm' 
-                                      : isChecked 
-                                        ? 'bg-green-100 border-green-300 shadow-sm' 
-                                        : 'bg-blue-100 border-blue-300'
-                                  }`}
+                          className={`rounded p-1 text-xs border bg-gray-50 border-gray-200`}
                                 >
-                                  <div className={`font-medium truncate ${
+                          <div className={`font-medium truncate ${
                                     isOverdue 
-                                      ? 'text-red-800' 
+                                      ? 'text-red-700' 
                                       : isChecked 
-                                        ? 'text-green-800' 
-                                        : 'text-blue-800'
+                                        ? 'text-green-700' 
+                                        : 'text-gray-800'
                                   }`}>
                                     {session.subject}
                                     {isOverdue && ' ⏰'}
                                   </div>
-                                  <div className={`text-xs ${
+                          <div className={`text-xs ${
                                     isOverdue 
                                       ? 'text-red-600' 
                                       : isChecked 
                                         ? 'text-green-600' 
-                                        : 'text-blue-600'
+                                        : 'text-gray-600'
                                   }`}>
                                     {session.startTime} - {session.endTime}
                                   </div>
@@ -564,8 +578,8 @@ export default function EditSchedulePage() {
                                         isOverdue 
                                           ? 'bg-red-500 text-white hover:bg-red-600' 
                                           : isChecked 
-                                            ? 'bg-green-500 text-white hover:bg-green-600' 
-                                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                                            ? 'bg-green-600 text-white hover:bg-green-700' 
+                                            : 'bg-blue-600 text-white hover:bg-blue-700'
                                       }`}
                                     >
                                       {isOverdue ? "Overdue" : isCheckin ? "Checked In" : isSaved ? "Update" : "Save"}
@@ -668,7 +682,8 @@ export default function EditSchedulePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+        </section>
+      </main>
+    </>
   );
 }

@@ -36,7 +36,7 @@ const data = {
     },
     {
       title: "Learning Path",
-      url: "/learning-path",
+      url: "/user/learning-path",
       icon: Calendar,
     },
   ],

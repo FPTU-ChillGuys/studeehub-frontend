@@ -6,6 +6,7 @@ import {
   BookOpen,
   Settings,
   FileText,
+  CreditCard,
 } from "lucide-react";
 
 import {
@@ -35,19 +36,9 @@ const adminMenuData = {
       icon: Users,
     },
     {
-      title: "Content Management",
-      url: "/admin/content",
-      icon: BookOpen,
-    },
-    {
-      title: "Reports",
-      url: "/admin/reports",
-      icon: FileText,
-    },
-    {
-      title: "Settings",
-      url: "/admin/settings",
-      icon: Settings,
+      title: "Subscription Plans",
+      url: "/admin/subscription-plans",
+      icon: CreditCard,
     },
   ],
 };
@@ -65,7 +56,7 @@ export function AdminSidebar({
       }
     : {
         name: "Admin",
-        email: "admin@studeehub.com", 
+        email: "admin@studeehub.com",
         avatar: "", // Let AvatarFallback show initials
       };
 

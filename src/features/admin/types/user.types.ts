@@ -1,3 +1,5 @@
+import { MetricsResponse } from "..";
+
 export interface User {
   id: string;
   email: string;
@@ -36,4 +38,29 @@ export interface UserUpdateData {
   email?: string;
   status?: 'active' | 'inactive' | 'suspended';
   role?: 'admin' | 'user' | 'moderator';
+}
+
+export interface FocusChart {
+  date: string;
+  focusHours: number;
+}
+
+export interface UserMetrics {
+  userId: string;
+  fullName: string;
+  subscriptionName: string;
+  joinedAt: string;
+  totalSessions: number;
+  totalFocusHours: number;
+  avgFocusPerDay: number;
+  focusChart: FocusChart[];
+  totalSchedules: number;
+  completedSchedules: number;
+  completionRate: number;
+  currentStreak: number;
+  longestStreak: number;
+  unlockedAchievements: number;
+  recentAchievements: string[];
+  activeDays: number;
+  engagementRatePercent: number;
 }

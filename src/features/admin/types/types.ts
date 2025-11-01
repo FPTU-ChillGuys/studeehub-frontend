@@ -14,7 +14,7 @@ export interface UserTrendSummary {
   growthRatePercent: number;
 }
 
-export interface UserMetricsResponse {
+export interface MetricsResponse {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
@@ -36,7 +36,7 @@ export interface UserMetricsResponse {
   trend: UserTrendSummary;
 }
 
-export interface UserMetrics extends Omit<UserMetricsResponse, 'monthlyUserGrowth' | 'trendSummary'> {
+export interface Metrics extends Omit<MetricsResponse, 'monthlyUserGrowth' | 'trendSummary'> {
   monthlyGrowth: MonthlyUserCount[];
   trend: UserTrendSummary;
 }

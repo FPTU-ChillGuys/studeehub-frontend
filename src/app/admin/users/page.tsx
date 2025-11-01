@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, UserPlus, RefreshCw, MoreVertical, Pencil, Trash2, Ban, CheckCircle } from 'lucide-react';
+import { Search, UserPlus, RefreshCw, MoreVertical, Pencil, Ban, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
@@ -46,7 +46,6 @@ export default function UserManagementPage() {
       setLoading(true);
       const params = { ...filters };
       const response = await userService.getUsers(params);
-      console.log("Responses", response);
       
       // The response is already the paginated data, no need to access .data
       setUsers(response.data || []);
@@ -76,19 +75,6 @@ export default function UserManagementPage() {
     } catch (error) {
       console.error('Error updating user status:', error);
       toast.error('Failed to update user status');
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      try {
-        await userService.deleteUser(userId);
-        toast.success('User deleted successfully');
-        fetchUsers();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        toast.error('Failed to delete user');
-      }
     }
   };
 
@@ -255,13 +241,6 @@ export default function UserManagementPage() {
                                 Suspend
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => handleDeleteUser(user.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

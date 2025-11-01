@@ -41,11 +41,11 @@ export default async function RootLayout({
         <link rel="shortcut icon" href="/logo.PNG" type="image/png" />
         <link rel="apple-touch-icon" href="/logo.PNG" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <NextTopLoader color="#FF0000" />
-        <Providers session={session}>{children}</Providers>
+      <body>
+        <div className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ display: "contents" }}>
+          <NextTopLoader color="#FF0000" />
+          <Providers session={session}>{children}</Providers>
+        </div>
       </body>
     </html>
   );

@@ -23,6 +23,16 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { 
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 interface SessionItem {
   id?: string;
@@ -39,14 +49,19 @@ export default function EditSchedulePage() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
+  const toLocalDateInput = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(toLocalDateInput(new Date()));
   const [currentDate, setCurrentDate] = useState(new Date());
   const [filterStatus, setFilterStatus] = useState<"all" | "saved" | "unsaved">(
     "all"
@@ -54,6 +69,15 @@ export default function EditSchedulePage() {
   const [filterCheckin, setFilterCheckin] = useState<
     "all" | "checked" | "unchecked" | "overdue"
   >("all");
+
+  // Drawer (Sheet) state for day agenda and quick add
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [sheetDate, setSheetDate] = useState<string>(selectedDate);
+  const [newSubject, setNewSubject] = useState("");
+  const [newStartTime, setNewStartTime] = useState("19:00");
+  const [newEndTime, setNewEndTime] = useState("21:00");
+  const [newDescription, setNewDescription] = useState("");
+  const [newReminder, setNewReminder] = useState<number>(15);
 
   // Load existing schedules on component mount
   useEffect(() => {
@@ -81,6 +105,70 @@ export default function EditSchedulePage() {
     return "unchecked";
   };
 
+  const openSheetForDate = (dateString: string) => {
+    setSheetDate(dateString);
+    setSelectedDate(dateString);
+    setIsSheetOpen(true);
+  };
+
+  const resetNewDraft = () => {
+    setNewSubject("");
+    setNewStartTime("19:00");
+    setNewEndTime("21:00");
+    setNewDescription("");
+    setNewReminder(15);
+  };
+
+  const addNewSessionFromSheet = async () => {
+    if (!userId) return;
+    const subject = newSubject.trim();
+    if (!subject) {
+      setError("Please enter a subject for the session");
+      return;
+    }
+    if (!sheetDate) {
+      setError("Please select a date");
+      return;
+    }
+    const startDateTime = new Date(`${sheetDate}T${newStartTime}`);
+    const endDateTime = new Date(`${sheetDate}T${newEndTime}`);
+    if (endDateTime <= startDateTime) {
+      setError("End time must be after start time");
+      return;
+    }
+    // Overlap check for same date
+    const hasOverlap = sessions.some((existingSession) => {
+      if (existingSession.date !== sheetDate) return false;
+      const existingStart = new Date(`${existingSession.date}T${existingSession.startTime}`);
+      const existingEnd = new Date(`${existingSession.date}T${existingSession.endTime}`);
+      return startDateTime < existingEnd && endDateTime > existingStart;
+    });
+    if (hasOverlap) {
+      setError("This schedule overlaps with an existing schedule on the same date");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await scheduleService.createSchedule({
+        userId,
+        title: subject,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        description: newDescription,
+        reminderMinutesBefore: newReminder,
+      });
+      await loadSchedules();
+      resetNewDraft();
+      setSuccess("Session added");
+    } catch (err: any) {
+      setError(err.message || "Failed to save schedule");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const loadSchedules = async () => {
     if (!userId) return;
 
@@ -95,7 +183,7 @@ export default function EditSchedulePage() {
         const sessionItems: SessionItem[] = response.data.map(
           (schedule: ScheduleItem) => ({
             id: schedule.id,
-            date: new Date(schedule.startTime).toISOString().split("T")[0],
+            date: toLocalDateInput(new Date(schedule.startTime)),
             subject: schedule.title,
             startTime: new Date(schedule.startTime).toTimeString().slice(0, 5),
             endTime: new Date(schedule.endTime).toTimeString().slice(0, 5),
@@ -239,23 +327,10 @@ export default function EditSchedulePage() {
           reminderMinutesBefore: session.reminderMinutesBefore,
         };
 
-        const response = await scheduleService.createSchedule(createData);
-
-        if (response.success) {
-          // Update the session with the actual ID from response
-          const newScheduleId =
-            response.data &&
-            typeof response.data === "object" &&
-            "id" in response.data
-              ? (response.data as any).id
-              : `schedule-${Date.now()}`; // fallback ID
-          updateSession(idx, { id: newScheduleId });
-          setSuccess("Schedule created successfully!");
-          // Reload schedules to get the latest data
-          await loadSchedules();
-        } else {
-          setError(response.message || "Failed to create schedule");
-        }
+        await scheduleService.createSchedule(createData);
+        setSuccess("Schedule created successfully!");
+        // Reload schedules to get the latest data
+        await loadSchedules();
       }
     } catch (err: any) {
       setError(err.message || "Failed to save schedule");
@@ -349,22 +424,8 @@ export default function EditSchedulePage() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                Weekly Calendar View
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="date-select">Add to date:</Label>
-                <Input
-                  id="date-select"
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-auto"
-                />
-                <Button onClick={addSession} size="sm">
-                  ➕ Add Session
-                </Button>
-              </div>
+              <CardTitle className="flex items-center gap-2">Monthly Calendar</CardTitle>
+              <div className="text-sm text-muted-foreground">Click a day to manage sessions</div>
             </div>
 
             {/* Month Navigation */}
@@ -551,7 +612,7 @@ export default function EditSchedulePage() {
                 // Group sessions by date
                 const scheduleMap = new Map();
                 sessions.forEach((session) => {
-                  const sessionDate = new Date(session.date);
+                  const sessionDate = new Date(`${session.date}T00:00:00`);
                   const dateKey = sessionDate.toDateString();
 
                   if (!scheduleMap.has(dateKey)) {
@@ -596,7 +657,8 @@ export default function EditSchedulePage() {
                       return (
                         <div
                           key={dayIndex}
-                          className={`min-h-[120px] border-r last:border-r-0 p-2 ${
+                          onClick={() => openSheetForDate(toLocalDateInput(day.date))}
+                          className={`min-h-[120px] border-r last:border-r-0 p-2 cursor-pointer hover:bg-accent/40 transition ${
                             day.isCurrentMonth ? "bg-card" : "bg-muted"
                           } ${
                             day.isToday
@@ -714,102 +776,109 @@ export default function EditSchedulePage() {
           </CardContent>
         </Card>
 
-        {/* Session Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Manage Sessions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {sessions.map((session, idx) => (
-                <div key={idx} className="p-4 border rounded-lg bg-white">
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div>
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={session.date}
-                        onChange={(e) =>
-                          updateSession(idx, { date: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Subject</Label>
-                      <Input
-                        value={session.subject}
-                        onChange={(e) =>
-                          updateSession(idx, { subject: e.target.value })
-                        }
-                        placeholder="Enter subject"
-                      />
-                    </div>
-                    <div>
-                      <Label>Start Time</Label>
-                      <Input
-                        type="time"
-                        value={session.startTime}
-                        onChange={(e) =>
-                          updateSession(idx, { startTime: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>End Time</Label>
-                      <Input
-                        type="time"
-                        value={session.endTime}
-                        onChange={(e) =>
-                          updateSession(idx, { endTime: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <Button
-                        onClick={() => saveSchedule(session, idx)}
-                        disabled={saving || !session.subject}
-                        size="sm"
-                        className="flex-1"
-                      >
-                        💾 {session.id ? "Update" : "Save"}
-                      </Button>
-                      <Button
-                        onClick={() => removeSession(idx)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        🗑️
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <Label>Description (optional)</Label>
-                    <Input
-                      value={session.description || ""}
-                      onChange={(e) =>
-                        updateSession(idx, { description: e.target.value })
-                      }
-                      placeholder="Add a description..."
-                    />
-                  </div>
-                </div>
-              ))}
+        {/* Floating Action Button */}
+        <div className="fixed bottom-6 right-6 z-40">
+          <Button
+            className="rounded-full h-12 w-12 text-xl shadow-lg"
+            onClick={() => openSheetForDate(selectedDate)}
+            title="Quick add session"
+          >
+            ＋
+          </Button>
+        </div>
 
-              {sessions.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <div className="text-4xl mb-3">📅</div>
-                  <p>No sessions scheduled yet.</p>
-                  <p className="text-sm">
-                    Click &quot;Add Session&quot; to create your first study
-                    session.
-                  </p>
+        {/* Day Agenda Sheet */}
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent side="right" className="sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Manage Sessions</SheetTitle>
+              <SheetDescription>
+                {new Date(sheetDate).toLocaleDateString()} — add or edit sessions for this day
+              </SheetDescription>
+            </SheetHeader>
+            <div className="px-4 space-y-4 overflow-y-auto">
+              {/* Quick Add */}
+              <div className="p-3 border rounded-lg">
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <Label>Subject</Label>
+                    <Input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} placeholder="Enter subject" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Start</Label>
+                      <Input type="time" value={newStartTime} onChange={(e) => setNewStartTime(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>End</Label>
+                      <Input type="time" value={newEndTime} onChange={(e) => setNewEndTime(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Optional" />
+                  </div>
+                  <div>
+                    <Label>Reminder (minutes)</Label>
+                    <Input type="number" min={0} value={newReminder} onChange={(e) => setNewReminder(Number(e.target.value || 0))} />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={addNewSessionFromSheet} disabled={saving || !newSubject.trim()}>Add</Button>
+                    <Button variant="outline" onClick={resetNewDraft}>Reset</Button>
+                  </div>
                 </div>
-              )}
+              </div>
+
+              {/* Existing sessions for this day */}
+              <div className="space-y-3">
+                {sessions
+                  .map((s, idx) => ({ s, idx }))
+                  .filter(({ s }) => s.date === sheetDate)
+                  .map(({ s, idx }) => {
+                    const status = getSessionStatus(s);
+                    const isOverdue = status === "overdue";
+                    const isChecked = status === "checked";
+                    return (
+                      <div key={s.id || `temp-${idx}`} className={`p-3 border rounded-lg ${isOverdue ? 'bg-red-50' : isChecked ? 'bg-green-50' : 'bg-blue-50'}`}>
+                        <div className="grid grid-cols-1 gap-3">
+                          <div>
+                            <Label>Subject</Label>
+                            <Input value={s.subject} onChange={(e) => updateSession(idx, { subject: e.target.value })} />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label>Start</Label>
+                              <Input type="time" value={s.startTime} onChange={(e) => updateSession(idx, { startTime: e.target.value })} />
+                            </div>
+                            <div>
+                              <Label>End</Label>
+                              <Input type="time" value={s.endTime} onChange={(e) => updateSession(idx, { endTime: e.target.value })} />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Description</Label>
+                            <Input value={s.description || ''} onChange={(e) => updateSession(idx, { description: e.target.value })} />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => saveSchedule(s, idx)}>💾 {s.id ? 'Update' : 'Save'}</Button>
+                            <Button size="sm" variant="outline" onClick={() => removeSession(idx)}>🗑️</Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {sessions.filter(s => s.date === sheetDate).length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center">No sessions for this day.</div>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
     </SidebarInset>
   );

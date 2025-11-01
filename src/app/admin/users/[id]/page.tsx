@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { ArrowLeft, User, Mail, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 import { UserProfile } from '@/Types';
 import userService from '@/service/userService';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export default function UserDetailPage() {
   const router = useRouter();

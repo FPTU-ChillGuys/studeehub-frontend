@@ -1,8 +1,8 @@
 import { deleteFlashcardById, getFlashcardsByNotebookId, updateFlashcardDeck, updateFlashcardTitle } from "@/lib/actions/flashcard";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request, params: { params: { id: string } }) {
-    const { id } = await params.params;
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string; }> }) {
+    const { id } = await context.params;
 
     const response = await getFlashcardsByNotebookId(id);
 
@@ -24,8 +24,8 @@ export async function GET(request: Request, params: { params: { id: string } }) 
 
 }
 
-export async function DELETE(request: Request, params: { params: { id: string } }) {
-    const { id } = await params.params;
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string; }> }) {
+    const { id } = await context.params;
 
     const response = await deleteFlashcardById(id);
 
@@ -37,8 +37,8 @@ export async function DELETE(request: Request, params: { params: { id: string } 
 
 
 
-export async function PUT (request: NextRequest, params: { params: { id: string } }) {
-    const { id } = await params.params;
+export async function PUT (request: NextRequest, context: { params: Promise<{ id: string; }> }) {
+    const { id } = await context.params;
     const { updatePayload } = await request.json();
 
     console.log("Updating flashcard deck with id:", id);

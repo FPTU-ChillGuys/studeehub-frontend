@@ -1,10 +1,8 @@
 import { deleteResourceById } from "@/lib/actions/resources";
+import { NextRequest } from "next/server";
 
-export async function DELETE(
-  request: Request,
-  params: { params: { id: string } }
-) {
-  const { id } = await params.params;
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string; }>; }) {
+  const { id } = await context.params;
 
   const response = await deleteResourceById(id);
   

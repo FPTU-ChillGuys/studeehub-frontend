@@ -12,11 +12,10 @@ import DocumentsPanel from "@/components/notebook-detail/DocumentsPanel";
 import { getFileIcon } from "@/components/notebook-detail/utils";
 import { LoadingNotebookDetail } from "@/components/notebook-detail";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, parsePartialJson } from "ai";
+import { DefaultChatTransport, UIMessage } from "ai";
 import useState from "react-usestateref";
 import FlashcardsPanel from "@/components/notebook-detail/FlashcardsPanel";
 import "react-quizlet-flashcard/dist/index.css";
-import { nanoid } from "nanoid";
 import { uploadNotebookFile } from "@/features/notebook/api/upload";
 import { getChatbot } from "@/features/chatbot/api/chatbot";
 import { getNotebook } from "@/features/notebook/api/notebook";
@@ -30,6 +29,14 @@ import { getFile } from "@/features/file/api/file";
 import { deleteResource, getResource } from "@/features/resource/api/resource";
 import { toast } from "sonner";
 import { useTopLoader } from "nextjs-toploader";
+import { ConvertApiToDocuments, DocumentApiResponse } from "@/lib/mapping/document";
+import { 
+  ConvertApiToFlashcardDecks, 
+  ConvertGeneratedFlashcardToFlashcardDeck,
+  ConvertFlashcardDeckToApi,
+  FlashcardDeckApiResponse,
+  FlashcardGenerateApiResponse
+} from "@/lib/mapping/flashcard";
 
 const NotebookDetailPage = () => {
   const params = useParams();
@@ -116,8 +123,9 @@ const NotebookDetailPage = () => {
       setIsLoadingMessages(true);
       try {
         const response = await getChatbot(`${notebookId}`);
-        if (response.success) {
-          setMessages(response.data.messages || []);
+        if (response.success && response.data) {
+          const messagesData = response.data as { messages: UIMessage[] };
+          setMessages(messagesData.messages || []);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -134,13 +142,11 @@ const NotebookDetailPage = () => {
       setIsLoadingNotebook(true);
       try {
         const response = await getNotebook(`${notebookId}`);
-        if (response.success) {
+        if (response.success && response.data) {
+          const notebookData = response.data as { notebook: Partial<Notebook> };
           setNotebook({
             ...notebookRef.current,
-            // id : response.data.id,
-            // title : response.data.title,
-            // description : response.data.description,
-            ...response.data.notebook,
+            ...notebookData.notebook,
           } as Notebook);
         }
       } catch (error) {
@@ -159,18 +165,13 @@ const NotebookDetailPage = () => {
       setIsLoadingDocuments(true);
       try {
         const response = await getFile(`${notebookId}`);
-        if (response.success) {
-          const data = response.data;
-          // Update documents in notebook state
-          // Get documents from response
-          const documents: Document[] =
-            data?.resources?.map((res: any) => ({
-              id: res.id,
-              name: res.fileName,
-              type: res.type,
-              url: res.url,
-              status: "completed",
-            })) || [];
+        if (response.success && response.data) {
+          const fileData = response.data as { resources: DocumentApiResponse[] };
+          // Update documents in notebook state using mapping
+          const documents: Document[] = ConvertApiToDocuments(
+            fileData.resources || []
+          );
+          
           setNotebook((prev) => ({
             ...prev,
             documents: documents,
@@ -229,14 +230,16 @@ const NotebookDetailPage = () => {
 
           if (!response.success) {
             uploadStatus = "error";
+            const errorData = response.data as { message?: string } | undefined;
             console.log("Upload error message:", response);
             toast.error("Upload failed!", {
               description:
-                response.data?.message ||
+                errorData?.message ||
                 "Failed to upload files. Please try again or try upload smaller files under 1000 words.",
             });
           } else {
-            resourceIds = response.data.resourceIds || [];
+            const uploadData = response.data as { resourceIds?: string[] } | undefined;
+            resourceIds = uploadData?.resourceIds || [];
             toast.success("Files uploaded successfully!", {
               description: `${files.length} file(s) have been uploaded and are being processed.`,
             });
@@ -337,38 +340,24 @@ const NotebookDetailPage = () => {
     
     loader.setProgress(50);
 
-    if (response.success === true) {
-      // Map response to IFlashcard format
-      const generatedFlashcard: FlashcardDeck = {
-        id: response.data.flashcards?.id || nanoid(),
-        title: response.data.flashcards?.title,
-        cards: response?.data.flashcards?.decks?.map((fc: any, index : number) => ({
-          id: index,
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                {fc.front}
-              </div>
-            ),
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                {fc.back}
-              </div>
-            ),
-          },
-        })),
-        cardCount: response?.data.flashcards?.decks?.length,
-      };
+    if (response.success === true && response.data) {
+      const flashcardsData = response.data as { flashcards: FlashcardGenerateApiResponse };
+      
+      // Map response to FlashcardDeck format using mapping function
+      const generatedFlashcard = ConvertGeneratedFlashcardToFlashcardDeck(
+        flashcardsData.flashcards,
+        flashcardsData.flashcards.id
+      );
+      
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
       toast.success("Flashcards generated successfully");
     }
     // Add toast notification for failure
     else {
+      const errorData = response.data as { message?: string } | undefined;
       toast.error("Flashcard generation failed!", {
         description:
-          response.data?.message ||
+          errorData?.message ||
           "Unable to generate flashcards. Please try again.",
       });
     }
@@ -393,38 +382,24 @@ const NotebookDetailPage = () => {
     
     loader.setProgress(50);
 
-    if (response.success === true) {
-      // Map response to IFlashcard format
-      const generatedFlashcard: FlashcardDeck = {
-        id:  response.data.flashcards?.id || nanoid(),
-        title: response.data.flashcards?.title,
-        cards: response?.data.flashcards?.decks?.map((fc: any, index : number) => ({
-          front: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                {fc.front}
-              </div>
-            ),
-          },
-          back: {
-            html: (
-              <div className="flex items-center justify-center h-full w-full p-6">
-                {fc.back}
-              </div>
-            ),
-          },
-          id: index,
-        })),
-        cardCount: response?.data.flashcards?.decks?.length,
-      };
+    if (response.success === true && response.data) {
+      const flashcardsData = response.data as { flashcards: FlashcardGenerateApiResponse };
+      
+      // Map response to FlashcardDeck format using mapping function
+      const generatedFlashcard = ConvertGeneratedFlashcardToFlashcardDeck(
+        flashcardsData.flashcards,
+        flashcardsData.flashcards.id
+      );
+      
       setFlashcards([...flashcardsRef.current, generatedFlashcard]);
       toast.success("Flashcards generated successfully");
     }
     // Add toast notification for failure
     else {
+      const errorData = response.data as { message?: string } | undefined;
       toast.error("Flashcard generation failed!", {
         description:
-          response.data?.message ||
+          errorData?.message ||
           "Unable to generate flashcards. Please try again.",
       });
     }
@@ -439,36 +414,15 @@ const NotebookDetailPage = () => {
       setIsLoadingFlashcards(true);
       try {
         const response = await getFlashcards(`${notebookId}`);
-        if (response.success === true) {
-          const fetchedFlashcards: FlashcardDeck[] =
-            response.data.flashcards.map(
-              (fc: any) =>
-                ({
-                  id: fc.id,
-                  title: fc.title,
-                  cardCount: fc.cardCount,
-                  cards: fc.cards.map((card: any, index: number) => ({
-                    id: index,
-                    front: {
-                      html: (
-                        <div className="flex items-center justify-center h-full w-full p-6">
-                          {card?.front || "No content"}
-                        </div>
-                      ),
-                    },
-                    back: {
-                      html: (
-                        <div className="flex items-center justify-center h-full w-full p-6">
-                          {card?.back || "No content"}
-                        </div>
-                      ),
-                    },
-                  })),
-                } as FlashcardDeck)
-            );
+        if (response.success === true && response.data) {
+          const flashcardsData = response.data as { flashcards: FlashcardDeckApiResponse[] };
+          
+          // Use mapping function to convert API response to FlashcardDeck[]
+          const fetchedFlashcards = ConvertApiToFlashcardDecks(flashcardsData.flashcards);
           setFlashcards(fetchedFlashcards);
         } else {
-          console.error("Failed to fetch flashcards:", response.data.message);
+          const errorData = response.data as { message?: string } | undefined;
+          console.error("Failed to fetch flashcards:", errorData?.message);
         }
       } catch (error) {
         console.error("Error fetching flashcards:", error);
@@ -526,28 +480,10 @@ const NotebookDetailPage = () => {
   const onUpdateDeck = async (flashcardId: string, updatedDeck: FlashcardDeck) => {
     loader.start();
     
-    // Convert FlashcardDeck to API format
-    // flashcardId là ID của FlashcardDeck (chính là deck.id)
-    // updatedDeck.cards là array các deck items
-    const updatePayload = {
-      title: updatedDeck.title,
-      cards: updatedDeck.cards.map((card: any) => ({
-        front: extractTextFromReactElement(card.front.html),
-        back: extractTextFromReactElement(card.back.html),
-      })),
-    };
+    // Convert FlashcardDeck to API format using mapping
+    const updatePayload = ConvertFlashcardDeckToApi(updatedDeck);
 
     try {
-      // const response = await fetch(`/api/flashcard/${flashcardId}`, {
-      //   method: "PUT",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ updatePayload: updatePayload }),
-      // });
-
-      // const updatedDeckResponse = await response.json();
-
       const response = await putFlashcard(flashcardId, { updatePayload });
       
       loader.setProgress(50);
@@ -560,7 +496,7 @@ const NotebookDetailPage = () => {
               ...flashcard,
               title: updatedDeck.title,
               cardCount: updatePayload.cards.length,
-              cards: updatePayload.cards.map((card: any, index: number) => ({ 
+              cards: updatePayload.cards.map((card, index: number) => ({ 
                 id: index.toString(),
                 front: { 
                   html: (
@@ -591,24 +527,6 @@ const NotebookDetailPage = () => {
     } finally {
       loader.done();
     }
-  };
-
-  // Helper function to extract text from React element
-  const extractTextFromReactElement = (element: any): string => {
-    if (typeof element === "string") return element;
-    if (!element) return "";
-    
-    if (element.props && element.props.children) {
-      const children = element.props.children;
-      if (typeof children === "string") return children;
-      if (Array.isArray(children)) {
-        return children.map(child => 
-          typeof child === "string" ? child : extractTextFromReactElement(child)
-        ).join("");
-      }
-    }
-    
-    return "";
   };
 
   const handleDeleteResource = async (resourceId: string) => {
@@ -647,8 +565,14 @@ const NotebookDetailPage = () => {
     try {
       const response = await getResource(doc.id);
       console.log("Resource content response:", response);
-      if (response.success && response.data?.content) {
-        setDocumentContent(response.data.content);
+      if (response.success && response.data) {
+        const contentData = response.data as { content?: string };
+        if (contentData.content) {
+          setDocumentContent(contentData.content);
+        } else {
+          toast.error("Failed to load document content");
+          setDocumentContent("Failed to load content");
+        }
       } else {
         toast.error("Failed to load document content");
         setDocumentContent("Failed to load content");

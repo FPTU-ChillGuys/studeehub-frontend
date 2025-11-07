@@ -70,13 +70,15 @@ const NotebooksPage = () => {
       try {
         const response = await getNotebook(`user/${userIdRef.current}`);
 
-        if (response.success) {
-          if (response.data.notebooks.length === 0) {
+        if (response.success && response.data) {
+          const notebooksData = response.data as { notebooks: any[] };
+          
+          if (notebooksData.notebooks.length === 0) {
             setNotebooks([]);
           } else {
-            // Get document counts for each notebook
+            // Get document counts for each notebook using mapping
             setNotebooks(
-              response.data.notebooks.map((notebook: any) =>
+              notebooksData.notebooks.map((notebook: any) =>
                 ConvertAnyToNotebook(notebook)
               )
             );
@@ -109,18 +111,25 @@ const NotebooksPage = () => {
     });
     loader.setProgress(50);
 
-    if (response.success && response.data.notebook) {
-      newNotebook = response.data.notebook as Notebook;
-      newNotebook.createdDate = new Date().toUTCString();
-      newNotebook.lastModified = new Date().toUTCString();
-      newNotebook.documentsCount = 0;
-      toast.success("Notebook created successfully");
+    if (response.success && response.data) {
+      const notebookData = response.data as { notebook: any };
+      
+      if (notebookData.notebook) {
+        newNotebook = notebookData.notebook as Notebook;
+        newNotebook.createdDate = new Date().toUTCString();
+        newNotebook.lastModified = new Date().toUTCString();
+        newNotebook.documentsCount = 0;
+        toast.success("Notebook created successfully");
+        
+        setNotebooks((prev) => [notebookData.notebook, ...prev]);
+      } else {
+        toast.error("Failed to create notebook");
+      }
     } else {
       toast.error("Failed to create notebook");
     }
 
     loader.done();
-    setNotebooks((prev) => [response.data.notebook, ...prev]);
   };
 
   const handleEditNotebook = async (id: string, newTitle: string) => {

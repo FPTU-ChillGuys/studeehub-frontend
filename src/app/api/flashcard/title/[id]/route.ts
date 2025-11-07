@@ -1,7 +1,8 @@
 import { updateFlashcardTitle } from "@/lib/actions/flashcard";
+import { NextRequest } from "next/server";
 
-export async function PUT(request: Request, params: { params: { id: string } }) {
-    const { id } = await params.params;
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string; }>; }) {
+    const { id } = await context.params;
     const { title } = await request.json();
 
     const response = await updateFlashcardTitle(id, title);

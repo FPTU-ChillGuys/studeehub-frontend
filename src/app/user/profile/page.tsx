@@ -186,7 +186,7 @@ export default function ProfilePage() {
         <ProfileStats stats={stats} loading={loading} />
 
         {/* Streak Banner */}
-        <StreakBanner stats={stats} userName={user?.name} loading={loading} />
+        <StreakBanner stats={stats} userName={user?.fullName} loading={loading} />
 
         {/* Navigation Tabs */}
         <div className="border-b border-gray-200">

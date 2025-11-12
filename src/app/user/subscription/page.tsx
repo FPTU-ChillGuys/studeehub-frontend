@@ -37,8 +37,8 @@ export default function SubscriptionPage() {
     if (!session.data?.user?.id) return;
     const paymentRequest: PaymentRequest = {
       description: plan.priceLabel || "",
-      returnUrl: "http://localhost:3000/user/subscription",
-      cancelUrl: "http://localhost:3000/user/subscription",
+      returnUrl: "https://studeehub.vercel.app/user/subscription",
+      cancelUrl: "https://studeehub.vercel.app/user/subscription",
       userId: session.data.user.id,
       subscriptionPlanId: planId,
     };

@@ -7,9 +7,7 @@ import {
   FAQ,
   Guarantee,
 } from "@/components/subscription/StaticSubscriptionContent";
-import {
-  faqData,
-} from "@/components/subscription/SubscriptionCards";
+import { faqData } from "@/components/subscription/SubscriptionCards";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,14 +35,14 @@ export default function SubscriptionPage() {
     if (!session.data?.user?.id) return;
     const paymentRequest: PaymentRequest = {
       description: plan.priceLabel || "",
-      returnUrl: "https://studeehub.vercel.app/user/subscription",
-      cancelUrl: "https://studeehub.vercel.app/user/subscription",
+      returnUrl: process.env.NEXT_PUBLIC_APP_URL + "/user/subscription",
+      cancelUrl: process.env.NEXT_PUBLIC_APP_URL + "/user/subscription",
       userId: session.data.user.id,
       subscriptionPlanId: planId,
     };
     const paymentLink = await paymentService.createPayment(paymentRequest);
     redirect(paymentLink.checkoutUrl);
-  } 
+  };
 
   return (
     <SidebarInset>
@@ -231,9 +229,9 @@ function PricingCard({
 
   return (
     <div
-      className={`relative rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
-        "border-gray-200 hover:border-gray-300 hover:shadow-lg"
-      } ${highlighted ? "border-purple-300" : ""}`}
+      className={`relative rounded-2xl border-2 transition-all duration-300 cursor-pointer ${"border-gray-200 hover:border-gray-300 hover:shadow-lg"} ${
+        highlighted ? "border-purple-300" : ""
+      }`}
       onClick={onSelect}
     >
       <div className="bg-white rounded-2xl p-6 h-full flex flex-col">

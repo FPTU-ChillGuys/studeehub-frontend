@@ -13,13 +13,15 @@ import { AuthUser } from "@/Types";
 export class AuthService {
   // Register a new user
   static async register(userData: RegisterRequest): Promise<{ success: boolean; message: string }> {
-    const clientUri = process.env.NEXT_PUBLIC_DEFAULT_CLIENT_URI;
+    let clientUri = process.env.NEXT_PUBLIC_API_URL;
 
     if (!clientUri) {
       throw new Error(
-        "NEXT_PUBLIC_DEFAULT_CLIENT_URI is not configured in environment variables"
+        "NEXT_PUBLIC_API_URL is not configured in environment variables"
       );
     }
+
+    clientUri += "/auths/verify-email";
 
     const requestData: RegisterRequestWithClientUri = {
       ...userData,

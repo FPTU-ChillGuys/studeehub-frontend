@@ -1,6 +1,6 @@
-import { PDFParse } from "pdf-parse";
-import 'pdfjs-dist/build/pdf.worker.mjs';
 import { CanvasFactory } from 'pdf-parse/worker';
+import { PDFParse } from 'pdf-parse';
+import 'pdfjs-dist/build/pdf.worker.mjs';
 
 export const PdfBufferToText = async (buffer: Buffer): Promise<string> => {
   const parser = new PDFParse({ data: buffer, CanvasFactory });

@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       "localhost", // Local development
     ],
   },
+  serverExternalPackages: ["pdf-parse", "@napi-rs/canvas"],
 };
 
 export default nextConfig;

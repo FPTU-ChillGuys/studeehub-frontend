@@ -96,22 +96,22 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
       isOtherPanelExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
     } flex flex-col border-r border-border h-full transition-all duration-300`}>
       {/* Documents Header */}
-      <div className="p-4 border-b border-border bg-card">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="p-2 sm:p-4 border-b border-border bg-card">
+        <div className="flex items-center gap-1 sm:gap-3 mb-2">
           <Link href="/user/my-documents">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-foreground">Documents</h2>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">Documents</h2>
           </div>
           {onToggleCollapse && !isExpanded && (
             <Button
               onClick={onToggleCollapse}
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 shrink-0 hidden md:flex"
               title="Collapse"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -122,7 +122,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
               onClick={onToggleExpand}
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 shrink-0"
               title={isExpanded ? "Minimize" : "Maximize"}
             >
               {isExpanded ? (
@@ -132,34 +132,37 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
               )}
             </Button>
           )}
-          <Button
-            onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-2"
-            size="sm"
-          >
-            <Upload className="w-4 h-4" />
-            Upload
-          </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
+        
+        {/* Upload Button - Full Width Row */}
+        <Button
+          onClick={() => setIsUploadModalOpen(true)}
+          className="w-full mb-2"
+          size="sm"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Upload Files
+        </Button>
+        
+        <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
           Manage documents within this notebook
         </p>
       </div>
 
       {/* Selected Documents Info */}
-      <div className="px-4 py-2 bg-muted/50 border-b border-border">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
+      <div className="px-2 sm:px-4 py-2 bg-muted/50 border-b border-border">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground line-clamp-2 flex-1">
             {selectedDocuments.size > 0
               ? `${selectedDocuments.size} documents selected for chat`
               : "Select documents to chat with AI and generate flashcards"}
           </p>
           {completedDocsCount > 0 && (
-            <div className="flex gap-1">
+            <div className="flex gap-1 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 text-xs"
+                className="h-6 text-xs px-2"
                 onClick={onSelectAll}
               >
                 Select All
@@ -168,7 +171,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 text-xs"
+                  className="h-6 text-xs px-2"
                   onClick={onClearSelection}
                 >
                   Clear

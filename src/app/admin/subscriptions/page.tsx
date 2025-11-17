@@ -5,13 +5,14 @@ import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import {
   SubscriptionSearchFilters,
-  SubscriptionsTable,
+  SubscriptionsTableWithExpand,
   PaginationControls,
   CreateSubscriptionModal,
 } from "@/components/admin/subscriptions";
 import {
   SubscriptionsResponse,
   SubscriptionFilters,
+  PaymentTransaction,
 } from "@/Types/subscriptions";
 import { SubscriptionPlan } from "@/Types/subcription-plans";
 import { UserProfile } from "@/Types";
@@ -214,7 +215,20 @@ export default function SubscriptionsPage() {
       {/* Subscriptions Table */}
       {subscriptions && (
         <Card>
-          <SubscriptionsTable subscriptions={subscriptionsRef.current?.data ?? []} />
+          <SubscriptionsTableWithExpand
+            subscriptions={subscriptionsRef.current?.data ?? []}
+            onRowExpand={async (subscriptionId: string) => {
+              try {
+                // Call your API to get payment transactions
+                const response = await subscriptionService.getTransactionBySubscriptionId(subscriptionId);
+                console.log('Fetched transactions:', response);
+                return response;
+              } catch (error) {
+                console.error("Error fetching transactions:", error);
+                return [];
+              }
+            }}
+          />
           <PaginationControls
             pageNumber={filters.pageNumber}
             pageSize={filters.pageSize}

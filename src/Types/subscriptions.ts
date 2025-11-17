@@ -51,3 +51,15 @@ export interface SubscriptionFilters {
   sortBy: string;
   sortDescending: boolean;
 }
+
+
+export interface PaymentTransaction {
+  id: string;
+  paymentMethod: string;
+  amount: number;
+  currency: string;
+  transactionCode: string;
+  status: number;
+  createdAt: string;
+  completedAt: string;
+}

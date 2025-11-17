@@ -105,7 +105,7 @@ export default function SubscriptionsPage() {
   }, []);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 w-full">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
@@ -147,10 +147,10 @@ export default function SubscriptionsPage() {
             pageNumber={filters.pageNumber}
             pageSize={filters.pageSize}
             totalCount={subscriptions.totalCount}
-            onPageNumberChange={(value) =>
+            onPageNumberChange={(value: number) =>
               handleFilterChange("pageNumber", value)
             }
-            onPageSizeChange={(value) =>
+            onPageSizeChange={(value: number) =>
               handleFilterChange("pageSize", value)
             }
             onSearch={handleSearch}

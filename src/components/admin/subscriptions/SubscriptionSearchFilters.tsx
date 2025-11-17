@@ -25,10 +25,10 @@ export function SubscriptionSearchFilters({
   loading,
 }: SubscriptionSearchFiltersProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Row 1: UserId, SubscriptionPlanId, Status */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             UserId
           </label>
@@ -37,10 +37,11 @@ export function SubscriptionSearchFilters({
             value={filters.userId}
             onChange={(e) => onFilterChange("userId", e.target.value)}
             type="text"
+            className="w-full"
           />
         </div>
 
-        <div>
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             SubscriptionPlanId
           </label>
@@ -51,10 +52,11 @@ export function SubscriptionSearchFilters({
               onFilterChange("subscriptionPlanId", e.target.value)
             }
             type="text"
+            className="w-full"
           />
         </div>
 
-        <div>
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             Status
           </label>
@@ -62,7 +64,7 @@ export function SubscriptionSearchFilters({
             value={filters.status || "all"}
             onValueChange={(value) => onFilterChange("status", value === "all" ? "" : value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -122,8 +124,8 @@ export function SubscriptionSearchFilters({
       </div>
 
       {/* Row 3: EndDateTo, SearchTerm, SortBy */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             EndDateTo
           </label>
@@ -132,10 +134,11 @@ export function SubscriptionSearchFilters({
             value={filters.endDateTo}
             onChange={(e) => onFilterChange("endDateTo", e.target.value)}
             type="date"
+            className="w-full"
           />
         </div>
 
-        <div>
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             SearchTerm
           </label>
@@ -144,10 +147,11 @@ export function SubscriptionSearchFilters({
             value={filters.searchTerm}
             onChange={(e) => onFilterChange("searchTerm", e.target.value)}
             type="text"
+            className="w-full"
           />
         </div>
 
-        <div>
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             SortBy
           </label>
@@ -156,13 +160,14 @@ export function SubscriptionSearchFilters({
             value={filters.sortBy}
             onChange={(e) => onFilterChange("sortBy", e.target.value)}
             type="text"
+            className="w-full"
           />
         </div>
       </div>
 
       {/* Row 4: SortDescending */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+        <div className="w-full">
           <label className="text-sm font-medium text-gray-700 block mb-2">
             SortDescending
           </label>
@@ -172,7 +177,7 @@ export function SubscriptionSearchFilters({
               onFilterChange("sortDescending", value === "desc")
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

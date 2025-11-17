@@ -143,12 +143,12 @@ export function PaginationControls({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex flex-col gap-4 p-4 border-t">
+    <div className="flex flex-col gap-4 p-4 border-t w-full">
       {/* Row 1: Rows per page and Info */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 w-full">
         {/* Left: Rows per page */}
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700">Rows per page:</label>
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Rows per page:</label>
           <select
             value={pageSize}
             onChange={(e) => handlePageSizeChange(e.target.value)}
@@ -176,7 +176,7 @@ export function PaginationControls({
 
         {/* Right: Go to page */}
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">Go to:</label>
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Go to:</label>
           <div className="flex gap-1">
             <Input
               type="number"

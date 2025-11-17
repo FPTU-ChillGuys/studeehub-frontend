@@ -2,3 +2,5 @@
 export { SubscriptionSearchFilters } from "./SubscriptionSearchFilters";
 export { SubscriptionsTable } from "./SubscriptionsTable";
 export { SubscriptionsPagination } from "./SubscriptionsPagination";
+export { PaginationControls } from "./PaginationControls";
+

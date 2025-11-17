@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import {
   SubscriptionSearchFilters,
   SubscriptionsTable,
-  SubscriptionsPagination,
+  PaginationControls,
 } from "@/components/admin/subscriptions";
 import {
   SubscriptionsResponse,
   SubscriptionFilters,
-  Subscription,
 } from "@/Types/subscriptions";
 import subscriptionService from "@/service/subscriptionService";
 import useStateRef from "react-usestateref";
@@ -46,7 +45,6 @@ export default function SubscriptionsPage() {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
-      pageNumber: 1,
     }));
   };
 
@@ -55,7 +53,7 @@ export default function SubscriptionsPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await subscriptionService.getSubscriptions(filters);
+      const response = await subscriptionService.getSubscriptions(filtersRef.current);
       setSubscriptions(response as unknown as SubscriptionsResponse);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch subscriptions";
@@ -85,6 +83,26 @@ export default function SubscriptionsPage() {
     setSubscriptions(undefined);
     setError(null);
   };
+
+  // Auto-load subscriptions on mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await subscriptionService.getSubscriptions(filtersRef.current);
+        setSubscriptions(response as unknown as SubscriptionsResponse);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to fetch subscriptions";
+        setError(errorMessage);
+        console.error("Error fetching subscriptions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6 p-6">
@@ -125,7 +143,19 @@ export default function SubscriptionsPage() {
       {subscriptions && (
         <Card>
           <SubscriptionsTable subscriptions={subscriptionsRef.current?.data ?? []} />
-          <SubscriptionsPagination data={subscriptionsRef.current!} />
+          <PaginationControls
+            pageNumber={filters.pageNumber}
+            pageSize={filters.pageSize}
+            totalCount={subscriptions.totalCount}
+            onPageNumberChange={(value) =>
+              handleFilterChange("pageNumber", value)
+            }
+            onPageSizeChange={(value) =>
+              handleFilterChange("pageSize", value)
+            }
+            onSearch={handleSearch}
+            loading={loading}
+          />
         </Card>
       )}
 

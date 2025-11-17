@@ -26,10 +26,10 @@ export function SubscriptionSearchFilters({
 }: SubscriptionSearchFiltersProps) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* UserId */}
+      {/* Row 1: UserId, SubscriptionPlanId, Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             UserId
           </label>
           <Input
@@ -40,9 +40,8 @@ export function SubscriptionSearchFilters({
           />
         </div>
 
-        {/* SubscriptionPlanId */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             SubscriptionPlanId
           </label>
           <Input
@@ -55,9 +54,8 @@ export function SubscriptionSearchFilters({
           />
         </div>
 
-        {/* Status */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             Status
           </label>
           <Select
@@ -65,7 +63,7 @@ export function SubscriptionSearchFilters({
             onValueChange={(value) => onFilterChange("status", value === "all" ? "" : value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select status" />
+              <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
@@ -78,14 +76,16 @@ export function SubscriptionSearchFilters({
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        {/* StartDateFrom */}
+      {/* Row 2: StartDateFrom, StartDateTo, EndDateFrom */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             StartDateFrom
           </label>
           <Input
-            placeholder="StartDateFrom"
+            placeholder="dd/mm/yyyy"
             value={filters.startDateFrom}
             onChange={(e) =>
               onFilterChange("startDateFrom", e.target.value)
@@ -94,26 +94,24 @@ export function SubscriptionSearchFilters({
           />
         </div>
 
-        {/* StartDateTo */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             StartDateTo
           </label>
           <Input
-            placeholder="StartDateTo"
+            placeholder="dd/mm/yyyy"
             value={filters.startDateTo}
             onChange={(e) => onFilterChange("startDateTo", e.target.value)}
             type="date"
           />
         </div>
 
-        {/* EndDateFrom */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             EndDateFrom
           </label>
           <Input
-            placeholder="EndDateFrom"
+            placeholder="dd/mm/yyyy"
             value={filters.endDateFrom}
             onChange={(e) =>
               onFilterChange("endDateFrom", e.target.value)
@@ -121,23 +119,24 @@ export function SubscriptionSearchFilters({
             type="date"
           />
         </div>
+      </div>
 
-        {/* EndDateTo */}
+      {/* Row 3: EndDateTo, SearchTerm, SortBy */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             EndDateTo
           </label>
           <Input
-            placeholder="EndDateTo"
+            placeholder="dd/mm/yyyy"
             value={filters.endDateTo}
             onChange={(e) => onFilterChange("endDateTo", e.target.value)}
             type="date"
           />
         </div>
 
-        {/* SearchTerm */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             SearchTerm
           </label>
           <Input
@@ -148,42 +147,8 @@ export function SubscriptionSearchFilters({
           />
         </div>
 
-        {/* PageNumber */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
-            PageNumber
-          </label>
-          <Input
-            placeholder="PageNumber"
-            value={filters.pageNumber}
-            onChange={(e) =>
-              onFilterChange("pageNumber", parseInt(e.target.value) || 1)
-            }
-            type="number"
-            min="1"
-          />
-        </div>
-
-        {/* PageSize */}
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">
-            PageSize
-          </label>
-          <Input
-            placeholder="PageSize"
-            value={filters.pageSize}
-            onChange={(e) =>
-              onFilterChange("pageSize", parseInt(e.target.value) || 10)
-            }
-            type="number"
-            min="1"
-            max="100"
-          />
-        </div>
-
-        {/* SortBy */}
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             SortBy
           </label>
           <Input
@@ -193,10 +158,12 @@ export function SubscriptionSearchFilters({
             type="text"
           />
         </div>
+      </div>
 
-        {/* SortDescending */}
+      {/* Row 4: SortDescending */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-gray-700 block mb-2">
             SortDescending
           </label>
           <Select
@@ -217,8 +184,12 @@ export function SubscriptionSearchFilters({
       </div>
 
       {/* Search and Reset Buttons */}
-      <div className="flex gap-3">
-        <Button onClick={onSearch} disabled={loading}>
+      <div className="flex gap-3 pt-2">
+        <Button
+          onClick={onSearch}
+          disabled={loading}
+          className="bg-slate-900 hover:bg-slate-800"
+        >
           {loading ? "Searching..." : "Search"}
         </Button>
         <Button
@@ -232,3 +203,4 @@ export function SubscriptionSearchFilters({
     </div>
   );
 }
+

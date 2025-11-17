@@ -40,7 +40,7 @@ export interface SubscriptionsResponse {
 export interface SubscriptionFilters {
   userId: string;
   subscriptionPlanId: string;
-  status: string;
+  status?: number;
   startDateFrom: string;
   startDateTo: string;
   endDateFrom: string;

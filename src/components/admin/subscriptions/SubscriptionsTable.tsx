@@ -16,21 +16,21 @@ interface SubscriptionsTableProps {
 
 // Status mapping
 const statusMap: { [key: number]: string } = {
-  1: "Active",
-  2: "Pending",
-  3: "Expired",
-  4: "Cancelled",
-  5: "Suspended",
-  6: "Inactive",
+  1: "Pending",
+  2: "Trial",
+  3: "Active",
+  4: "Expired",
+  5: "Cancelled",
+  6: "Failed",
 };
 
 const statusColorMap: { [key: number]: string } = {
-  1: "bg-green-500",
-  2: "bg-yellow-500",
-  3: "bg-gray-500",
-  4: "bg-red-500",
-  5: "bg-orange-500",
-  6: "bg-slate-500",
+  1: "bg-yellow-500",
+  2: "bg-blue-500",
+  3: "bg-green-500",
+  4: "bg-gray-500",
+  5: "bg-red-500",
+  6: "bg-red-600",
 };
 
 // Format date

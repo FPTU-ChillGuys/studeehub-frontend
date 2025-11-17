@@ -8,6 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SubscriptionFilters } from "@/Types/subscriptions";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface SubscriptionSearchFiltersProps {
   filters: SubscriptionFilters;
@@ -24,169 +26,215 @@ export function SubscriptionSearchFilters({
   onReset,
   loading,
 }: SubscriptionSearchFiltersProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Validate GUID format
+  const isValidGuid = (value: string): boolean => {
+    if (!value) return true; // Allow empty
+    const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return guidRegex.test(value);
+  };
+
+  const handleUserIdChange = (value: string) => {
+    if (isValidGuid(value)) {
+      onFilterChange("userId", value);
+    }
+  };
   return (
     <div className="space-y-4 w-full">
-      {/* Row 1: UserId, SubscriptionPlanId, Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            UserId
-          </label>
-          <Input
-            placeholder="UserId"
-            value={filters.userId}
-            onChange={(e) => onFilterChange("userId", e.target.value)}
-            type="text"
-            className="w-full"
-          />
-        </div>
-
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            SubscriptionPlanId
-          </label>
-          <Input
-            placeholder="SubscriptionPlanId"
-            value={filters.subscriptionPlanId}
-            onChange={(e) =>
-              onFilterChange("subscriptionPlanId", e.target.value)
-            }
-            type="text"
-            className="w-full"
-          />
-        </div>
-
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            Status
-          </label>
-          <Select
-            value={filters.status || "all"}
-            onValueChange={(value) => onFilterChange("status", value === "all" ? "" : value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="1">Active</SelectItem>
-              <SelectItem value="2">Pending</SelectItem>
-              <SelectItem value="3">Expired</SelectItem>
-              <SelectItem value="4">Cancelled</SelectItem>
-              <SelectItem value="5">Suspended</SelectItem>
-              <SelectItem value="6">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Header with toggle */}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold text-gray-800">Search Filters</h3>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className="w-4 h-4" />
+              Hide
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              Show
+            </>
+          )}
+        </button>
       </div>
 
-      {/* Row 2: StartDateFrom, StartDateTo, EndDateFrom */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            StartDateFrom
-          </label>
-          <Input
-            placeholder="dd/mm/yyyy"
-            value={filters.startDateFrom}
-            onChange={(e) =>
-              onFilterChange("startDateFrom", e.target.value)
-            }
-            type="date"
-          />
-        </div>
+      {/* Filters content - conditionally visible */}
+      {isExpanded && (
+        <>
+          {/* Row 1: User ID, Subscription Plan ID, Status */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                User ID
+              </label>
+              <Input
+                placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
+                value={filters.userId}
+                onChange={(e) => handleUserIdChange(e.target.value)}
+                type="text"
+                className="w-full text-xs"
+              />
+              {filters.userId && !isValidGuid(filters.userId) && (
+                <p className="text-xs text-red-500 mt-1">Invalid GUID format</p>
+              )}
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            StartDateTo
-          </label>
-          <Input
-            placeholder="dd/mm/yyyy"
-            value={filters.startDateTo}
-            onChange={(e) => onFilterChange("startDateTo", e.target.value)}
-            type="date"
-          />
-        </div>
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Subscription Plan ID
+              </label>
+              <Input
+                placeholder="Subscription Plan ID"
+                value={filters.subscriptionPlanId}
+                onChange={(e) =>
+                  onFilterChange("subscriptionPlanId", e.target.value)
+                }
+                type="text"
+                className="w-full"
+              />
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            EndDateFrom
-          </label>
-          <Input
-            placeholder="dd/mm/yyyy"
-            value={filters.endDateFrom}
-            onChange={(e) =>
-              onFilterChange("endDateFrom", e.target.value)
-            }
-            type="date"
-          />
-        </div>
-      </div>
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Status
+              </label>
+              <Select
+                value={filters.status || "all"}
+                onValueChange={(value) => onFilterChange("status", value === "all" ? "" : value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="1">Pending</SelectItem>
+                  <SelectItem value="2">Trial</SelectItem>
+                  <SelectItem value="3">Active</SelectItem>
+                  <SelectItem value="4">Expired</SelectItem>
+                  <SelectItem value="5">Cancelled</SelectItem>
+                  <SelectItem value="6">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-      {/* Row 3: EndDateTo, SearchTerm, SortBy */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            EndDateTo
-          </label>
-          <Input
-            placeholder="dd/mm/yyyy"
-            value={filters.endDateTo}
-            onChange={(e) => onFilterChange("endDateTo", e.target.value)}
-            type="date"
-            className="w-full"
-          />
-        </div>
+          {/* Row 2: Start Date From, Start Date To, End Date From */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Start Date From
+              </label>
+              <Input
+                placeholder="dd/mm/yyyy"
+                value={filters.startDateFrom}
+                onChange={(e) =>
+                  onFilterChange("startDateFrom", e.target.value)
+                }
+                type="date"
+                className="w-full"
+              />
+            </div>
 
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            SearchTerm
-          </label>
-          <Input
-            placeholder="SearchTerm"
-            value={filters.searchTerm}
-            onChange={(e) => onFilterChange("searchTerm", e.target.value)}
-            type="text"
-            className="w-full"
-          />
-        </div>
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Start Date To
+              </label>
+              <Input
+                placeholder="dd/mm/yyyy"
+                value={filters.startDateTo}
+                onChange={(e) => onFilterChange("startDateTo", e.target.value)}
+                type="date"
+                className="w-full"
+              />
+            </div>
 
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            SortBy
-          </label>
-          <Input
-            placeholder="SortBy"
-            value={filters.sortBy}
-            onChange={(e) => onFilterChange("sortBy", e.target.value)}
-            type="text"
-            className="w-full"
-          />
-        </div>
-      </div>
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                End Date From
+              </label>
+              <Input
+                placeholder="dd/mm/yyyy"
+                value={filters.endDateFrom}
+                onChange={(e) =>
+                  onFilterChange("endDateFrom", e.target.value)
+                }
+                type="date"
+                className="w-full"
+              />
+            </div>
+          </div>
 
-      {/* Row 4: SortDescending */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-        <div className="w-full">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
-            SortDescending
-          </label>
-          <Select
-            value={filters.sortDescending ? "desc" : "asc"}
-            onValueChange={(value) =>
-              onFilterChange("sortDescending", value === "desc")
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asc">Ascending</SelectItem>
-              <SelectItem value="desc">Descending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+          {/* Row 3: End Date To, Search Term, Sort By */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                End Date To
+              </label>
+              <Input
+                placeholder="dd/mm/yyyy"
+                value={filters.endDateTo}
+                onChange={(e) => onFilterChange("endDateTo", e.target.value)}
+                type="date"
+                className="w-full"
+              />
+            </div>
+
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Search Term
+              </label>
+              <Input
+                placeholder="Search Term"
+                value={filters.searchTerm}
+                onChange={(e) => onFilterChange("searchTerm", e.target.value)}
+                type="text"
+                className="w-full"
+              />
+            </div>
+
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Sort By
+              </label>
+              <Input
+                placeholder="Sort By"
+                value={filters.sortBy}
+                onChange={(e) => onFilterChange("sortBy", e.target.value)}
+                type="text"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Row 4: Sort Descending */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Sort Descending
+              </label>
+              <Select
+                value={filters.sortDescending ? "desc" : "asc"}
+                onValueChange={(value) =>
+                  onFilterChange("sortDescending", value === "desc")
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">Ascending</SelectItem>
+                  <SelectItem value="desc">Descending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Search and Reset Buttons */}
       <div className="flex gap-3 pt-2">

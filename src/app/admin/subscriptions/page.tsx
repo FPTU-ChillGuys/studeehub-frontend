@@ -25,7 +25,6 @@ export default function SubscriptionsPage() {
   const [filters, setFilters, filtersRef] = useStateRef<SubscriptionFilters>({
     userId: "",
     subscriptionPlanId: "",
-    status: "",
     startDateFrom: "",
     startDateTo: "",
     endDateFrom: "",
@@ -69,7 +68,7 @@ export default function SubscriptionsPage() {
     setFilters({
       userId: "",
       subscriptionPlanId: "",
-      status: "",
+      status: 1,
       startDateFrom: "",
       startDateTo: "",
       endDateFrom: "",

@@ -40,6 +40,11 @@ const adminMenuData = {
       url: "/admin/subscription-plans",
       icon: CreditCard,
     },
+    {
+      title: "Subscriptions",
+      url: "/admin/subscriptions",
+      icon: CreditCard,
+    },
   ],
 };
 

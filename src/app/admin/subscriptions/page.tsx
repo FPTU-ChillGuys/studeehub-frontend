@@ -7,19 +7,28 @@ import {
   SubscriptionSearchFilters,
   SubscriptionsTable,
   PaginationControls,
+  CreateSubscriptionModal,
 } from "@/components/admin/subscriptions";
 import {
   SubscriptionsResponse,
   SubscriptionFilters,
 } from "@/Types/subscriptions";
+import { SubscriptionPlan } from "@/Types/subcription-plans";
+import { UserProfile } from "@/Types";
 import subscriptionService from "@/service/subscriptionService";
+import userService from "@/service/userService";
 import useStateRef from "react-usestateref";
+import subscriptionPlanService from "@/service/subscriptionPlanService";
 
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions, subscriptionsRef] =
     useStateRef<SubscriptionsResponse>();
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [plansLoading, setPlansLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   // Search filters
   const [filters, setFilters, filtersRef] = useStateRef<SubscriptionFilters>({
@@ -32,8 +41,8 @@ export default function SubscriptionsPage() {
     searchTerm: "",
     pageNumber: 1,
     pageSize: 10,
-    sortBy: "",
-    sortDescending: false,
+    sortBy: "StartDate",
+    sortDescending: true,
   });
 
   // Handle filter changes
@@ -83,6 +92,25 @@ export default function SubscriptionsPage() {
     setError(null);
   };
 
+  // Handle create subscription
+  const handleCreateSubscription = async (data: {
+    userId: string;
+    subscriptionPlanId: string;
+    status: number;
+  }) => {
+    try {
+      // Call the API to create subscription
+      // This will be handled by the service call you'll implement
+      const response = await subscriptionService.createSubscription(data);
+      // Reload subscriptions list
+      if (response) {
+        await handleSearch();
+      } 
+    } catch (error) {
+      throw error;
+    }
+  };
+
   // Auto-load subscriptions on mount
   useEffect(() => {
     const loadData = async () => {
@@ -99,18 +127,63 @@ export default function SubscriptionsPage() {
         setLoading(false);
       }
     };
+
+    // Load subscription plans
+    const loadPlans = async () => {
+      setPlansLoading(true);
+      try {
+        // Assuming you have a getAllPlans method in subscriptionService for plans
+        // If not, you'll need to create one or use a different service
+        const plans = await subscriptionPlanService.getSubscriptionPlans();
+        if (plans) {
+          setSubscriptionPlans(plans);
+        }
+      } catch (error) {
+        console.error("Error fetching subscription plans:", error);
+      } finally {
+        setPlansLoading(false);
+      }
+    };
+
+    // Load users
+    const loadUsers = async () => {
+      setUsersLoading(true);
+      try {
+        const response = await userService.getUsers({ pageSize: 1000 });
+        if (response.data) {
+          setUsers(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+
     loadData();
+    loadPlans();
+    loadUsers();
+    loadPlans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="space-y-6 p-6 w-full">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage user subscriptions and view subscription details
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage user subscriptions and view subscription details
+          </p>
+        </div>
+        <CreateSubscriptionModal
+          subscriptionPlans={subscriptionPlans}
+          users={users}
+          onSubmit={handleCreateSubscription}
+          loading={loading || plansLoading}
+          usersLoading={usersLoading}
+        />
       </div>
 
       {/* Error Alert */}

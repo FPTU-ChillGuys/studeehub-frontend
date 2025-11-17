@@ -104,7 +104,7 @@ export function SubscriptionSearchFilters({
                 Status
               </label>
               <Select
-                value={filters.status || "all"}
+                value={filters.status?.toString() || "all"}
                 onValueChange={(value) => onFilterChange("status", value === "all" ? "" : value)}
               >
                 <SelectTrigger className="w-full">

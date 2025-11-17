@@ -19,9 +19,15 @@ class SubscriptionService {
              }
         }
 
-        // createSubscription(data: SubscriptionData): Promise<Subscription> {
-        //         // Implement API call to create a new subscription
-        // }
+        async createSubscription(data: { userId: string; subscriptionPlanId: string; status: number; }): Promise<boolean> {
+               try {
+                 const response = await apiClient.post<unknown>('/subscriptions', data);
+                 return response.success;
+               } catch (error) {
+                   console.error("Error creating subscription:", error);
+                   throw error;
+               }
+        }
 
         // updateSubscription(id: string, data: SubscriptionData): Promise<Subscription> {
         //         // Implement API call to update an existing subscription

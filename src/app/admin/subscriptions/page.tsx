@@ -228,6 +228,15 @@ export default function SubscriptionsPage() {
                 return [];
               }
             }}
+            onStatusUpdate={async (subscriptionId: string, status: number) => {
+              try {
+                await subscriptionService.updateSubscriptionStatus(subscriptionId, status);
+                // Reload subscriptions list
+                await handleSearch();
+              } catch (error) {
+                throw error;
+              }
+            }}
           />
           <PaginationControls
             pageNumber={filters.pageNumber}

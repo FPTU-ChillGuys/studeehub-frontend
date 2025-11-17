@@ -51,6 +51,22 @@ class SubscriptionService {
   //         // Implement API call to delete a subscription
   // }
 
+  async updateSubscriptionStatus(
+    subscriptionId: string,
+    status: number
+  ): Promise<boolean> {
+    try {
+      const response = await apiClient.put<unknown>(
+        `/subscriptions/${subscriptionId}/status`,
+        status
+      );
+      return response.success;
+    } catch (error) {
+      console.error("Error updating subscription status:", error);
+      throw error;
+    }
+  }
+
   async getTransactionBySubscriptionId(
     subscriptionId: string
   ): Promise<PaymentTransaction[]> {

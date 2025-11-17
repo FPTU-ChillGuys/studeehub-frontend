@@ -9,8 +9,29 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronDown, ChevronUp, Loader2, MoreVertical } from "lucide-react";
 import { Subscription } from "@/Types/subscriptions";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PaymentTransaction {
   id: string;
@@ -25,6 +46,7 @@ interface PaymentTransaction {
 interface SubscriptionsTableWithExpandProps {
   subscriptions: Subscription[];
   onRowExpand?: (subscriptionId: string) => Promise<PaymentTransaction[]>;
+  onStatusUpdate?: (subscriptionId: string, status: number) => Promise<void>;
 }
 
 // Subscription Status mapping
@@ -78,12 +100,26 @@ const formatCurrency = (value: number) => {
 export function SubscriptionsTableWithExpand({
   subscriptions,
   onRowExpand,
+  onStatusUpdate,
 }: SubscriptionsTableWithExpandProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<{
     [key: string]: PaymentTransaction[];
   }>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const STATUS_OPTIONS = [
+    { value: "1", label: "Pending" },
+    { value: "2", label: "Trial" },
+    { value: "3", label: "Active" },
+    { value: "4", label: "Expired" },
+    { value: "5", label: "Cancelled" },
+    { value: "6", label: "Failed" },
+  ];
 
   const handleToggleExpand = async (subscriptionId: string) => {
     if (expandedId === subscriptionId) {
@@ -110,19 +146,60 @@ export function SubscriptionsTableWithExpand({
     setExpandedId(subscriptionId);
   };
 
+  const handleQuickActivate = async (subscription: Subscription) => {
+    setUpdatingStatus(true);
+    try {
+      await onStatusUpdate?.(subscription.id, 3); // 3 = Active
+      toast.success("Subscription updated to Active");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update status"
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleOpenStatusDialog = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setSelectedStatus(subscription.status.toString());
+    setStatusDialogOpen(true);
+  };
+
+  const handleStatusDialogSubmit = async () => {
+    if (!selectedSubscription || !selectedStatus) return;
+
+    setUpdatingStatus(true);
+    try {
+      await onStatusUpdate?.(selectedSubscription.id, parseInt(selectedStatus));
+      toast.success(
+        `Subscription updated to ${subscriptionStatusMap[parseInt(selectedStatus)]}`
+      );
+      setStatusDialogOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update status"
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-10"></TableHead>
-            <TableHead>User</TableHead>
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10"></TableHead>
+              <TableHead>User</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Subscription Plan</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-40">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -174,11 +251,38 @@ export function SubscriptionsTableWithExpand({
                   {subscriptionStatusMap[subscription.status] || "Unknown"}
                 </Badge>
               </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={updatingStatus}
+                      className="h-8 w-8 p-0"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleQuickActivate(subscription)}
+                      disabled={subscription.status === 3}
+                    >
+                      Set Active
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleOpenStatusDialog(subscription)}
+                    >
+                      Change Status
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>,
             ...(expandedId === subscription.id
               ? [
                   <TableRow key={`${subscription.id}-expanded`}>
-                    <TableCell colSpan={8} className="bg-gray-50 p-0">
+                    <TableCell colSpan={9} className="bg-gray-50 p-0">
                       <div className="p-4">
                         <h4 className="font-semibold mb-4">
                           Payment Transactions
@@ -248,6 +352,64 @@ export function SubscriptionsTableWithExpand({
           ])}
         </TableBody>
       </Table>
-    </div>
+      </div>
+
+      {/* Status Update Dialog */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Update Subscription Status</DialogTitle>
+            <DialogDescription>
+              Change the status for this subscription. Select a new status and confirm.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                New Status
+              </label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setStatusDialogOpen(false)}
+                disabled={updatingStatus}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleStatusDialogSubmit}
+                disabled={updatingStatus || !selectedStatus}
+                className="bg-slate-900 hover:bg-slate-800 gap-2"
+              >
+                {updatingStatus ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Status"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
+

@@ -213,13 +213,13 @@ export function FeedbackDetailModal({
               <h5 className="font-semibold text-gray-900">{feedback.title}</h5>
             </div>
 
-            {/* Feedback and Response Side by Side (if response exists and not editing) */}
+            {/* Feedback and Response Stack (if response exists and not editing) */}
             {feedback.response && !isEditingResponse && (
-              <div className="grid grid-cols-2 gap-6">
-                {/* Feedback Column */}
+              <div className="space-y-6">
+                {/* Feedback Row - Left aligned */}
                 <div>
                   <h3 className="font-bold text-gray-900 mb-3">Feedback</h3>
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 w-full">
                     <p className="text-gray-800 whitespace-pre-wrap text-sm">
                       {feedback.message}
                     </p>
@@ -229,29 +229,31 @@ export function FeedbackDetailModal({
                   </div>
                 </div>
 
-                {/* Response Column */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-gray-900">Response</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setIsEditingResponse(true);
-                        setResponseText(feedback.response || "");
-                      }}
-                    >
-                      <Edit2 size={14} className="mr-1" />
-                      Edit
-                    </Button>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-gray-800 whitespace-pre-wrap text-sm">
-                      {feedback.response}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-3">
-                      {formatDate(feedback.respondedAt || "")}
-                    </p>
+                {/* Response Row - Right aligned */}
+                <div className="flex justify-end">
+                  <div className="w-full">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-gray-900">Response</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsEditingResponse(true);
+                          setResponseText(feedback.response || "");
+                        }}
+                      >
+                        <Edit2 size={14} className="mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <p className="text-gray-800 whitespace-pre-wrap text-sm">
+                        {feedback.response}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-3">
+                        {formatDate(feedback.respondedAt || "")}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -301,10 +303,10 @@ export function FeedbackDetailModal({
             {/* EDIT MODE: Show Feedback + Response Input */}
             {isEditingResponse && (
               <div className="space-y-6 pt-4 border-t">
-                {/* Feedback Display */}
+                {/* Feedback Display - Left aligned */}
                 <div>
                   <h3 className="font-bold text-gray-900 mb-3">Feedback</h3>
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-w-2xl">
                     <p className="text-gray-800 whitespace-pre-wrap text-sm">
                       {feedback.message}
                     </p>
@@ -314,60 +316,62 @@ export function FeedbackDetailModal({
                   </div>
                 </div>
 
-                {/* Response Edit Form */}
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-3">Response</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-                    {/* Response Textarea */}
-                    <div>
-                      <label className="text-sm font-medium">Response</label>
-                      <Textarea
-                        value={responseText}
-                        onChange={(e) => setResponseText(e.target.value)}
-                        placeholder="Type your response here..."
-                        rows={5}
-                        className="mt-1"
-                        disabled={isSubmitting}
-                      />
-                    </div>
+                {/* Response Edit Form - Right aligned */}
+                <div className="flex justify-end">
+                  <div className="w-full max-w-2xl">
+                    <h3 className="font-bold text-gray-900 mb-3">Response</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+                      {/* Response Textarea */}
+                      <div>
+                        <label className="text-sm font-medium">Response</label>
+                        <Textarea
+                          value={responseText}
+                          onChange={(e) => setResponseText(e.target.value)}
+                          placeholder="Type your response here..."
+                          rows={5}
+                          className="mt-1"
+                          disabled={isSubmitting}
+                        />
+                      </div>
 
-                    {/* Status Selector */}
-                    <div>
-                      <label className="text-sm font-medium">Status</label>
-                      <Select
-                        value={selectedStatus}
-                        onValueChange={setSelectedStatus}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Pending</SelectItem>
-                          <SelectItem value="2">In Progress</SelectItem>
-                          <SelectItem value="3">Resolved</SelectItem>
-                          <SelectItem value="4">Closed</SelectItem>
-                          <SelectItem value="5">Acknowledged</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                      {/* Status Selector */}
+                      <div>
+                        <label className="text-sm font-medium">Status</label>
+                        <Select
+                          value={selectedStatus}
+                          onValueChange={setSelectedStatus}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Pending</SelectItem>
+                            <SelectItem value="2">In Progress</SelectItem>
+                            <SelectItem value="3">Resolved</SelectItem>
+                            <SelectItem value="4">Closed</SelectItem>
+                            <SelectItem value="5">Acknowledged</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditingResponse(false);
-                          setResponseText(feedback.response || "");
-                          setSelectedStatus(feedback.status.toString());
-                        }}
-                        disabled={isSubmitting}
-                      >
-                        Cancel
-                      </Button>
-                      <Button onClick={handleSubmitResponse} disabled={isSubmitting}>
-                        <Send size={16} className="mr-2" />
-                        {isSubmitting ? "Updating..." : "Update Response"}
-                      </Button>
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsEditingResponse(false);
+                            setResponseText(feedback.response || "");
+                            setSelectedStatus(feedback.status.toString());
+                          }}
+                          disabled={isSubmitting}
+                        >
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSubmitResponse} disabled={isSubmitting}>
+                          <Send size={16} className="mr-2" />
+                          {isSubmitting ? "Updating..." : "Update Response"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -376,48 +380,66 @@ export function FeedbackDetailModal({
 
             {/* REPLY MODE: Only show when response is empty AND respondedAt is null */}
             {!feedback.response && !isEditingResponse && (
-              <div>
-                <h3 className="font-bold text-gray-900 mb-3">Reply to Feedback</h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-                  {/* Response Textarea */}
-                  <div>
-                    <label className="text-sm font-medium">Response</label>
-                    <Textarea
-                      value={responseText}
-                      onChange={(e) => setResponseText(e.target.value)}
-                      placeholder="Type your response here..."
-                      rows={5}
-                      className="mt-1"
-                      disabled={isSubmitting}
-                    />
+              <div className="space-y-6">
+                {/* Feedback Display - Left aligned */}
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-3">Feedback</h3>
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-w-2xl">
+                    <p className="text-gray-800 whitespace-pre-wrap text-sm">
+                      {feedback.message}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-3">
+                      {formatDate(feedback.createdAt)}
+                    </p>
                   </div>
+                </div>
 
-                  {/* Status Selector */}
-                  <div>
-                    <label className="text-sm font-medium">Status</label>
-                    <Select
-                      value={selectedStatus}
-                      onValueChange={setSelectedStatus}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Pending</SelectItem>
-                        <SelectItem value="2">In Progress</SelectItem>
-                        <SelectItem value="3">Resolved</SelectItem>
-                        <SelectItem value="4">Closed</SelectItem>
-                        <SelectItem value="5">Acknowledged</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Reply Form - Right aligned */}
+                <div className="flex justify-end">
+                  <div className="w-full max-w-2xl">
+                    <h3 className="font-bold text-gray-900 mb-3">Reply to Feedback</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+                      {/* Response Textarea */}
+                      <div>
+                        <label className="text-sm font-medium">Response</label>
+                        <Textarea
+                          value={responseText}
+                          onChange={(e) => setResponseText(e.target.value)}
+                          placeholder="Type your response here..."
+                          rows={5}
+                          className="mt-1"
+                          disabled={isSubmitting}
+                        />
+                      </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 justify-end">
-                    <Button onClick={handleSubmitResponse} disabled={isSubmitting}>
-                      <Send size={16} className="mr-2" />
-                      {isSubmitting ? "Submitting..." : "Submit Response"}
-                    </Button>
+                      {/* Status Selector */}
+                      <div>
+                        <label className="text-sm font-medium">Status</label>
+                        <Select
+                          value={selectedStatus}
+                          onValueChange={setSelectedStatus}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Pending</SelectItem>
+                            <SelectItem value="2">In Progress</SelectItem>
+                            <SelectItem value="3">Resolved</SelectItem>
+                            <SelectItem value="4">Closed</SelectItem>
+                            <SelectItem value="5">Acknowledged</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 justify-end">
+                        <Button onClick={handleSubmitResponse} disabled={isSubmitting}>
+                          <Send size={16} className="mr-2" />
+                          {isSubmitting ? "Submitting..." : "Submit Response"}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

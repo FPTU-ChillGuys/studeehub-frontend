@@ -151,6 +151,38 @@ class APIClient {
       method: "DELETE"
     });
   }
-}
 
+  async postWithFormData<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<R> {
+    const accessToken = await this.getToken();
+
+
+    return this.request<R, T>(endpoint, {
+      method: "POST",
+      body: formData,
+      headers : {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+  }
+
+  async putWithFormData<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<R> {
+    const accessToken = await this.getToken();
+
+    return this.request<R, T>(endpoint, {
+      method: "PUT",
+      body: formData,
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+  }
+
+ 
+}
 export const apiClient = new APIClient(API_BASE_URL);

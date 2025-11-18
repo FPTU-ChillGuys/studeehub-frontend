@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Home, BookOpen, Timer } from "lucide-react";
+import { Calendar, Home, BookOpen, Timer, MessageSquare } from "lucide-react";
 
 import {
   Sidebar,
@@ -15,7 +15,6 @@ import { NavUser } from "@/components/nav-user";
 import { useProfile } from "@/hooks/useProfile";
 import { useSession } from "next-auth/react";
 
-// Menu items.
 const data = {
   navMain: [
     {
@@ -38,6 +37,11 @@ const data = {
       title: "Learning Path",
       url: "/user/learning-path",
       icon: Calendar,
+    },
+    {
+      title: "Feedback",
+      url: "/user/feedback",
+      icon: MessageSquare,
     },
   ],
 };

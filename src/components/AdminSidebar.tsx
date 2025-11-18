@@ -3,10 +3,8 @@
 import {
   LayoutDashboard,
   Users,
-  BookOpen,
-  Settings,
-  FileText,
   CreditCard,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -39,6 +37,16 @@ const adminMenuData = {
       title: "Subscription Plans",
       url: "/admin/subscription-plans",
       icon: CreditCard,
+    },
+    {
+      title: "Subscriptions",
+      url: "/admin/subscriptions",
+      icon: CreditCard,
+    },
+    {
+      title: "Feedbacks",
+      url: "/admin/feedbacks",
+      icon: MessageSquare,
     },
   ],
 };

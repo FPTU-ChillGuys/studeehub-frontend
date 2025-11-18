@@ -184,6 +184,56 @@ class FeedbackService {
       throw error;
     }
   }
+
+  async editFeedback(
+    feedbackId: string,
+    data: {
+      category: number;
+      rating: number;
+      title: string;
+      message: string;
+      keepAttachmentIds?: string[];
+      files?: File[];
+    }
+  ): Promise<FeedbackResponse> {
+    try {
+      const formData = new FormData();
+      formData.append("category", data.category.toString());
+      formData.append("rating", data.rating.toString());
+      formData.append("title", data.title);
+      formData.append("message", data.message);
+
+      // Add keep attachment IDs
+      if (data.keepAttachmentIds && data.keepAttachmentIds.length > 0) {
+        data.keepAttachmentIds.forEach((id) => {
+          formData.append("keepAttachmentIds", id);
+        });
+      }
+
+      // Add new files if provided
+      if (data.files && data.files.length > 0) {
+        data.files.forEach((file) => {
+          formData.append("files", file);
+        });
+      }
+
+      const response = await apiClient.putWithFormData<unknown>(
+        `/feedbacks/${feedbackId}`,
+        formData
+      );
+
+      return {
+        success: response.success,
+        message: response.success
+          ? "Feedback updated successfully!"
+          : "Failed to update feedback",
+        data: response.data,
+      };
+    } catch (error) {
+      console.error("Error editing feedback:", error);
+      throw error;
+    }
+  }
 }
 
 const feedbackService = new FeedbackService();

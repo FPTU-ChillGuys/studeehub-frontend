@@ -22,13 +22,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star, ChevronLeft, ChevronRight, Eye, Trash2 } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Eye, Trash2, Edit2 } from "lucide-react";
 import {
   Feedback,
   categoryLabels,
@@ -38,6 +45,7 @@ import {
 import feedbackService from "@/service/feedbackService";
 import { toast } from "sonner";
 import { FeedbackDetailModal } from "./FeedbackDetailModal";
+import { FeedbackEditForm } from "./FeedbackEditForm";
 
 interface ApiResponse<T> {
   data?: T;
@@ -57,6 +65,10 @@ export function FeedbackHistory() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingFeedbackData, setEditingFeedbackData] = useState<Feedback | null>(null);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
   const pageSize = 10;
 
@@ -117,6 +129,39 @@ export function FeedbackHistory() {
       );
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleEditFeedback = (feedback: Feedback) => {
+    setEditingFeedbackId(feedback.id);
+    setEditingFeedbackData(feedback);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (editedData: {
+    category: number;
+    rating: number;
+    title: string;
+    message: string;
+    keepAttachmentIds?: string[];
+    files?: File[];
+  }) => {
+    if (!editingFeedbackId) return;
+
+    setIsEditSubmitting(true);
+    try {
+      await feedbackService.editFeedback(editingFeedbackId, editedData);
+      toast.success("Feedback updated successfully");
+      setIsEditModalOpen(false);
+      setEditingFeedbackData(null);
+      setEditingFeedbackId(null);
+      loadFeedbacks(currentPage, filterCategory, filterStatus);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update feedback"
+      );
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
@@ -265,6 +310,16 @@ export function FeedbackHistory() {
                           <Eye size={14} />
                         </Button>
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            const detailedFeedback = await feedbackService.getFeedbackDetail(feedback?.data?.id || "");
+                            handleEditFeedback(detailedFeedback);
+                          }}
+                        >
+                          <Edit2 size={14} />
+                        </Button>
+                        <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteFeedback(feedback?.data?.id || "")}
@@ -343,6 +398,25 @@ export function FeedbackHistory() {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Feedback Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Feedback</DialogTitle>
+            <DialogDescription>
+              Update your feedback details below
+            </DialogDescription>
+          </DialogHeader>
+          {editingFeedbackData && (
+            <FeedbackEditForm
+              feedback={editingFeedbackData}
+              onSubmit={handleEditSubmit}
+              isSubmitting={isEditSubmitting}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

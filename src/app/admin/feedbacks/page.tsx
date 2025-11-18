@@ -8,6 +8,7 @@ import {
   AdminFeedbacksTable,
   AdminFeedbackFilters,
 } from "@/components/admin/feedbacks/AdminFeedbacksTable";
+import { FeedbackDetailModal } from "@/components/feedback/FeedbackDetailModal";
 import { Feedback } from "@/Types/feedback";
 import feedbackService from "@/service/feedbackService";
 import useStateRef from "react-usestateref";
@@ -20,6 +21,8 @@ export default function AdminFeedbacksPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Search filters with defaults
   const [filters, setFilters, filtersRef] = useStateRef<AdminFeedbackFilters>({
@@ -90,6 +93,12 @@ export default function AdminFeedbacksPage() {
     setCurrentPage(page);
   };
 
+  // Handle view detail
+  const handleViewDetail = (feedbackId: string) => {
+    setSelectedFeedbackId(feedbackId);
+    setIsDetailModalOpen(true);
+  };
+
   // Initial load
   useEffect(() => {
     handleSearch();
@@ -148,9 +157,23 @@ export default function AdminFeedbacksPage() {
             onPageChange={handlePageChange}
             onFilterChange={handleFilterChange}
             filters={filtersRef.current}
+            onViewDetail={handleViewDetail}
           />
         </CardContent>
       </Card>
+
+      {/* Feedback Detail Modal */}
+      <FeedbackDetailModal
+        feedbackId={selectedFeedbackId}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedFeedbackId(null);
+        }}
+        onFeedbackUpdated={() => {
+          handleSearch();
+        }}
+      />
     </div>
   );
 }

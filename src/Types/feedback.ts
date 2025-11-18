@@ -59,6 +59,20 @@ export interface Feedback {
   status: FeedbackStatus;
   createdAt: string;
   updatedAt: string;
+  response?: string | null;
+  respondedAt?: string | null;
+  deletedAt?: string | null;
+  user?: {
+    id: string;
+    fullName: string;
+    userName: string;
+    userEmail: string;
+  };
+  attachments?: {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+  }[];
 }
 
 export interface FeedbackData {

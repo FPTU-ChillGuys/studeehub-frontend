@@ -120,6 +120,56 @@ class FeedbackService {
       throw error;
     }
   }
+
+  async getFeedbackDetail(feedbackId: string): Promise<Feedback> {
+    try {
+      const response = await apiClient.get<Feedback>(
+        `/feedbacks/${feedbackId}`
+      );
+      if (response.success) {
+        return response.data as Feedback;
+      }
+      throw new Error("Failed to fetch feedback detail");
+    } catch (error) {
+      console.error("Error fetching feedback detail:", error);
+      throw error;
+    }
+  }
+
+  async respondToFeedback(
+    feedbackId: string,
+    response: string,
+    status: number
+  ): Promise<boolean> {
+    try {
+      const result = await apiClient.put<unknown>(
+        `/feedbacks/${feedbackId}/response`,
+        { response, status }
+      );
+      return result.success;
+    } catch (error) {
+      console.error("Error responding to feedback:", error);
+      throw error;
+    }
+  }
+
+  async updateFeedbackResponse(
+    feedbackId: string,
+    responseId: string,
+    response: string,
+    status: number
+  ): Promise<boolean> {
+    try {
+      const result = await apiClient.put<unknown>(
+        `/feedbacks/${feedbackId}/response/${responseId}`,
+        { response, status }
+      );
+      return result.success;
+    } catch (error) {
+      console.error("Error updating feedback response:", error);
+      throw error;
+    }
+  }
 }
 
 const feedbackService = new FeedbackService();

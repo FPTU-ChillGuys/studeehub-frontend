@@ -47,6 +47,7 @@ interface AdminFeedbacksTableProps {
   onPageChange: (page: number) => void;
   onFilterChange: (key: string, value: string | number | boolean | undefined) => void;
   filters: AdminFeedbackFilters;
+  onViewDetail: (feedbackId: string) => void;
 }
 
 export function AdminFeedbacksTable({
@@ -57,6 +58,7 @@ export function AdminFeedbacksTable({
   onPageChange,
   onFilterChange,
   filters,
+  onViewDetail,
 }: AdminFeedbacksTableProps) {
   const handlePreviousPage = () => {
     if (currentPage > 1) onPageChange(currentPage - 1);
@@ -152,6 +154,7 @@ export function AdminFeedbacksTable({
                 <TableHead>Rating</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-20">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -203,6 +206,15 @@ export function AdminFeedbacksTable({
                   </TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {formatDate(feedback.data?.createdAt)}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewDetail(feedback.data?.id || "")}
+                    >
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

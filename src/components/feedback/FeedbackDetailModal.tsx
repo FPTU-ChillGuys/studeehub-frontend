@@ -306,7 +306,7 @@ export function FeedbackDetailModal({
                 {/* Feedback Display - Left aligned */}
                 <div>
                   <h3 className="font-bold text-gray-900 mb-3">Feedback</h3>
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-w-2xl">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 w-full">
                     <p className="text-gray-800 whitespace-pre-wrap text-sm">
                       {feedback.message}
                     </p>
@@ -318,7 +318,7 @@ export function FeedbackDetailModal({
 
                 {/* Response Edit Form - Right aligned */}
                 <div className="flex justify-end">
-                  <div className="w-full max-w-2xl">
+                  <div className="w-full">
                     <h3 className="font-bold text-gray-900 mb-3">Response</h3>
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
                       {/* Response Textarea */}

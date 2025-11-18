@@ -151,6 +151,20 @@ class APIClient {
       method: "DELETE"
     });
   }
-}
 
+  async postWithFormData<T, R extends APIResponse<T> = APIResponse<T>>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<R> {
+    return this.request<R, T>(endpoint, {
+      method: "POST",
+      body: formData,
+      headers : {
+        "Content-Type": "multipart/form-data",
+      }
+    });
+  } 
+
+ 
+}
 export const apiClient = new APIClient(API_BASE_URL);

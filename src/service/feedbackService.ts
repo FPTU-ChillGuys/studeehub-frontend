@@ -172,6 +172,18 @@ class FeedbackService {
       throw error;
     }
   }
+
+  async deleteFeedback(feedbackId: string): Promise<boolean> {
+    try {
+      const result = await apiClient.delete<unknown>(
+        `/feedbacks/${feedbackId}/soft`
+      );
+      return result.success;
+    } catch (error) {
+      console.error("Error deleting feedback:", error);
+      throw error;
+    }
+  }
 }
 
 const feedbackService = new FeedbackService();

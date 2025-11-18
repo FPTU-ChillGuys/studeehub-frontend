@@ -19,18 +19,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Eye, Trash2 } from "lucide-react";
 import {
   Feedback,
   categoryLabels,
   feedbackStatusLabels,
   feedbackStatusColors,
-  FeedbackResponse,
 } from "@/Types/feedback";
 import feedbackService from "@/service/feedbackService";
 import { toast } from "sonner";
-import { APIResponse } from "@/lib/api/client";
-import { ApiResponse } from "@/Types";
+import { FeedbackDetailModal } from "./FeedbackDetailModal";
+
+interface ApiResponse<T> {
+  data?: T;
+  message?: string;
+  [key: string]: unknown;
+}
 
 export function FeedbackHistory() {
   const [feedbacks, setFeedbacks] = useState<ApiResponse<Feedback>[]>([]);
@@ -39,6 +43,9 @@ export function FeedbackHistory() {
   const [totalPages, setTotalPages] = useState(1);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   const pageSize = 10;
 
@@ -72,6 +79,28 @@ export function FeedbackHistory() {
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handleViewDetail = (feedbackId: string) => {
+    setSelectedFeedbackId(feedbackId);
+    setIsReadOnly(true);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleDeleteFeedback = async (feedbackId: string) => {
+    if (!window.confirm("Are you sure you want to delete this feedback?")) {
+      return;
+    }
+
+    try {
+      await feedbackService.deleteFeedback(feedbackId);
+      toast.success("Feedback deleted successfully");
+      loadFeedbacks(currentPage, filterCategory, filterStatus);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete feedback"
+      );
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -156,6 +185,7 @@ export function FeedbackHistory() {
                   <TableHead>Rating</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,9 +194,6 @@ export function FeedbackHistory() {
                     <TableCell className="font-medium">
                       <div className="flex flex-col">
                         <span>{feedback?.data?.title}</span>
-                        <span className="text-sm text-gray-500 mt-1">
-                          {feedback?.message?.substring(0, 100)}...
-                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -211,6 +238,24 @@ export function FeedbackHistory() {
                     <TableCell className="text-sm text-gray-500">
                       {formatDate(feedback?.data?.createdAt || "")}
                     </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetail(feedback?.data?.id || "")}
+                        >
+                          <Eye size={14} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteFeedback(feedback?.data?.id || "")}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -245,6 +290,20 @@ export function FeedbackHistory() {
           </div>
         )}
       </CardContent>
+
+      {/* Feedback Detail Modal - Read Only */}
+      <FeedbackDetailModal
+        feedbackId={selectedFeedbackId}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedFeedbackId(null);
+        }}
+        isReadOnly={isReadOnly}
+        onFeedbackUpdated={() => {
+          loadFeedbacks(currentPage, filterCategory, filterStatus);
+        }}
+      />
     </Card>
   );
 }

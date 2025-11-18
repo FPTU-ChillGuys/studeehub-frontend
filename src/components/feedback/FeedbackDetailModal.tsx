@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, Download, Send, Edit2 } from "lucide-react";
+import { Star, Download, Send, Edit2, Trash2 } from "lucide-react";
 import {
   Feedback,
   categoryLabels,
@@ -33,6 +33,7 @@ interface FeedbackDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFeedbackUpdated?: () => void;
+  isReadOnly?: boolean;
 }
 
 export function FeedbackDetailModal({
@@ -40,10 +41,12 @@ export function FeedbackDetailModal({
   isOpen,
   onClose,
   onFeedbackUpdated,
+  isReadOnly = false,
 }: FeedbackDetailModalProps) {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [responseText, setResponseText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("1");
   const [isEditingResponse, setIsEditingResponse] = useState(false);
@@ -114,6 +117,29 @@ export function FeedbackDetailModal({
     }
   };
 
+  const handleDeleteFeedback = async () => {
+    if (!feedback) return;
+    
+    // Confirm before delete
+    if (!window.confirm("Are you sure you want to delete this feedback? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await feedbackService.deleteFeedback(feedback.id);
+      toast.success("Feedback deleted successfully");
+      onClose();
+      onFeedbackUpdated?.();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete feedback"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "-";
     try {
@@ -146,8 +172,19 @@ export function FeedbackDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="min-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>Feedback Details</DialogTitle>
+          {!isReadOnly && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteFeedback}
+              disabled={isDeleting}
+            >
+              <Trash2 size={16} className="mr-1" />
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          )}
         </DialogHeader>
 
         {isLoading ? (
@@ -233,17 +270,19 @@ export function FeedbackDetailModal({
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-gray-900">Response</h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setIsEditingResponse(true);
-                          setResponseText(feedback.response || "");
-                        }}
-                      >
-                        <Edit2 size={14} className="mr-1" />
-                        Edit
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsEditingResponse(true);
+                            setResponseText(feedback.response || "");
+                          }}
+                        >
+                          <Edit2 size={14} className="mr-1" />
+                          Edit
+                        </Button>
+                      )}
                     </div>
                     <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                       <p className="text-gray-800 whitespace-pre-wrap text-sm">
@@ -300,7 +339,7 @@ export function FeedbackDetailModal({
             )}
 
             {/* EDIT MODE: Show Feedback + Response Input */}
-            {isEditingResponse && (
+            {!isReadOnly && isEditingResponse && (
               <div className="space-y-6 pt-4 border-t">
                 {/* Feedback Display - Left aligned */}
                 <div>
@@ -377,8 +416,8 @@ export function FeedbackDetailModal({
               </div>
             )}
 
-            {/* REPLY MODE: Only show when response is empty AND respondedAt is null */}
-            {!feedback.response && !isEditingResponse && (
+            {/* REPLY MODE: Only show when response is empty AND respondedAt is null AND not read-only */}
+            {!isReadOnly && !feedback.response && !isEditingResponse && (
               <div className="space-y-6">
                 {/* Feedback Display - Left aligned */}
                 <div>

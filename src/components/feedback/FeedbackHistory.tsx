@@ -13,6 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -46,6 +55,8 @@ export function FeedbackHistory() {
   const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const pageSize = 10;
 
@@ -88,18 +99,24 @@ export function FeedbackHistory() {
   };
 
   const handleDeleteFeedback = async (feedbackId: string) => {
-    if (!window.confirm("Are you sure you want to delete this feedback?")) {
-      return;
-    }
+    setDeleteConfirmId(feedbackId);
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+
+    setIsDeleting(true);
     try {
-      await feedbackService.deleteFeedback(feedbackId);
+      await feedbackService.deleteFeedback(deleteConfirmId);
       toast.success("Feedback deleted successfully");
+      setDeleteConfirmId(null);
       loadFeedbacks(currentPage, filterCategory, filterStatus);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to delete feedback"
       );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -304,6 +321,28 @@ export function FeedbackHistory() {
           loadFeedbacks(currentPage, filterCategory, filterStatus);
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Feedback</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this feedback? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

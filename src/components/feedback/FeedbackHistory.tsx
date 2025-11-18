@@ -48,6 +48,7 @@ export function FeedbackHistory() {
         category: category === "all" ? undefined : parseInt(category),
         status: status === "all" ? undefined : parseInt(status),
       });
+      console.log("Fetched feedbacks:", response);
       setFeedbacks(response.data);
       setTotalPages(response.totalPages);
     } catch (error) {

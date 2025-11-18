@@ -31,7 +31,7 @@ class FeedbackService {
       // Add files if provided
       if (data.files && data.files.length > 0) {
         data.files.forEach((file) => {
-          formData.append(`files`, file);
+          formData.append("files", file);
         });
       }
 
@@ -72,7 +72,7 @@ class FeedbackService {
         }
       );
       if (response.success) {
-        return response.data as FeedbacksResponse;
+        return response as unknown as FeedbacksResponse;
       }
       return {
         totalCount: 0,

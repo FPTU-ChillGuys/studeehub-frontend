@@ -156,11 +156,15 @@ class APIClient {
     endpoint: string,
     formData: FormData
   ): Promise<R> {
+    const accessToken = await this.getToken();
+
+
     return this.request<R, T>(endpoint, {
       method: "POST",
       body: formData,
       headers : {
         "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${accessToken}`
       }
     });
   } 

@@ -160,9 +160,6 @@ export function AdminFeedbacksTable({
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
                       <span>{feedback.data?.title}</span>
-                      <span className="text-sm text-gray-500 mt-1">
-                        {feedback.message.substring(0, 100)}...
-                      </span>
                     </div>
                   </TableCell>
                   <TableCell>

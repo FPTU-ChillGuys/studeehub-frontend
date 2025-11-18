@@ -25,12 +25,15 @@ import {
   categoryLabels,
   feedbackStatusLabels,
   feedbackStatusColors,
+  FeedbackResponse,
 } from "@/Types/feedback";
 import feedbackService from "@/service/feedbackService";
 import { toast } from "sonner";
+import { APIResponse } from "@/lib/api/client";
+import { ApiResponse } from "@/Types";
 
 export function FeedbackHistory() {
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [feedbacks, setFeedbacks] = useState<ApiResponse<Feedback>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -48,8 +51,8 @@ export function FeedbackHistory() {
         category: category === "all" ? undefined : parseInt(category),
         status: status === "all" ? undefined : parseInt(status),
       });
-      console.log("Fetched feedbacks:", response);
-      setFeedbacks(response.data);
+      console.log("Fetched feedbacks:", response.data);
+      setFeedbacks(response.data as unknown as ApiResponse<Feedback>[]);
       setTotalPages(response.totalPages);
     } catch (error) {
       toast.error("Failed to load feedback history");
@@ -72,13 +75,26 @@ export function FeedbackHistory() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    try {
+      // Handle ISO 8601 format with Z or timezone
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Invalid Date";
+      }
+      
+      return date.toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return "Invalid Date";
+    }
   };
 
   return (
@@ -143,13 +159,13 @@ export function FeedbackHistory() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {feedbacks?.map((feedback) => (
-                  <TableRow key={feedback.id} className="hover:bg-gray-50">
+                {feedbacks?.map((feedback, index) => (
+                  <TableRow key={`${index}`} className="hover:bg-gray-50">
                     <TableCell className="font-medium">
                       <div className="flex flex-col">
-                        <span>{feedback.title}</span>
+                        <span>{feedback?.data?.title}</span>
                         <span className="text-sm text-gray-500 mt-1">
-                          {feedback.message.substring(0, 100)}...
+                          {feedback?.message?.substring(0, 100)}...
                         </span>
                       </div>
                     </TableCell>
@@ -157,7 +173,7 @@ export function FeedbackHistory() {
                       <span className="text-sm">
                         {
                           categoryLabels[
-                            feedback.category as keyof typeof categoryLabels
+                            feedback?.data?.category as keyof typeof categoryLabels
                           ]
                         }
                       </span>
@@ -169,7 +185,7 @@ export function FeedbackHistory() {
                             key={i}
                             size={16}
                             className={`${
-                              i < feedback.rating
+                              i < (feedback?.data?.rating ?? 0)
                                 ? "fill-yellow-400 text-yellow-400"
                                 : "text-gray-300"
                             }`}
@@ -181,19 +197,19 @@ export function FeedbackHistory() {
                       <Badge
                         className={
                           feedbackStatusColors[
-                            feedback.status as keyof typeof feedbackStatusColors
+                            feedback?.data?.status as keyof typeof feedbackStatusColors
                           ]
                         }
                       >
                         {
                           feedbackStatusLabels[
-                            feedback.status as keyof typeof feedbackStatusLabels
+                            feedback?.data?.status as keyof typeof feedbackStatusLabels
                           ]
                         }
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {formatDate(feedback.createdAt)}
+                      {formatDate(feedback?.data?.createdAt || "")}
                     </TableCell>
                   </TableRow>
                 ))}

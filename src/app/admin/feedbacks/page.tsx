@@ -49,7 +49,7 @@ export default function AdminFeedbacksPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await feedbackService.getUserFeedbacks(filtersRef.current);
+      const response = await feedbackService.getFeedbacks(filtersRef.current);
       console.log("Fetched feedbacks:", response);
       setFeedbacks(response.data as unknown as APIResponse<Feedback>[]);
       setCurrentPage(response.page);

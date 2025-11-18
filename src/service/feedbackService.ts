@@ -86,6 +86,40 @@ class FeedbackService {
       throw error;
     }
   }
+
+  async getFeedbacks(filters: FeedbackFilters): Promise<FeedbacksResponse> {
+    try {
+      // Build params object, only including non-null/non-undefined values
+      const params: Record<string, string | number | boolean> = {};
+      if (filters.pageNumber !== undefined) params.pageNumber = filters.pageNumber;
+      if (filters.pageSize !== undefined) params.pageSize = filters.pageSize;
+      if (filters.rating !== undefined) params.rating = filters.rating;
+      if (filters.category !== undefined) params.category = filters.category;
+      if (filters.status !== undefined) params.status = filters.status;
+      if (filters.sortBy !== undefined) params.sortBy = filters.sortBy;
+      if (filters.sortDescending !== undefined) params.sortDescending = filters.sortDescending;
+
+      const response = await apiClient.get<FeedbacksResponse>(
+        "/feedbacks",
+        {
+          params,
+        }
+      );
+      if (response.success) {
+        return response as unknown as FeedbacksResponse;
+      }
+      return {
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 0,
+        data: [],
+      };
+    } catch (error) {
+      console.error("Error fetching user feedbacks:", error);
+      throw error;
+    }
+  }
 }
 
 const feedbackService = new FeedbackService();

@@ -155,13 +155,15 @@ class FeedbackService {
 
   async updateFeedbackResponse(
     feedbackId: string,
-    responseId: string,
     response: string,
     status: number
   ): Promise<boolean> {
     try {
+
+      console.log("Updating feedback response:", { feedbackId, response, status });
+
       const result = await apiClient.put<unknown>(
-        `/feedbacks/${feedbackId}/response/${responseId}`,
+        `/feedbacks/${feedbackId}/response`,
         { response, status }
       );
       return result.success;

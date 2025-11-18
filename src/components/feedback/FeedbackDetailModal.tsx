@@ -88,7 +88,6 @@ export function FeedbackDetailModal({
         // Update existing response
         await feedbackService.updateFeedbackResponse(
           feedback.id,
-          feedback.id, // responseId is feedbackId for this API
           responseText,
           parseInt(selectedStatus)
         );

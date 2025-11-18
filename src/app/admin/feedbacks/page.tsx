@@ -97,7 +97,7 @@ export default function AdminFeedbacksPage() {
   }, [filters.pageNumber, filters.category, filters.status, filters.sortBy, filters.sortDescending]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 w-full mx-5">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Feedback Management</h1>

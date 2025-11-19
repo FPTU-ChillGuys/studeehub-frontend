@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -172,9 +173,12 @@ export function FeedbackDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="min-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle>Feedback Details</DialogTitle>
-          {!isReadOnly && (
+        </DialogHeader>
+        
+        {!isReadOnly && (
+          <div className="absolute top-4 right-14">
             <Button
               variant="destructive"
               size="sm"
@@ -184,8 +188,10 @@ export function FeedbackDetailModal({
               <Trash2 size={16} className="mr-1" />
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>
-          )}
-        </DialogHeader>
+          </div>
+        )}
+
+        <div className="space-y-4">
 
         {isLoading ? (
           <div className="space-y-4">
@@ -315,25 +321,58 @@ export function FeedbackDetailModal({
             {/* Attachments */}
             {feedback.attachments && feedback.attachments.length > 0 && (
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Attachments</h4>
-                <div className="space-y-2">
-                  {feedback.attachments.map((attachment) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded border"
-                    >
-                      <span className="text-sm truncate">{attachment.fileName}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          handleDownload(attachment.fileUrl, attachment.fileName)
-                        }
-                      >
-                        <Download size={14} />
-                      </Button>
-                    </div>
-                  ))}
+                <h4 className="font-semibold text-gray-900 mb-4">Attachments</h4>
+                <div className="space-y-4">
+                  {feedback.attachments.map((attachment) => {
+                    const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(attachment.fileName);
+                    
+                    return (
+                      <div key={attachment.id}>
+                        {isImage ? (
+                          <div className="space-y-3">
+                            <div className="relative w-full h-96 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                              <Image
+                                src={attachment.fileUrl}
+                                alt={attachment.fileName}
+                                fill
+                                className="object-contain"
+                                sizes="100vw"
+                                onError={() => {
+                                  console.error("Failed to load image:", attachment.fileName);
+                                }}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <span className="text-sm truncate text-gray-700 font-medium">{attachment.fileName}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="hover:bg-blue-100"
+                                onClick={() =>
+                                  handleDownload(attachment.fileUrl, attachment.fileName)
+                                }
+                              >
+                                <Download size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <span className="text-sm truncate">{attachment.fileName}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleDownload(attachment.fileUrl, attachment.fileName)
+                              }
+                            >
+                              <Download size={16} />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -422,7 +461,7 @@ export function FeedbackDetailModal({
                 {/* Feedback Display - Left aligned */}
                 <div>
                   <h3 className="font-bold text-gray-900 mb-3">Feedback</h3>
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-w-2xl">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <p className="text-gray-800 whitespace-pre-wrap text-sm">
                       {feedback.message}
                     </p>
@@ -434,7 +473,7 @@ export function FeedbackDetailModal({
 
                 {/* Reply Form - Right aligned */}
                 <div className="flex justify-end">
-                  <div className="w-full max-w-2xl">
+                  <div className="w-full">
                     <h3 className="font-bold text-gray-900 mb-3">Reply to Feedback</h3>
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
                       {/* Response Textarea */}
@@ -488,6 +527,7 @@ export function FeedbackDetailModal({
             <p className="text-gray-500">No feedback found</p>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

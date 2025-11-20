@@ -97,6 +97,19 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+// Get effective transaction status based on subscription status
+const getEffectiveTransactionStatus = (
+  transactionStatus: number,
+  subscriptionStatus: number
+): number => {
+  // If subscription is Active (3), override transaction status to Active (0)
+  if (subscriptionStatus === 3) {
+    return 0; // Active
+  }
+  // Otherwise use the original transaction status
+  return transactionStatus;
+};
+
 export function SubscriptionsTableWithExpand({
   subscriptions,
   onRowExpand,
@@ -315,17 +328,25 @@ export function SubscriptionsTableWithExpand({
                                         {transaction.transactionCode}
                                       </TableCell>
                                       <TableCell>
-                                        <Badge
-                                          className={`${
-                                            transactionStatusColorMap[
-                                              transaction.status
-                                            ] || "bg-gray-500"
-                                          } text-white`}
-                                        >
-                                          {transactionStatusMap[
-                                            transaction.status
-                                          ] || "Unknown"}
-                                        </Badge>
+                                        {(() => {
+                                          const effectiveStatus = getEffectiveTransactionStatus(
+                                            transaction.status,
+                                            subscription.status
+                                          );
+                                          return (
+                                            <Badge
+                                              className={`${
+                                                transactionStatusColorMap[
+                                                  effectiveStatus
+                                                ] || "bg-gray-500"
+                                              } text-white`}
+                                            >
+                                              {transactionStatusMap[
+                                                effectiveStatus
+                                              ] || "Unknown"}
+                                            </Badge>
+                                          );
+                                        })()}
                                       </TableCell>
                                       <TableCell>
                                         {formatDate(transaction.createdAt)}

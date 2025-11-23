@@ -48,6 +48,7 @@ interface AdminFeedbacksTableProps {
   onFilterChange: (key: string, value: string | number | boolean | undefined) => void;
   filters: AdminFeedbackFilters;
   onViewDetail: (feedbackId: string) => void;
+  totalCount?: number;
 }
 
 export function AdminFeedbacksTable({
@@ -59,6 +60,7 @@ export function AdminFeedbacksTable({
   onFilterChange,
   filters,
   onViewDetail,
+  totalCount = 0,
 }: AdminFeedbacksTableProps) {
   const handlePreviousPage = () => {
     if (currentPage > 1) onPageChange(currentPage - 1);
@@ -227,7 +229,7 @@ export function AdminFeedbacksTable({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages} • Total: {feedbacks.length} items
+            Page {currentPage} of {totalPages} • Total: {totalCount} items
           </div>
           <div className="flex gap-2">
             <Button

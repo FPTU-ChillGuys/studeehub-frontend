@@ -22,6 +22,7 @@ export default function AdminFeedbacksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Search filters with defaults
@@ -57,6 +58,7 @@ export default function AdminFeedbacksPage() {
       setFeedbacks(response.data as unknown as APIResponse<Feedback>[]);
       setCurrentPage(response.page);
       setTotalPages(response.totalPages);
+      setTotalCount(response.totalCount);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch feedbacks";
       setError(errorMessage);
@@ -158,6 +160,7 @@ export default function AdminFeedbacksPage() {
             onFilterChange={handleFilterChange}
             filters={filtersRef.current}
             onViewDetail={handleViewDetail}
+            totalCount={totalCount}
           />
         </CardContent>
       </Card>
